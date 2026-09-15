@@ -34,9 +34,19 @@ public class RoutePathRenderer : MonoBehaviour
     [SerializeField]
     private MovementAllowance movementAllowance;
 
-    [Tooltip("Moved to the final cell of the route while a route is planned. Can be left empty - no marker is auto-created.")]
+    [Header("Destination Reticle")]
+
+    [Tooltip("Optional. If assigned, this is moved to the destination instead of the auto-generated reticle below - use this if you want your own themed marker art.")]
     [SerializeField]
     private Transform destinationMarker;
+
+    [Tooltip("Size of the auto-generated reticle, in pixels. Slightly larger than pixelsPerUnit frames the destination tile with a bit of overhang.")]
+    [SerializeField]
+    private int reticleSizePixels = 10;
+
+    [Tooltip("Length of each corner bracket on the auto-generated reticle, in pixels.")]
+    [SerializeField]
+    private int reticleBracketLengthPixels = 3;
 
 
     [Header("Pixel Grid")]
@@ -79,6 +89,9 @@ public class RoutePathRenderer : MonoBehaviour
     private readonly List<SpriteRenderer> affordablePool = new List<SpriteRenderer>();
     private readonly List<SpriteRenderer> excessPool = new List<SpriteRenderer>();
 
+    // Only created when destinationMarker is left unassigned in the Inspector.
+    private SpriteRenderer autoDestinationMarker;
+
 
     private void Awake()
     {
@@ -89,6 +102,11 @@ public class RoutePathRenderer : MonoBehaviour
 
         excessDotsContainer =
             CreateContainer("ExcessRouteDots");
+
+        if (destinationMarker == null)
+        {
+            autoDestinationMarker = CreateReticle();
+        }
     }
 
 
@@ -157,6 +175,124 @@ public class RoutePathRenderer : MonoBehaviour
 
 
     /// <summary>
+    /// Builds the auto-generated destination marker: a small square
+    /// texture with four corner brackets, like a targeting reticle,
+    /// point-filtered so it stays crisp at any scale.
+    /// </summary>
+    private SpriteRenderer CreateReticle()
+    {
+        GameObject reticleObject = new GameObject("DestinationReticle");
+
+        reticleObject.transform.SetParent(
+            transform,
+            false
+        );
+
+        SpriteRenderer reticle =
+            reticleObject.AddComponent<SpriteRenderer>();
+
+        reticle.sprite = CreateReticleSprite();
+
+        reticle.sortingLayerName =
+            ResolveSortingLayerName(
+                sortingLayerName
+            );
+
+        // One above the dashes, so the reticle never gets hidden behind
+        // a dot that happens to land on the same cell.
+        reticle.sortingOrder = sortingOrder + 1;
+
+        reticle.gameObject.SetActive(false);
+
+        return reticle;
+    }
+
+
+    /// <summary>
+    /// Procedurally draws an NxN transparent texture with a short opaque
+    /// bracket in each corner - i.e. a targeting reticle - so no marker
+    /// art needs to be authored by hand. Pixels are plain white; the
+    /// actual colour is applied later via SpriteRenderer.color so it can
+    /// change (affordable vs excess) without regenerating the texture.
+    /// </summary>
+    private Sprite CreateReticleSprite()
+    {
+        int size = Mathf.Max(2, reticleSizePixels);
+
+        int bracketLength =
+            Mathf.Clamp(
+                reticleBracketLengthPixels,
+                1,
+                size / 2
+            );
+
+
+        Texture2D texture =
+            new Texture2D(
+                size,
+                size,
+                TextureFormat.RGBA32,
+                false
+            );
+
+        texture.filterMode = FilterMode.Point;
+        texture.wrapMode = TextureWrapMode.Clamp;
+
+
+        Color clear = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+        Color[] pixels = new Color[size * size];
+
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = clear;
+        }
+
+        texture.SetPixels(pixels);
+
+
+        for (int i = 0; i < bracketLength; i++)
+        {
+            // Bottom-left corner
+            SetReticlePixel(texture, size, i, 0);
+            SetReticlePixel(texture, size, 0, i);
+
+            // Bottom-right corner
+            SetReticlePixel(texture, size, size - 1 - i, 0);
+            SetReticlePixel(texture, size, size - 1, i);
+
+            // Top-left corner
+            SetReticlePixel(texture, size, i, size - 1);
+            SetReticlePixel(texture, size, 0, size - 1 - i);
+
+            // Top-right corner
+            SetReticlePixel(texture, size, size - 1 - i, size - 1);
+            SetReticlePixel(texture, size, size - 1, size - 1 - i);
+        }
+
+        texture.Apply();
+
+
+        return Sprite.Create(
+            texture,
+            new Rect(0, 0, size, size),
+            new Vector2(0.5f, 0.5f),
+            pixelsPerUnit
+        );
+    }
+
+
+    private void SetReticlePixel(Texture2D texture, int size, int x, int y)
+    {
+        if (x < 0 || x >= size || y < 0 || y >= size)
+        {
+            return;
+        }
+
+        texture.SetPixel(x, y, Color.white);
+    }
+
+
+    /// <summary>
     /// Redraws for the latest planned path.
     /// </summary>
     private void HandleRouteChanged(List<Vector3Int> path)
@@ -201,10 +337,7 @@ public class RoutePathRenderer : MonoBehaviour
             DeactivateFrom(affordablePool, 0);
             DeactivateFrom(excessPool, 0);
 
-            if (destinationMarker != null)
-            {
-                destinationMarker.gameObject.SetActive(false);
-            }
+            SetDestinationMarkerActive(false);
 
             return;
         }
@@ -272,12 +405,55 @@ public class RoutePathRenderer : MonoBehaviour
         DeactivateFrom(excessPool, excessDotCount);
 
 
+        Vector3 destinationWorldPosition =
+            gridMap.CellToWorld(path[path.Count - 1]);
+
+        bool destinationIsAffordable =
+            affordableCellCount >= path.Count;
+
+        SetDestinationMarkerActive(
+            true,
+            destinationWorldPosition,
+            destinationIsAffordable
+        );
+    }
+
+
+    /// <summary>
+    /// Drives whichever destination marker is in play - your own assigned
+    /// Transform if one was set, otherwise the auto-generated reticle,
+    /// recoloured to match whether the full route is currently affordable.
+    /// </summary>
+    private void SetDestinationMarkerActive(
+        bool active,
+        Vector3 worldPosition = default,
+        bool isAffordable = true)
+    {
         if (destinationMarker != null)
         {
-            destinationMarker.gameObject.SetActive(true);
+            destinationMarker.gameObject.SetActive(active);
 
-            destinationMarker.position =
-                gridMap.CellToWorld(path[path.Count - 1]);
+            if (active)
+            {
+                destinationMarker.position = worldPosition;
+            }
+
+            return;
+        }
+
+        if (autoDestinationMarker != null)
+        {
+            autoDestinationMarker.gameObject.SetActive(active);
+
+            if (active)
+            {
+                autoDestinationMarker.transform.position = worldPosition;
+
+                autoDestinationMarker.color =
+                    isAffordable
+                        ? affordableColor
+                        : excessColor;
+            }
         }
     }
 
