@@ -15406,8 +15406,11 @@ GameObject:
   - component: {fileID: 1705402915}
   - component: {fileID: 1705402914}
   - component: {fileID: 1705402913}
+  - component: {fileID: 1705402918}
+  - component: {fileID: 1705402917}
   - component: {fileID: 1705402912}
   - component: {fileID: 1705402916}
+  - component: {fileID: 1705402919}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -15449,6 +15452,7 @@ MonoBehaviour:
   deceleration: 8
   turnSlowDistance: 0.35
   destinationSlowDistance: 0.75
+  minimumFinalApproachSpeed: 0.4
   rotationSpeed: 540
   arrivalDistance: 0.005
 --- !u!114 &1705402914
@@ -15465,7 +15469,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridPlayerInput
   mainCamera: {fileID: 519420031}
   gridMap: {fileID: 28316566}
-  playerController: {fileID: 1705402913}
+  routePlanner: {fileID: 1705402917}
+  movementPlanController: {fileID: 1705402918}
 --- !u!4 &1705402915
 Transform:
   m_ObjectHideFlags: 0
@@ -15509,6 +15514,59 @@ MonoBehaviour:
   discoveredPlanetCount: 0
   managedPlanetLockCount: 0
   visionRefreshCount: 0
+--- !u!114 &1705402917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 340b325fd1649c74783a8511c299d5c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoutePlanner
+  playerController: {fileID: 1705402913}
+  pathfinder: {fileID: 1705402912}
+--- !u!114 &1705402918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9318f14f20b6f774da835d256e1aafca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovementPlanController
+  routePlanner: {fileID: 1705402917}
+  playerController: {fileID: 1705402913}
+  movementAllowance: {fileID: 0}
+--- !u!114 &1705402919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad82eab5b4d5bb1488f7f337e2f5c807, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoutePathRenderer
+  routePlanner: {fileID: 1705402917}
+  playerController: {fileID: 1705402913}
+  gridMap: {fileID: 28316566}
+  movementAllowance: {fileID: 0}
+  destinationMarker: {fileID: 0}
+  pixelsPerUnit: 16
+  dotSizePixels: 1
+  gapPixels: 4
+  affordableColor: {r: 0.3, g: 1, b: 0.4, a: 1}
+  excessColor: {r: 1, g: 0.35, b: 0.3, a: 1}
+  sortingLayerName: Foreground
+  sortingOrder: 122
 --- !u!213 &1853568726
 Sprite:
   m_ObjectHideFlags: 0
