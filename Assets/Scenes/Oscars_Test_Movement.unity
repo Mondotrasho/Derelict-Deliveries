@@ -1799,7 +1799,7 @@ MonoBehaviour:
       counters: []
       deliveries: []
   - id: Yellow_Planet
-    displayName: 
+    displayName: Fun Planet
     cell: {x: -15, y: 6, z: 0}
     tileIndex: 1
     visibility:
@@ -15946,6 +15946,7 @@ MonoBehaviour:
   minimumPlanetVisibility: 1
   autoRememberDiscoveredPlanets: 1
   importStartingVisiblePlanets: 1
+  startingVisibleTier: 1
   preDiscoveredRememberedTier: 1
   detectPlanetDataChanges: 1
   planetLockPrefix: 'vision:planet:'
