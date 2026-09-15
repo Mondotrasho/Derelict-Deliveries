@@ -130,4 +130,166 @@ public class RoutePlanner : MonoBehaviour
 
         RouteChanged?.Invoke(plannedPath);
     }
+
+
+    /// <summary>
+    /// One step of manually drawing a route by dragging - called once per
+    /// newly hovered cell. Rather than re-pathfinding from the player
+    /// (SetDestination), this extends or trims the existing plan from
+    /// wherever it currently ends:
+    ///
+    /// - dragging onto an already-planned cell trims the route back to
+    ///   that point (backtracking), instead of looping through it
+    /// - dragging onto the player's own current cell clears the plan
+    /// - dragging onto a non-adjacent cell (the cursor jumped more than
+    ///   one cell between frames) bridges the gap with a short pathfound
+    ///   segment, applying the same backtracking check to every cell in it
+    /// - dragging onto an ordinary adjacent cell appends it, but only if
+    ///   GridPathfinder.CanStepBetween allows that step - an obstacle,
+    ///   a blocked corner, or diagonal movement being disabled all reject
+    ///   the drag rather than creating an illegal route
+    ///
+    /// Does nothing while the player is already executing a committed
+    /// route, for the same reason as SetDestination.
+    /// </summary>
+    public void AppendDraggedCell(Vector3Int cell)
+    {
+        if (playerController == null || pathfinder == null)
+        {
+            Debug.LogError(
+                "RoutePlanner is missing a required reference."
+            );
+
+            return;
+        }
+
+        if (playerController.IsMoving)
+        {
+            return;
+        }
+
+
+        Vector3Int lastCell = GetLastPlannedCellOrCurrent();
+
+        if (cell == lastCell)
+        {
+            return;
+        }
+
+
+        bool changed;
+
+        if (IsAdjacent(lastCell, cell))
+        {
+            changed = AppendOrBacktrackSingleCell(lastCell, cell);
+        }
+        else
+        {
+            // The cursor moved further than one cell since the last drag
+            // update - bridge the gap instead of leaving a hole in the
+            // route. FindPath already only ever returns legal steps, so
+            // every cell in this segment will pass CanStepBetween too.
+            List<Vector3Int> bridgeSegment =
+                pathfinder.FindPath(lastCell, cell);
+
+            changed = false;
+
+            foreach (Vector3Int bridgeCell in bridgeSegment)
+            {
+                Vector3Int fromCell = GetLastPlannedCellOrCurrent();
+
+                if (AppendOrBacktrackSingleCell(fromCell, bridgeCell))
+                {
+                    changed = true;
+                }
+            }
+        }
+
+        if (!changed)
+        {
+            return;
+        }
+
+        plannedDestination =
+            plannedPath.Count > 0
+                ? plannedPath[plannedPath.Count - 1]
+                : (Vector3Int?)null;
+
+        RouteChanged?.Invoke(plannedPath);
+    }
+
+
+    /// <summary>
+    /// The cell the planned route currently ends at, or the player's
+    /// actual current cell if nothing is planned yet.
+    /// </summary>
+    private Vector3Int GetLastPlannedCellOrCurrent()
+    {
+        return plannedPath.Count > 0
+            ? plannedPath[plannedPath.Count - 1]
+            : playerController.CurrentCell;
+    }
+
+
+    /// <summary>
+    /// One step of manual route drawing: trims back to an already-visited
+    /// cell (backtracking), clears the plan if dragged back onto the
+    /// player's own cell, or appends a new cell - rejecting the append if
+    /// GridPathfinder says the step from fromCell isn't actually legal.
+    /// Returns whether the planned path actually changed.
+    /// </summary>
+    private bool AppendOrBacktrackSingleCell(Vector3Int fromCell, Vector3Int cell)
+    {
+        if (cell == playerController.CurrentCell)
+        {
+            bool hadRoute = plannedPath.Count > 0;
+            plannedPath.Clear();
+            return hadRoute;
+        }
+
+
+        int existingIndex = plannedPath.IndexOf(cell);
+
+        if (existingIndex >= 0)
+        {
+            int removeCount =
+                plannedPath.Count - existingIndex - 1;
+
+            if (removeCount == 0)
+            {
+                return false;
+            }
+
+            plannedPath.RemoveRange(
+                existingIndex + 1,
+                removeCount
+            );
+
+            return true;
+        }
+
+
+        if (!pathfinder.CanStepBetween(fromCell, cell))
+        {
+            // Obstacle, blocked corner, or diagonal movement disabled -
+            // reject rather than create an illegal route.
+            return false;
+        }
+
+        plannedPath.Add(cell);
+        return true;
+    }
+
+
+    /// <summary>
+    /// True if the two cells are exactly one step apart, including
+    /// diagonally.
+    /// </summary>
+    private bool IsAdjacent(Vector3Int a, Vector3Int b)
+    {
+        int dx = Mathf.Abs(a.x - b.x);
+        int dy = Mathf.Abs(a.y - b.y);
+
+        return dx <= 1 && dy <= 1 && (dx != 0 || dy != 0);
+    }
 }

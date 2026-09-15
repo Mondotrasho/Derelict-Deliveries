@@ -39,6 +39,10 @@ public class GridPathfinder : MonoBehaviour
     [SerializeField]
     private bool preventCornerCutting = true;
 
+    [Tooltip("When a diagonal route and a staircase route cost exactly the same, prefer the diagonal one so paths don't default to zigzagging. Purely a shape preference - does not change what MovementAllowance charges.")]
+    [SerializeField]
+    private bool preferDiagonalMovement = true;
+
 
     /// <summary>
     /// The four orthogonal directions, always available.
@@ -146,7 +150,7 @@ public class GridPathfinder : MonoBehaviour
                     continue;
                 }
 
-                if (!gridMap.IsWalkable(neighbourCell))
+                if (!CanStepBetween(currentNode.Cell, neighbourCell))
                 {
                     continue;
                 }
@@ -155,27 +159,6 @@ public class GridPathfinder : MonoBehaviour
                 bool isDiagonalStep =
                     direction.x != 0 &&
                     direction.y != 0;
-
-                if (isDiagonalStep && preventCornerCutting)
-                {
-                    Vector3Int horizontalNeighbour =
-                        currentNode.Cell +
-                        new Vector3Int(direction.x, 0, 0);
-
-                    Vector3Int verticalNeighbour =
-                        currentNode.Cell +
-                        new Vector3Int(0, direction.y, 0);
-
-                    bool cornerBlocked =
-                        !gridMap.IsWalkable(horizontalNeighbour) ||
-                        !gridMap.IsWalkable(verticalNeighbour);
-
-                    if (cornerBlocked)
-                    {
-                        continue;
-                    }
-                }
-
 
                 int stepCost =
                     isDiagonalStep
@@ -209,7 +192,27 @@ public class GridPathfinder : MonoBehaviour
                 }
 
 
-                if (newGCost < neighbourNode.GCost)
+                bool isCheaper =
+                    newGCost < neighbourNode.GCost;
+
+                // With diagonalStepCost at its default (2x orthogonal),
+                // a diagonal route and an equivalent staircase route cost
+                // exactly the same - so without a tie-break, whichever
+                // shape reached a cell first "wins" and never gets
+                // replaced (newGCost < GCost is strict). Since directions
+                // are checked orthogonal-first, that meant staircases by
+                // default. This tie-break lets an equal-cost diagonal
+                // step take over from an existing orthogonal one, purely
+                // for a smoother-looking route - it does not change the
+                // cost charged by MovementAllowance, which prices the
+                // final path's actual cell deltas independently.
+                bool isEqualCostButSmoother =
+                    preferDiagonalMovement &&
+                    newGCost == neighbourNode.GCost &&
+                    isDiagonalStep &&
+                    !ArrivedDiagonally(neighbourNode);
+
+                if (isCheaper || isEqualCostButSmoother)
                 {
                     neighbourNode.GCost = newGCost;
                     neighbourNode.Parent = currentNode;
@@ -228,6 +231,83 @@ public class GridPathfinder : MonoBehaviour
         );
 
         return emptyPath;
+    }
+
+
+    /// <summary>
+    /// True if this node's current best-known route arrives via a
+    /// diagonal step from its parent.
+    /// </summary>
+    private bool ArrivedDiagonally(PathNode node)
+    {
+        if (node.Parent == null)
+        {
+            return false;
+        }
+
+        Vector3Int delta = node.Cell - node.Parent.Cell;
+
+        return delta.x != 0 && delta.y != 0;
+    }
+
+
+    /// <summary>
+    /// True if a single step from fromCell directly into toCell is legal
+    /// under the current settings - walkable, diagonal-allowed if it's a
+    /// diagonal step, and not cutting a blocked corner. This is the one
+    /// place that defines "is this move legal", shared by the internal A*
+    /// search and by RoutePlanner's manual drag-drawing (which appends
+    /// single steps without running a full search).
+    ///
+    /// Does not check adjacency - fromCell and toCell are assumed to
+    /// already be one step apart in some direction.
+    /// </summary>
+    public bool CanStepBetween(Vector3Int fromCell, Vector3Int toCell)
+    {
+        if (gridMap == null)
+        {
+            Debug.LogError("GridPathfinder has no GridMap assigned.");
+            return false;
+        }
+
+
+        Vector3Int delta = toCell - fromCell;
+
+        bool isDiagonalStep =
+            delta.x != 0 &&
+            delta.y != 0;
+
+        if (isDiagonalStep && !allowDiagonalMovement)
+        {
+            return false;
+        }
+
+        if (!gridMap.IsWalkable(toCell))
+        {
+            return false;
+        }
+
+        if (isDiagonalStep && preventCornerCutting)
+        {
+            Vector3Int horizontalNeighbour =
+                fromCell +
+                new Vector3Int(delta.x, 0, 0);
+
+            Vector3Int verticalNeighbour =
+                fromCell +
+                new Vector3Int(0, delta.y, 0);
+
+            bool cornerBlocked =
+                !gridMap.IsWalkable(horizontalNeighbour) ||
+                !gridMap.IsWalkable(verticalNeighbour);
+
+            if (cornerBlocked)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 
