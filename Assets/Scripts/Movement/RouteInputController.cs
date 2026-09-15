@@ -15,12 +15,12 @@ using UnityEngine.UI;
 /// directly rather than re-pathfinding from the player every frame.
 /// Right-click cancels the plan, same as Escape.
 ///
-/// Supersedes GridPlayerInput, which only ever supported model A
-/// (re-pathfind-to-cursor, no waypoint chaining, no manual drawing).
-/// Point the same RoutePlanner/MovementPlanController/UI references at
-/// this component instead - both scripts can stay in the project, but
-/// only one should be enabled on a given RoutePlanner at a time, since
-/// both react to the same mouse input.
+/// Offers a fuller model than GridPlayerInput, which only ever supports
+/// re-pathfind-to-cursor (no waypoint chaining, no manual drawing). Both
+/// scripts stay in the project, but only one may actually drive a given
+/// RoutePlanner at a time - see RouteInputOwnership. This script claims
+/// ownership in OnEnable and refuses to activate (logging why) if
+/// GridPlayerInput already holds the claim.
 /// </summary>
 public class RouteInputController : MonoBehaviour
 {
@@ -77,6 +77,20 @@ public class RouteInputController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!RouteInputOwnership.TryClaim(routePlanner, this, out Behaviour currentOwner))
+        {
+            Debug.LogWarning(
+                $"{name}: RouteInputController was not enabled because " +
+                $"{currentOwner.GetType().Name} is already driving this RoutePlanner. " +
+                "Only one route-input script can be active on a given RoutePlanner at a " +
+                "time - disable that one first if you want RouteInputController active instead.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
         if (commitButton != null)
         {
             commitButton.onClick.AddListener(HandleCommitButtonClicked);
@@ -91,6 +105,8 @@ public class RouteInputController : MonoBehaviour
 
     private void OnDisable()
     {
+        RouteInputOwnership.Release(routePlanner, this);
+
         if (commitButton != null)
         {
             commitButton.onClick.RemoveListener(HandleCommitButtonClicked);

@@ -4,17 +4,20 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// Temporary testing input for route planning.
+/// Simple click-to-move input for route planning: left click previews a
+/// route to the clicked cell via RoutePlanner, and continues
+/// re-previewing to whatever cell the cursor is over for as long as the
+/// button stays held - so dragging live-updates the destination rather
+/// than needing repeated clicks. Enter commits the previewed route (or
+/// an optional assigned commitButton), Escape cancels it (or an optional
+/// assigned cancelButton).
 ///
-/// Left click previews a route to the clicked cell via RoutePlanner, and
-/// continues re-previewing to whatever cell the cursor is over for as
-/// long as the button stays held - so dragging live-updates the
-/// destination rather than needing repeated clicks. Enter commits the
-/// previewed route (or an optional assigned commitButton), Escape
-/// cancels it (or an optional assigned cancelButton). This stands in for
-/// the dedicated RouteInputController (manual cell-by-cell route
-/// drawing) planned for a later stage - once that exists, this script
-/// can be retired.
+/// RouteInputController offers the fuller click-chaining/drag-drawing
+/// model. Both are kept in the project rather than one being retired,
+/// but only one may actually drive a given RoutePlanner at a time - see
+/// RouteInputOwnership. This script claims ownership in OnEnable and
+/// refuses to activate (logging why) if RouteInputController already
+/// holds the claim.
 /// </summary>
 public class GridPlayerInput : MonoBehaviour
 {
@@ -67,6 +70,20 @@ public class GridPlayerInput : MonoBehaviour
 
     private void OnEnable()
     {
+        if (!RouteInputOwnership.TryClaim(routePlanner, this, out Behaviour currentOwner))
+        {
+            Debug.LogWarning(
+                $"{name}: GridPlayerInput was not enabled because " +
+                $"{currentOwner.GetType().Name} is already driving this RoutePlanner. " +
+                "Only one route-input script can be active on a given RoutePlanner at a " +
+                "time - disable that one first if you want GridPlayerInput active instead.",
+                this
+            );
+
+            enabled = false;
+            return;
+        }
+
         if (commitButton != null)
         {
             commitButton.onClick.AddListener(HandleCommitButtonClicked);
@@ -81,6 +98,8 @@ public class GridPlayerInput : MonoBehaviour
 
     private void OnDisable()
     {
+        RouteInputOwnership.Release(routePlanner, this);
+
         if (commitButton != null)
         {
             commitButton.onClick.RemoveListener(HandleCommitButtonClicked);
