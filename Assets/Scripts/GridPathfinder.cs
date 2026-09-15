@@ -6,6 +6,13 @@ using UnityEngine;
 ///
 /// This class only decides which cells make up the path.
 /// It does not move the player.
+///
+/// Diagonal movement is supported alongside the original four orthogonal
+/// directions. By default a diagonal step costs exactly twice an
+/// orthogonal step - i.e. what two orthogonal moves would have cost
+/// anyway - so diagonal movement is a shape/smoothness choice (fewer
+/// turns, a nicer-looking route) rather than a raw distance shortcut.
+/// Total route cost works out the same either way.
 /// </summary>
 public class GridPathfinder : MonoBehaviour
 {
@@ -15,15 +22,45 @@ public class GridPathfinder : MonoBehaviour
     private GridMap gridMap;
 
 
+    [Header("Diagonal Movement")]
+
+    [SerializeField]
+    private bool allowDiagonalMovement = true;
+
+    [Tooltip("Cost of moving into one orthogonal (N/S/E/W) cell.")]
+    [SerializeField]
+    private int orthogonalStepCost = 1;
+
+    [Tooltip("Cost of moving into one diagonal cell. Defaulting to 2x the orthogonal cost means a diagonal step costs exactly what two orthogonal steps would have - so it never provides a raw distance shortcut, only a smoother-looking route. Keep this in sync with MovementAllowance's matching field: GridPathfinder deliberately doesn't know about MovementAllowance, so the two costs are not shared automatically.")]
+    [SerializeField]
+    private int diagonalStepCost = 2;
+
+    [Tooltip("If true, a diagonal move is blocked unless both flanking orthogonal cells are also walkable - stops the path clipping through a blocked corner.")]
+    [SerializeField]
+    private bool preventCornerCutting = true;
+
+
     /// <summary>
-    /// Four-directional grid movement.
+    /// The four orthogonal directions, always available.
     /// </summary>
-    private static readonly Vector3Int[] NeighbourDirections =
+    private static readonly Vector3Int[] OrthogonalDirections =
     {
         Vector3Int.up,
         Vector3Int.right,
         Vector3Int.down,
         Vector3Int.left
+    };
+
+
+    /// <summary>
+    /// The four diagonal directions, only used when allowDiagonalMovement is true.
+    /// </summary>
+    private static readonly Vector3Int[] DiagonalDirections =
+    {
+        new Vector3Int(1, 1, 0),
+        new Vector3Int(1, -1, 0),
+        new Vector3Int(-1, -1, 0),
+        new Vector3Int(-1, 1, 0)
     };
 
 
@@ -60,6 +97,15 @@ public class GridPathfinder : MonoBehaviour
         }
 
 
+        List<Vector3Int> directions =
+            new List<Vector3Int>(OrthogonalDirections);
+
+        if (allowDiagonalMovement)
+        {
+            directions.AddRange(DiagonalDirections);
+        }
+
+
         List<PathNode> openNodes = new List<PathNode>();
         HashSet<Vector3Int> closedCells = new HashSet<Vector3Int>();
 
@@ -70,7 +116,7 @@ public class GridPathfinder : MonoBehaviour
         PathNode startNode = new PathNode(startCell);
 
         startNode.GCost = 0;
-        startNode.HCost = CalculateDistance(startCell, destinationCell);
+        startNode.HCost = CalculateHeuristic(startCell, destinationCell);
 
         openNodes.Add(startNode);
         knownNodes.Add(startCell, startNode);
@@ -89,7 +135,7 @@ public class GridPathfinder : MonoBehaviour
             closedCells.Add(currentNode.Cell);
 
 
-            foreach (Vector3Int direction in NeighbourDirections)
+            foreach (Vector3Int direction in directions)
             {
                 Vector3Int neighbourCell =
                     currentNode.Cell + direction;
@@ -106,7 +152,39 @@ public class GridPathfinder : MonoBehaviour
                 }
 
 
-                int newGCost = currentNode.GCost + 1;
+                bool isDiagonalStep =
+                    direction.x != 0 &&
+                    direction.y != 0;
+
+                if (isDiagonalStep && preventCornerCutting)
+                {
+                    Vector3Int horizontalNeighbour =
+                        currentNode.Cell +
+                        new Vector3Int(direction.x, 0, 0);
+
+                    Vector3Int verticalNeighbour =
+                        currentNode.Cell +
+                        new Vector3Int(0, direction.y, 0);
+
+                    bool cornerBlocked =
+                        !gridMap.IsWalkable(horizontalNeighbour) ||
+                        !gridMap.IsWalkable(verticalNeighbour);
+
+                    if (cornerBlocked)
+                    {
+                        continue;
+                    }
+                }
+
+
+                int stepCost =
+                    isDiagonalStep
+                        ? diagonalStepCost
+                        : orthogonalStepCost;
+
+                int newGCost =
+                    currentNode.GCost +
+                    stepCost;
 
 
                 if (!knownNodes.TryGetValue(
@@ -117,7 +195,7 @@ public class GridPathfinder : MonoBehaviour
 
                     neighbourNode.GCost = newGCost;
                     neighbourNode.HCost =
-                        CalculateDistance(
+                        CalculateHeuristic(
                             neighbourCell,
                             destinationCell
                         );
@@ -182,19 +260,39 @@ public class GridPathfinder : MonoBehaviour
 
 
     /// <summary>
-    /// Manhattan distance suits four-directional movement.
+    /// Admissible distance estimate that accounts for diagonal movement.
+    ///
+    /// When diagonalStepCost is exactly 2x orthogonalStepCost (the
+    /// default), this reduces to plain Manhattan distance - which also
+    /// happens to be the *exact* real cost of any route between the two
+    /// cells, diagonal shortcuts or not, since a diagonal step costs the
+    /// same as the two orthogonal steps it replaces. If diagonalStepCost
+    /// is set cheaper than that, the heuristic correctly accounts for the
+    /// resulting shortcut; if set more expensive, the extra term is
+    /// clamped so the heuristic never overestimates (which would break
+    /// A*'s guarantee of finding the shortest path).
     /// </summary>
-    private int CalculateDistance(
+    private int CalculateHeuristic(
         Vector3Int firstCell,
         Vector3Int secondCell)
     {
-        int horizontalDistance =
-            Mathf.Abs(firstCell.x - secondCell.x);
+        int dx = Mathf.Abs(firstCell.x - secondCell.x);
+        int dy = Mathf.Abs(firstCell.y - secondCell.y);
 
-        int verticalDistance =
-            Mathf.Abs(firstCell.y - secondCell.y);
+        if (!allowDiagonalMovement)
+        {
+            return orthogonalStepCost * (dx + dy);
+        }
 
-        return horizontalDistance + verticalDistance;
+
+        int diagonalSavingsPerStep =
+            Mathf.Min(
+                0,
+                diagonalStepCost - (2 * orthogonalStepCost)
+            );
+
+        return (orthogonalStepCost * (dx + dy)) +
+               (diagonalSavingsPerStep * Mathf.Min(dx, dy));
     }
 
 

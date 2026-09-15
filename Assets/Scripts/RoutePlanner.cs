@@ -62,6 +62,11 @@ public class RoutePlanner : MonoBehaviour
     /// Requests a candidate route from the player's current cell to
     /// destinationCell. Replaces any previously planned route, even if
     /// no path could be found (in which case the plan becomes empty).
+    ///
+    /// Does nothing while the player is already executing a committed
+    /// route - a plan built mid-move would be stale by the time it could
+    /// ever be acted on, and recalculating one every frame during a drag
+    /// would be wasted pathfinding for no visible benefit.
     /// </summary>
     public void SetDestination(Vector3Int destinationCell)
     {
@@ -71,6 +76,11 @@ public class RoutePlanner : MonoBehaviour
                 "RoutePlanner is missing a required reference."
             );
 
+            return;
+        }
+
+        if (playerController.IsMoving)
+        {
             return;
         }
 

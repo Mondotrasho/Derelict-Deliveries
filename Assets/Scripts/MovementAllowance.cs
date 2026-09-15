@@ -28,9 +28,13 @@ public class MovementAllowance : MonoBehaviour
 
     [Header("Cost")]
 
-    [Tooltip("Cost to move into one orthogonal cell. Movement is currently four-directional only, so this is the only cost that applies - terrain/hazard-based variable costs can extend GetMovementCost later.")]
+    [Tooltip("Cost to move into one orthogonal (N/S/E/W) cell.")]
     [SerializeField]
     private int costPerOrthogonalCell = 1;
+
+    [Tooltip("Cost to move into one diagonal cell. Should match GridPathfinder's diagonalStepCost - GridPathfinder deliberately doesn't know about MovementAllowance, so the two fields are not shared automatically and a mismatch would let the pathfinder pick routes this budget disagrees about the price of.")]
+    [SerializeField]
+    private int costPerDiagonalCell = 2;
 
 
     private int currentMovementPoints;
@@ -74,13 +78,22 @@ public class MovementAllowance : MonoBehaviour
 
 
     /// <summary>
-    /// Cost to travel from one cell into an adjacent cell. Every step
-    /// currently costs the same, flat amount - this is the seam for
-    /// later per-terrain, hazard or ship-status costs.
+    /// Cost to travel from one cell into an adjacent cell. Diagonal steps
+    /// (both axes changing) use costPerDiagonalCell; everything else uses
+    /// costPerOrthogonalCell. This is also the seam for later per-terrain
+    /// or hazard-based variable costs.
     /// </summary>
     public int GetMovementCost(Vector3Int fromCell, Vector3Int toCell)
     {
-        return costPerOrthogonalCell;
+        Vector3Int delta = toCell - fromCell;
+
+        bool isDiagonalStep =
+            delta.x != 0 &&
+            delta.y != 0;
+
+        return isDiagonalStep
+            ? costPerDiagonalCell
+            : costPerOrthogonalCell;
     }
 
 

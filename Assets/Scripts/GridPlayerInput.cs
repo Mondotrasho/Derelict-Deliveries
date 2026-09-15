@@ -1,15 +1,20 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 /// <summary>
 /// Temporary testing input for route planning.
 ///
-/// Left click previews a route to the clicked cell via RoutePlanner.
-/// Enter commits the previewed route, Escape cancels it. This stands in
-/// for the dedicated RouteInputController (drag-to-draw route
-/// construction) planned for a later stage - once that exists, this
-/// script can be retired.
+/// Left click previews a route to the clicked cell via RoutePlanner, and
+/// continues re-previewing to whatever cell the cursor is over for as
+/// long as the button stays held - so dragging live-updates the
+/// destination rather than needing repeated clicks. Enter commits the
+/// previewed route (or an optional assigned commitButton), Escape
+/// cancels it (or an optional assigned cancelButton). This stands in for
+/// the dedicated RouteInputController (manual cell-by-cell route
+/// drawing) planned for a later stage - once that exists, this script
+/// can be retired.
 /// </summary>
 public class GridPlayerInput : MonoBehaviour
 {
@@ -23,13 +28,29 @@ public class GridPlayerInput : MonoBehaviour
     [SerializeField]
     private GridMap gridMap;
 
-    [Tooltip("Owns the route being previewed by mouse clicks.")]
+    [Tooltip("Owns the route being previewed by mouse input.")]
     [SerializeField]
     private RoutePlanner routePlanner;
 
     [Tooltip("Commits or cancels the previewed route.")]
     [SerializeField]
     private MovementPlanController movementPlanController;
+
+
+    [Header("UI (Optional)")]
+
+    [Tooltip("Optional Canvas Button. Clicking it calls the same Commit() that pressing Enter does.")]
+    [SerializeField]
+    private Button commitButton;
+
+    [Tooltip("Optional Canvas Button. Clicking it calls the same Cancel() that pressing Escape does.")]
+    [SerializeField]
+    private Button cancelButton;
+
+
+    // Tracks the last cell a preview was requested for, so a stationary
+    // held mouse button doesn't re-run pathfinding every single frame.
+    private Vector3Int? lastPreviewedCell;
 
 
     /// <summary>
@@ -44,19 +65,60 @@ public class GridPlayerInput : MonoBehaviour
     }
 
 
+    private void OnEnable()
+    {
+        if (commitButton != null)
+        {
+            commitButton.onClick.AddListener(HandleCommitButtonClicked);
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.onClick.AddListener(HandleCancelButtonClicked);
+        }
+    }
+
+
+    private void OnDisable()
+    {
+        if (commitButton != null)
+        {
+            commitButton.onClick.RemoveListener(HandleCommitButtonClicked);
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.onClick.RemoveListener(HandleCancelButtonClicked);
+        }
+    }
+
+
     /// <summary>
-    /// Checks for click, commit and cancel input each frame.
+    /// Checks for click/drag, commit and cancel input each frame.
     /// </summary>
     private void Update()
     {
-        if (Mouse.current != null &&
-            Mouse.current.leftButton.wasPressedThisFrame)
+        if (Mouse.current != null)
         {
-            // Clicks on UI (buttons, panels, etc.) shouldn't also plan a route.
-            if (EventSystem.current == null ||
-                !EventSystem.current.IsPointerOverGameObject())
+            bool overUI =
+                EventSystem.current != null &&
+                EventSystem.current.IsPointerOverGameObject();
+
+            // Clicks/drags over UI (buttons, panels, etc.) shouldn't also plan a route.
+            if (!overUI)
             {
-                PreviewRouteToMousePosition();
+                if (Mouse.current.leftButton.wasPressedThisFrame)
+                {
+                    // A fresh press always re-previews, even if the cursor
+                    // happens to be over the same cell as a previous drag.
+                    lastPreviewedCell = null;
+
+                    PreviewRouteToMousePosition();
+                }
+                else if (Mouse.current.leftButton.isPressed)
+                {
+                    PreviewRouteToMousePosition();
+                }
             }
         }
 
@@ -77,10 +139,30 @@ public class GridPlayerInput : MonoBehaviour
 
 
     /// <summary>
+    /// Shared with commitButton.onClick - same call as the Enter key.
+    /// </summary>
+    private void HandleCommitButtonClicked()
+    {
+        movementPlanController?.Commit();
+    }
+
+
+    /// <summary>
+    /// Shared with cancelButton.onClick - same call as the Escape key.
+    /// </summary>
+    private void HandleCancelButtonClicked()
+    {
+        movementPlanController?.Cancel();
+    }
+
+
+    /// <summary>
     /// Converts the current mouse position into a grid cell and asks
-    /// RoutePlanner to build a preview route toward it. This no longer
-    /// moves the player directly - that only happens once the route is
-    /// committed through MovementPlanController.
+    /// RoutePlanner to build a preview route toward it - but only when
+    /// that cell has actually changed since the last preview, so dragging
+    /// across a stationary cell doesn't re-run pathfinding every frame.
+    /// This no longer moves the player directly - that only happens once
+    /// the route is committed through MovementPlanController.
     /// </summary>
     private void PreviewRouteToMousePosition()
     {
@@ -137,6 +219,16 @@ public class GridPlayerInput : MonoBehaviour
             gridMap.WorldToCell(
                 mouseWorldPosition
             );
+
+
+        if (lastPreviewedCell.HasValue &&
+            lastPreviewedCell.Value == destinationCell)
+        {
+            // Still hovering the same cell as last frame - nothing changed.
+            return;
+        }
+
+        lastPreviewedCell = destinationCell;
 
 
         // Ask RoutePlanner to preview a route to that cell.
