@@ -377,6 +377,28 @@ public class VisionManager : MonoBehaviour
                 startingPlanetLockIds.Add(
                     startingLockId
                 );
+
+
+                // Starting visibility represents information the player can
+                // already perceive when the scene begins. Match the knowledge
+                // ratchet to that authored tier without changing Discovered.
+                //
+                // Partial -> Detected -> garbled label
+                // Full    -> Identified -> real label
+                if (revealTier ==
+                    FogOfWar.VisibilityTier.Full)
+                {
+                    planet.visibility.RaiseKnowledgeState(
+                        PlanetKnowledgeState.Identified
+                    );
+                }
+                else if (revealTier ==
+                    FogOfWar.VisibilityTier.Partial)
+                {
+                    planet.visibility.RaiseKnowledgeState(
+                        PlanetKnowledgeState.Detected
+                    );
+                }
             }
 
 

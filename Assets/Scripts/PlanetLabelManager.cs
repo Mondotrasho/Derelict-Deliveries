@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,9 +9,13 @@ using UnityEngine.InputSystem;
 /// Hover rules:
 /// - no planet under the mouse       -> no label
 /// - effective fog visibility Hidden -> no label
-/// - visible but identity unknown    -> "Unknown"
-/// - identity already Identified     -> real display name
-/// - live Full visibility            -> real display name immediately
+/// - knowledgeState Unknown          -> fully garbled text using garbleCharacters
+/// - knowledgeState Detected         -> partially garbled real name
+/// - knowledgeState Identified       -> real display name
+///
+/// Partial vision normally raises knowledge to Detected, so a partially
+/// visible planet uses the existing corrupt/garbled text effect rather than
+/// the fixed Unknown placeholder.
 ///
 /// "Effective" visibility means what FogOfWar is actually rendering after
 /// combining live player vision, remembered fog and starting/locked reveals.
@@ -56,7 +61,7 @@ public class PlanetLabelManager : MonoBehaviour
         Color.white;
 
     [SerializeField]
-    private Color unknownColor =
+    private Color garbledColor =
         new Color(0.6f, 0.85f, 1.0f);
 
     [SortingLayerName]
@@ -68,12 +73,29 @@ public class PlanetLabelManager : MonoBehaviour
     private int sortingOrder = 20;
 
 
-    [Header("Unknown Planet")]
+    [Header("Garble")]
 
-    [Tooltip("Text shown when the planet is visible but its identity is not yet known.")]
+    [Tooltip("Chance each character remains correct for a Detected planet at Partial visibility.")]
+    [Range(0f, 1f)]
     [SerializeField]
-    private string unknownLabelText =
-        "Unknown";
+    private float partialRevealChance = 0.35f;
+
+    [Tooltip("Chance each character remains correct for a Detected planet at Full visibility.")]
+    [Range(0f, 1f)]
+    [SerializeField]
+    private float fullRevealChance = 0.85f;
+
+    [Tooltip("How often a Detected planet's corrupted name changes.")]
+    [SerializeField]
+    private float garbleRefreshInterval = 0.35f;
+
+    [SerializeField]
+    private string garbleCharacters =
+        "!@#$%^&*-_=+?<>01";
+
+    [Tooltip("Fallback length used for Unknown text if the planet has no display name or id.")]
+    [SerializeField]
+    private int unknownFallbackLength = 5;
 
 
     [Header("Debug")]
@@ -96,6 +118,8 @@ public class PlanetLabelManager : MonoBehaviour
     private string activePlanetId;
     private string lastDebugState;
 
+    private float garbleTimer;
+
 
     private void Awake()
     {
@@ -115,6 +139,22 @@ public class PlanetLabelManager : MonoBehaviour
 
     private void Update()
     {
+        garbleTimer +=
+            Time.deltaTime;
+
+        bool refreshGarble =
+            garbleTimer >=
+            Mathf.Max(
+                0.01f,
+                garbleRefreshInterval
+            );
+
+        if (refreshGarble)
+        {
+            garbleTimer = 0.0f;
+        }
+
+
         if (!ResolveReferences())
         {
             DebugState(
@@ -198,7 +238,8 @@ public class PlanetLabelManager : MonoBehaviour
         ShowLabel(
             hoveredPlanet,
             liveTier,
-            effectiveTier
+            effectiveTier,
+            refreshGarble
         );
     }
 
@@ -371,10 +412,14 @@ public class PlanetLabelManager : MonoBehaviour
     private void ShowLabel(
         Planet planet,
         FogOfWar.VisibilityTier liveTier,
-        FogOfWar.VisibilityTier effectiveTier)
+        FogOfWar.VisibilityTier effectiveTier,
+        bool refreshGarble)
     {
-        if (activePlanetId !=
-            planet.id)
+        bool changedPlanet =
+            activePlanetId !=
+            planet.id;
+
+        if (changedPlanet)
         {
             HideActiveLabel();
         }
@@ -397,31 +442,99 @@ public class PlanetLabelManager : MonoBehaviour
         );
 
 
-        bool identityKnown =
-            liveTier ==
-                FogOfWar.VisibilityTier.Full ||
-            (
-                planet.visibility != null &&
-                planet.visibility.knowledgeState ==
-                    PlanetKnowledgeState.Identified
-            );
+        PlanetKnowledgeState knowledgeState =
+            planet.visibility != null
+                ? planet.visibility.knowledgeState
+                : PlanetKnowledgeState.Unknown;
 
 
-        string textToDraw =
-            identityKnown
-                ? GetDisplayName(planet)
-                : unknownLabelText;
-
+        string textToDraw = null;
         Color colorToDraw =
-            identityKnown
-                ? identifiedColor
-                : unknownColor;
+            garbledColor;
 
 
-        label.SetText(
-            textToDraw,
-            colorToDraw
-        );
+        switch (knowledgeState)
+        {
+            case PlanetKnowledgeState.Identified:
+
+                textToDraw =
+                    GetDisplayName(
+                        planet
+                    );
+
+                colorToDraw =
+                    identifiedColor;
+
+                break;
+
+
+            case PlanetKnowledgeState.Detected:
+
+                // Keep the current corrupted text until the refresh timer
+                // expires. A newly hovered label always generates immediately.
+                if (changedPlanet ||
+                    refreshGarble ||
+                    !label.HasText)
+                {
+                    float revealChance =
+                        effectiveTier ==
+                            FogOfWar.VisibilityTier.Full
+                            ? fullRevealChance
+                            : partialRevealChance;
+
+                    textToDraw =
+                        GenerateGarbledText(
+                            GetDisplayName(
+                                planet
+                            ),
+                            revealChance
+                        );
+
+                    label.SetText(
+                        textToDraw,
+                        garbledColor
+                    );
+                }
+
+                break;
+
+
+            case PlanetKnowledgeState.Unknown:
+            default:
+
+                // Unknown must not reveal any real-name characters, but it
+                // should still use the same corruption character set as the
+                // rest of the label system. Preserve spaces/length only.
+                if (changedPlanet ||
+                    refreshGarble ||
+                    !label.HasText)
+                {
+                    textToDraw =
+                        GenerateUnknownText(
+                            GetDisplayName(
+                                planet
+                            )
+                        );
+
+                    label.SetText(
+                        textToDraw,
+                        garbledColor
+                    );
+                }
+
+                break;
+        }
+
+
+        if (knowledgeState ==
+            PlanetKnowledgeState.Identified)
+        {
+            label.SetText(
+                textToDraw,
+                colorToDraw
+            );
+        }
+
 
         label.SetActive(
             true
@@ -433,11 +546,161 @@ public class PlanetLabelManager : MonoBehaviour
 
         DebugState(
             $"DRAW LABEL - planet \"{planet.id}\" | " +
-            $"text \"{textToDraw}\" | " +
+            $"knowledge {knowledgeState} | " +
             $"live {liveTier} | effective {effectiveTier} | " +
-            $"knowledge {(planet.visibility != null ? planet.visibility.knowledgeState : PlanetKnowledgeState.Unknown)} | " +
+            $"text \"{(textToDraw ?? "(unchanged garble)")}\" | " +
             $"world {labelWorldPosition}."
         );
+    }
+
+
+    /// <summary>
+    /// Builds the corrupted version of a detected planet's real display name.
+    /// Spaces stay intact. Every other character either survives or is replaced
+    /// with a random corruption character according to revealChance.
+    /// </summary>
+    private string GenerateGarbledText(
+        string realName,
+        float revealChance)
+    {
+        if (string.IsNullOrEmpty(
+                realName))
+        {
+            return GenerateUnknownText(
+                string.Empty
+            );
+        }
+
+
+        if (string.IsNullOrEmpty(
+                garbleCharacters))
+        {
+            return realName;
+        }
+
+
+        StringBuilder builder =
+            new StringBuilder(
+                realName.Length
+            );
+
+
+        foreach (char character in realName)
+        {
+            if (character == ' ')
+            {
+                builder.Append(' ');
+                continue;
+            }
+
+
+            if (Random.value <
+                revealChance)
+            {
+                builder.Append(
+                    character
+                );
+            }
+            else
+            {
+                builder.Append(
+                    garbleCharacters[
+                        Random.Range(
+                            0,
+                            garbleCharacters.Length
+                        )
+                    ]
+                );
+            }
+        }
+
+
+        return builder.ToString();
+    }
+
+
+    /// <summary>
+    /// Creates fully corrupted text for an Unknown planet.
+    ///
+    /// No real letters are revealed. The output uses only garbleCharacters,
+    /// while preserving spaces and approximately preserving the real label
+    /// length so the unknown label still has the same visual footprint.
+    /// </summary>
+    private string GenerateUnknownText(
+        string realName)
+    {
+        int fallbackLength =
+            Mathf.Max(
+                1,
+                unknownFallbackLength
+            );
+
+
+        if (string.IsNullOrEmpty(
+                garbleCharacters))
+        {
+            return new string(
+                '?',
+                string.IsNullOrEmpty(realName)
+                    ? fallbackLength
+                    : realName.Length
+            );
+        }
+
+
+        if (string.IsNullOrEmpty(
+                realName))
+        {
+            StringBuilder fallback =
+                new StringBuilder(
+                    fallbackLength
+                );
+
+            for (int i = 0;
+                 i < fallbackLength;
+                 i++)
+            {
+                fallback.Append(
+                    garbleCharacters[
+                        Random.Range(
+                            0,
+                            garbleCharacters.Length
+                        )
+                    ]
+                );
+            }
+
+            return fallback.ToString();
+        }
+
+
+        StringBuilder builder =
+            new StringBuilder(
+                realName.Length
+            );
+
+
+        foreach (char character in realName)
+        {
+            if (character == ' ')
+            {
+                builder.Append(' ');
+                continue;
+            }
+
+
+            builder.Append(
+                garbleCharacters[
+                    Random.Range(
+                        0,
+                        garbleCharacters.Length
+                    )
+                ]
+            );
+        }
+
+
+        return builder.ToString();
     }
 
 
