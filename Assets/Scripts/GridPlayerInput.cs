@@ -3,11 +3,13 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Handles simple mouse input for testing player grid movement.
+/// Temporary testing input for route planning.
 ///
-/// When the left mouse button is clicked, the mouse position is converted
-/// into a world position, then into a grid cell, and finally sent to the
-/// PlayerGridController as a destination.
+/// Left click previews a route to the clicked cell via RoutePlanner.
+/// Enter commits the previewed route, Escape cancels it. This stands in
+/// for the dedicated RouteInputController (drag-to-draw route
+/// construction) planned for a later stage - once that exists, this
+/// script can be retired.
 /// </summary>
 public class GridPlayerInput : MonoBehaviour
 {
@@ -21,9 +23,13 @@ public class GridPlayerInput : MonoBehaviour
     [SerializeField]
     private GridMap gridMap;
 
-    [Tooltip("Player controller that receives the destination cell.")]
+    [Tooltip("Owns the route being previewed by mouse clicks.")]
     [SerializeField]
-    private PlayerGridController playerController;
+    private RoutePlanner routePlanner;
+
+    [Tooltip("Commits or cancels the previewed route.")]
+    [SerializeField]
+    private MovementPlanController movementPlanController;
 
 
     /// <summary>
@@ -39,34 +45,44 @@ public class GridPlayerInput : MonoBehaviour
 
 
     /// <summary>
-    /// Checks for a left mouse click each frame.
+    /// Checks for click, commit and cancel input each frame.
     /// </summary>
     private void Update()
     {
-        if (Mouse.current == null)
+        if (Mouse.current != null &&
+            Mouse.current.leftButton.wasPressedThisFrame)
         {
-            return;
+            // Clicks on UI (buttons, panels, etc.) shouldn't also plan a route.
+            if (EventSystem.current == null ||
+                !EventSystem.current.IsPointerOverGameObject())
+            {
+                PreviewRouteToMousePosition();
+            }
         }
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+
+        if (Keyboard.current != null)
         {
-            // Clicks on UI (buttons, panels, etc.) shouldn't also move the player.
-            if (EventSystem.current != null &&
-                EventSystem.current.IsPointerOverGameObject())
+            if (Keyboard.current.enterKey.wasPressedThisFrame)
             {
-                return;
+                movementPlanController?.Commit();
             }
 
-            MovePlayerToMousePosition();
+            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                movementPlanController?.Cancel();
+            }
         }
     }
 
 
     /// <summary>
-    /// Converts the current mouse position into a grid destination
-    /// and sends it to the player controller.
+    /// Converts the current mouse position into a grid cell and asks
+    /// RoutePlanner to build a preview route toward it. This no longer
+    /// moves the player directly - that only happens once the route is
+    /// committed through MovementPlanController.
     /// </summary>
-    private void MovePlayerToMousePosition()
+    private void PreviewRouteToMousePosition()
     {
         if (mainCamera == null)
         {
@@ -86,10 +102,10 @@ public class GridPlayerInput : MonoBehaviour
             return;
         }
 
-        if (playerController == null)
+        if (routePlanner == null)
         {
             Debug.LogWarning(
-                "GridPlayerInput has no PlayerGridController assigned."
+                "GridPlayerInput has no RoutePlanner assigned."
             );
 
             return;
@@ -123,8 +139,8 @@ public class GridPlayerInput : MonoBehaviour
             );
 
 
-        // Ask the player to pathfind and move to that cell.
-        playerController.MoveToCell(
+        // Ask RoutePlanner to preview a route to that cell.
+        routePlanner.SetDestination(
             destinationCell
         );
     }
