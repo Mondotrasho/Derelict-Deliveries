@@ -270,11 +270,11 @@ public class FogOfWar : MonoBehaviour
     [Tooltip("Optional logical grid controller. CellReached is used as an exact logical-cell update in addition to world-position tracking.")]
     [SerializeField] private PlayerGridController playerController;
 
-    [Tooltip("Optional turn manager. Remembered fog decays when TurnEnded is raised.")]
+    [Tooltip("Optional turn manager. Remembered fog decays once per Ticked, not once per TurnEnded - see AdvanceDecayStep.")]
     [SerializeField] private TurnManager turnManager;
 
     [Header("Decay")]
-    [Tooltip("How many AdvanceTurn calls a remembered cell survives before returning to fully hidden. Every generated radius decays independently.")]
+    [Tooltip("How many AdvanceDecayStep calls (one per Ticked) a remembered cell survives before returning to fully hidden. Every generated radius decays independently.")]
     [SerializeField, Min(1)] private int decayStepsToHide = 3;
 
     [Header("Pop Effect")]
@@ -411,7 +411,7 @@ public class FogOfWar : MonoBehaviour
             playerController.CellReached += HandleCellReached;
 
         if (turnManager != null)
-            turnManager.TurnEnded += HandleTurnEnded;
+            turnManager.Ticked += HandleTick;
     }
 
     private void OnDisable()
@@ -420,7 +420,7 @@ public class FogOfWar : MonoBehaviour
             playerController.CellReached -= HandleCellReached;
 
         if (turnManager != null)
-            turnManager.TurnEnded -= HandleTurnEnded;
+            turnManager.Ticked -= HandleTick;
     }
 
     private void LateUpdate()
@@ -469,9 +469,9 @@ public class FogOfWar : MonoBehaviour
         UpdateVisibilityAtCell(cell, force: false);
     }
 
-    private void HandleTurnEnded(int turnNumber)
+    private void HandleTick(int tickNumber)
     {
-        AdvanceTurn();
+        AdvanceDecayStep();
     }
 
     /// <summary>
@@ -495,12 +495,13 @@ public class FogOfWar : MonoBehaviour
     }
 
     /// <summary>
-    /// Manual alternative to event wiring. Updates current vision and advances remembered decay.
+    /// Manual alternative to event wiring. Updates current vision and advances remembered decay
+    /// by one step.
     /// </summary>
     public void Step()
     {
         UpdateVisibility(force: false);
-        AdvanceTurn();
+        AdvanceDecayStep();
     }
 
     /// <summary>
@@ -1648,7 +1649,14 @@ public class FogOfWar : MonoBehaviour
         layer.currentlyVisible.UnionWith(newlyVisible.Keys);
     }
 
-    public void AdvanceTurn()
+    /// <summary>
+    /// Advances remembered-fog decay by one step. Named AdvanceDecayStep
+    /// (not AdvanceTurn) because it is wired to TurnManager.Ticked, not
+    /// TurnEnded - decay happens at the fine-grained tick rate, which is
+    /// what keeps decayStepsToHide feeling the same as before regardless
+    /// of how coarse an actual "turn" becomes.
+    /// </summary>
+    public void AdvanceDecayStep()
     {
         foreach (FogLayer layer in layers)
         {

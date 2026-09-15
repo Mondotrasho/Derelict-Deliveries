@@ -10,6 +10,11 @@ using UnityEngine;
 /// calculate routes (GridPathfinder/RoutePlanner), and does not move the
 /// player (PlayerGridController) - it only tracks a budget and prices
 /// whatever path it is handed.
+///
+/// Optionally talks to a TurnManager in both directions: listens for
+/// TurnEnded to refill the budget, and can end the turn itself once the
+/// budget is spent (see autoEndTurnWhenBudgetExhausted). TurnManager
+/// itself has no reference back to this script either way.
 /// </summary>
 public class MovementAllowance : MonoBehaviour
 {
@@ -17,6 +22,17 @@ public class MovementAllowance : MonoBehaviour
 
     [SerializeField]
     private PlayerGridController playerController;
+
+    [Tooltip("Optional. When assigned, movement points refill to max whenever a turn ends - once per real turn, not once per cell moved.")]
+    [SerializeField]
+    private TurnManager turnManager;
+
+
+    [Header("Timing")]
+
+    [Tooltip("If true, spending the last movement point in a turn ends the turn automatically (which also refills the budget for the next turn), instead of waiting for an explicit End Turn action.")]
+    [SerializeField]
+    private bool autoEndTurnWhenBudgetExhausted = false;
 
 
     [Header("Budget")]
@@ -68,6 +84,30 @@ public class MovementAllowance : MonoBehaviour
         {
             return currentMovementPoints;
         }
+    }
+
+
+    private void OnEnable()
+    {
+        if (turnManager != null)
+        {
+            turnManager.TurnEnded += HandleTurnEnded;
+        }
+    }
+
+
+    private void OnDisable()
+    {
+        if (turnManager != null)
+        {
+            turnManager.TurnEnded -= HandleTurnEnded;
+        }
+    }
+
+
+    private void HandleTurnEnded(int turnNumber)
+    {
+        RefillToMax();
     }
 
 
@@ -204,7 +244,11 @@ public class MovementAllowance : MonoBehaviour
 
     /// <summary>
     /// Deducts movement points already spent on a committed route.
-    /// Clamped at zero rather than going negative.
+    /// Clamped at zero rather than going negative. If
+    /// autoEndTurnWhenBudgetExhausted is set and this spend empties the
+    /// budget, ends the turn immediately - which in turn calls
+    /// RefillToMax() via the TurnEnded subscription above, so the next
+    /// turn starts fully refilled in the same call.
     /// </summary>
     public void Spend(int amount)
     {
@@ -220,13 +264,20 @@ public class MovementAllowance : MonoBehaviour
             );
 
         AllowanceChanged?.Invoke();
+
+        if (autoEndTurnWhenBudgetExhausted &&
+            currentMovementPoints == 0 &&
+            turnManager != null)
+        {
+            turnManager.EndTurn();
+        }
     }
 
 
     /// <summary>
-    /// Restores movement points to the maximum. Intended to be called by
-    /// a turn-progression system (e.g. TurnManager.TurnEnded) once that
-    /// hookup is wired up - not called automatically yet.
+    /// Restores movement points to the maximum. Called automatically
+    /// once per real turn if turnManager is assigned (via its TurnEnded
+    /// event) - also fine to call directly.
     /// </summary>
     public void RefillToMax()
     {

@@ -20,6 +20,10 @@ using UnityEngine;
 /// It does not decide what the route costs, whether it may be committed,
 /// or which cells make up a route in the first place - see RoutePlanner
 /// and MovementPlanController for that.
+///
+/// Optionally reports real cells crossed to a TurnManager as ticks (see
+/// cellsPerTick) - this is the only place movement and the shared clock
+/// touch. TurnManager itself has no reference back to this script.
 /// </summary>
 public class PlayerGridController : MonoBehaviour
 {
@@ -125,6 +129,17 @@ public class PlayerGridController : MonoBehaviour
     }
 
 
+    [Header("Timing")]
+
+    [Tooltip("Optional. Real cells moved are reported to this as ticks, at the rate below - the mover's own speed relative to everything else that reacts to ticks (fog decay, later enemy stepping). Not required for movement to work.")]
+    [SerializeField]
+    private TurnManager turnManager;
+
+    [Tooltip("How many cells this mover crosses per tick reported to TurnManager. 1 is normal speed. 2 means the world only reacts once for every 2 cells travelled - this is the actual mechanism behind a temporary 'boosted' speed: raise this for the duration of the boost, then put it back.")]
+    [SerializeField, Min(1)]
+    private int cellsPerTick = 1;
+
+
     [Header("Rotation")]
 
     [Tooltip("Rotation speed of the visible ship sprite in degrees per second.")]
@@ -144,6 +159,11 @@ public class PlayerGridController : MonoBehaviour
     private Coroutine movementCoroutine;
 
     private float currentSpeed;
+
+    // Cells crossed since the last AdvanceTick() report - carries a
+    // remainder forward when cellsPerTick > 1, so an in-progress count
+    // toward the next tick is never lost between calls.
+    private int cellsSinceLastTick;
 
     // Tracked independently of playerSprite so heading works identically
     // with or without a visual sprite assigned, and survives across
@@ -360,6 +380,7 @@ public class PlayerGridController : MonoBehaviour
             {
                 currentCell = step.ArrivedCell.Value;
                 CellReached?.Invoke(currentCell);
+                ReportMovementTick();
             }
         }
 
@@ -824,6 +845,36 @@ public class PlayerGridController : MonoBehaviour
 
         currentCell = steps[index].ArrivedCell.Value;
         CellReached?.Invoke(currentCell);
+        ReportMovementTick();
+    }
+
+
+    /// <summary>
+    /// Reports one real cell of movement toward the next tick, at
+    /// cellsPerTick. Only called from the two places above that fire
+    /// CellReached for an actual cell crossed during active movement -
+    /// not from the initial spawn-position announcement or from
+    /// StopMovement's re-sync, since neither of those represents a full
+    /// cell of travel.
+    /// </summary>
+    private void ReportMovementTick()
+    {
+        if (turnManager == null)
+        {
+            return;
+        }
+
+        cellsSinceLastTick++;
+
+        int rate = Mathf.Max(1, cellsPerTick);
+
+        if (cellsSinceLastTick < rate)
+        {
+            return;
+        }
+
+        cellsSinceLastTick -= rate;
+        turnManager.AdvanceTick();
     }
 
 
