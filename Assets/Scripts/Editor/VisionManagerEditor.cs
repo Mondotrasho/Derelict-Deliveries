@@ -4,6 +4,11 @@ using UnityEngine;
 
 /// <summary>
 /// Default VisionManager Inspector plus a live, read-only per-planet debug list.
+///
+/// The important distinction is:
+/// - Live Tier: what the ship can see RIGHT NOW from its current position.
+/// - Effective Tier: what FogOfWar is actually rendering after combining live
+///   vision, remembered locations and authored starting/locked reveals.
 /// </summary>
 [CustomEditor(typeof(VisionManager))]
 public class VisionManagerEditor : Editor
@@ -22,22 +27,26 @@ public class VisionManagerEditor : Editor
             (VisionManager)target;
 
         EditorGUILayout.Space(10f);
+
         EditorGUILayout.LabelField(
             "Runtime Planet Vision",
             EditorStyles.boldLabel
         );
 
+
         if (!Application.isPlaying)
         {
             EditorGUILayout.HelpBox(
-                "Enter Play mode to see live planet visibility, discovery and fog-lock state.",
+                "Enter Play mode to see live and effective planet visibility.",
                 MessageType.Info
             );
+
             return;
         }
 
+
         EditorGUILayout.LabelField(
-            "Currently Visible",
+            "Currently Visible (Live)",
             manager.CurrentlyVisiblePlanetCount.ToString()
         );
 
@@ -51,8 +60,10 @@ public class VisionManagerEditor : Editor
             manager.ManagedPlanetLockCount.ToString()
         );
 
+
         List<VisionManager.PlanetVisionInfo> planets =
             manager.GetPlanetVisionSnapshot();
+
 
         if (planets.Count == 0)
         {
@@ -60,8 +71,10 @@ public class VisionManagerEditor : Editor
                 "No planets found in PlanetManager.",
                 MessageType.None
             );
+
             return;
         }
+
 
         using (new EditorGUI.DisabledScope(true))
         {
@@ -75,9 +88,11 @@ public class VisionManagerEditor : Editor
                         ? "(no ID)"
                         : info.Id;
 
+
                 EditorGUILayout.BeginVertical(
                     EditorStyles.helpBox
                 );
+
 
                 EditorGUILayout.LabelField(
                     $"[{i}] {id}",
@@ -94,8 +109,18 @@ public class VisionManagerEditor : Editor
                     info.LiveTier.ToString()
                 );
 
+                EditorGUILayout.TextField(
+                    "Effective Tier",
+                    info.EffectiveTier.ToString()
+                );
+
+                EditorGUILayout.TextField(
+                    "Knowledge State",
+                    info.KnowledgeState.ToString()
+                );
+
                 EditorGUILayout.Toggle(
-                    "Currently Visible",
+                    "Currently Visible (Live)",
                     info.CurrentlyVisible
                 );
 
@@ -114,18 +139,36 @@ public class VisionManagerEditor : Editor
                     info.RevealFogWhenDiscovered
                 );
 
+
+                EditorGUILayout.Space(2f);
+
                 EditorGUILayout.Toggle(
-                    "Has Fog Lock",
+                    "Has Starting Fog Lock",
+                    info.HasStartingFogLock
+                );
+
+                if (info.HasStartingFogLock)
+                {
+                    EditorGUILayout.TextField(
+                        "Starting Fog Tier",
+                        info.StartingFogLockTier.ToString()
+                    );
+                }
+
+
+                EditorGUILayout.Toggle(
+                    "Has Remembered Fog Lock",
                     info.HasFogLock
                 );
 
                 if (info.HasFogLock)
                 {
                     EditorGUILayout.TextField(
-                        "Fog Lock Tier",
+                        "Remembered Fog Tier",
                         info.FogLockTier.ToString()
                     );
                 }
+
 
                 EditorGUILayout.EndVertical();
             }

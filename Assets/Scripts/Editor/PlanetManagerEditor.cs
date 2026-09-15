@@ -268,10 +268,11 @@ public class PlanetManagerEditor : Editor
                     return lineHeight + 8f;
 
                 // Fixed rows:
-                // foldout, id, cell, tile, visibility label + 4 fields,
+                // foldout, id, display name, cell, tile,
+                // visibility label + 5 fields,
                 // animation label + 2 fields.
                 float height =
-                    12f * (lineHeight + 2f) + 20f;
+                    14f * (lineHeight + 2f) + 20f;
 
                 SerializedProperty eventState =
                     element.FindPropertyRelative("eventState");
@@ -358,6 +359,20 @@ public class PlanetManagerEditor : Editor
 
         rect.y += lineHeight + 2f;
 
+        SerializedProperty displayName =
+            element.FindPropertyRelative("displayName");
+
+        EditorGUI.PropertyField(
+            rect,
+            displayName,
+            new GUIContent(
+                "Display Name",
+                "Human-readable name shown once the planet is identified. Leave blank to fall back to Id."
+            )
+        );
+
+        rect.y += lineHeight + 2f;
+
         SerializedProperty cell =
             element.FindPropertyRelative("cell");
 
@@ -386,9 +401,20 @@ public class PlanetManagerEditor : Editor
 
         rect.y += lineHeight + 2f;
 
+        SerializedProperty currentlyVisible =
+            visibility.FindPropertyRelative("currentlyVisible");
+
         EditorGUI.PropertyField(
             rect,
-            visibility.FindPropertyRelative("currentlyVisible")
+            currentlyVisible,
+            new GUIContent(
+                Application.isPlaying
+                    ? "Currently Visible (Live)"
+                    : "Starting Visible",
+                Application.isPlaying
+                    ? "Runtime live player visibility. VisionManager updates this from the player's current position."
+                    : "Authored starting reveal. VisionManager imports this into FogOfWar at Play start, then the runtime field returns to live-visibility meaning."
+            )
         );
 
         rect.y += lineHeight + 2f;
@@ -403,6 +429,17 @@ public class PlanetManagerEditor : Editor
         EditorGUI.PropertyField(
             rect,
             visibility.FindPropertyRelative("rememberLocation")
+        );
+
+        rect.y += lineHeight + 2f;
+
+        EditorGUI.PropertyField(
+            rect,
+            visibility.FindPropertyRelative("knowledgeState"),
+            new GUIContent(
+                "Knowledge State",
+                "Unknown = identity not known, Detected = location/partial identity known, Identified = real name known."
+            )
         );
 
         rect.y += lineHeight + 2f;
@@ -533,6 +570,9 @@ public class PlanetManagerEditor : Editor
         element.FindPropertyRelative("id").stringValue =
             $"Planet {index + 1}";
 
+        element.FindPropertyRelative("displayName").stringValue =
+            $"Planet {index + 1}";
+
         element.FindPropertyRelative("cell").vector3IntValue =
             Vector3Int.zero;
 
@@ -550,6 +590,9 @@ public class PlanetManagerEditor : Editor
 
         visibility.FindPropertyRelative("rememberLocation").boolValue =
             false;
+
+        visibility.FindPropertyRelative("knowledgeState").enumValueIndex =
+            (int)PlanetKnowledgeState.Unknown;
 
         element.FindPropertyRelative("revealFogWhenDiscovered").boolValue =
             true;

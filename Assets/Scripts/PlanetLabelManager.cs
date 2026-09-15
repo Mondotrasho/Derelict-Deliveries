@@ -1,24 +1,23 @@
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
-/// Creates and updates one PlanetLabel per planet, following world
-/// knowledge rather than raw rendering:
+/// Shows one small world-space planet label while the mouse is over a planet.
 ///
-/// hidden and never remembered  -> no label
-/// knowledgeState Unknown       -> fixed placeholder text, no real data leaked
-/// knowledgeState Detected      -> garbled name; low reveal chance at Partial
-///                                  vision, high reveal chance at Full
-/// knowledgeState Identified    -> real name
+/// Hover rules:
+/// - no planet under the mouse       -> no label
+/// - effective fog visibility Hidden -> no label
+/// - visible but identity unknown    -> "Unknown"
+/// - identity already Identified     -> real display name
+/// - live Full visibility            -> real display name immediately
 ///
-/// Location-known (Discovered/RememberLocation) and identity-known
-/// (knowledgeState) are deliberately separate: a remembered-but-only-
-/// Detected planet still shows a garbled label even while comfortably
-/// inside remembered fog. Fog-lock participation
-/// (Planet.revealFogWhenDiscovered) is a further separate concern this
-/// ignores entirely - a moon with fog reveal disabled still gets a label
-/// exactly like any other planet.
+/// "Effective" visibility means what FogOfWar is actually rendering after
+/// combining live player vision, remembered fog and starting/locked reveals.
+///
+/// Planets are Tilemap data rather than individual GameObjects, so this manager
+/// converts the mouse position to the same Grid cell used by Planet.cell.
+/// No planet colliders are required.
 /// </summary>
 public class PlanetLabelManager : MonoBehaviour
 {
@@ -30,226 +29,445 @@ public class PlanetLabelManager : MonoBehaviour
     [SerializeField]
     private VisionManager visionManager;
 
+    [Tooltip("Camera used for mouse-to-world conversion. Leave empty to use Camera.main.")]
+    [SerializeField]
+    private Camera mainCamera;
+
 
     [Header("Label Look")]
 
-    [Tooltip("Leave empty to use TextMesh's built-in default font (smooth vector text). Assign a bitmap Font asset for a pixel-accurate look matching the rest of the project.")]
+    [Tooltip("Leave empty to use TextMesh's built-in default font.")]
     [SerializeField]
     private Font labelFont;
 
     [SerializeField]
     private int fontSize = 12;
 
-    [Tooltip("TextMesh characters are large by default - this scales the whole label down to fit a small-scale pixel-art world.")]
+    [Tooltip("TextMesh characters are large by default, so this scales the label down for the game world.")]
     [SerializeField]
     private float labelScale = 0.02f;
 
     [SerializeField]
-    private Vector3 labelOffset = new Vector3(0.0f, 0.6f, 0.0f);
+    private Vector3 labelOffset =
+        new Vector3(0.0f, 0.6f, 0.0f);
 
     [SerializeField]
-    private Color identifiedColor = Color.white;
+    private Color identifiedColor =
+        Color.white;
 
     [SerializeField]
-    private Color garbledColor = new Color(0.6f, 0.85f, 1.0f);
+    private Color unknownColor =
+        new Color(0.6f, 0.85f, 1.0f);
 
     [SortingLayerName]
     [SerializeField]
-    private string sortingLayerName = "Default";
+    private string sortingLayerName =
+        "Default";
 
     [SerializeField]
     private int sortingOrder = 20;
 
 
-    [Header("Garble")]
+    [Header("Unknown Planet")]
 
-    [Tooltip("Chance each character shows correctly at knowledgeState Detected while the planet is only in Partial vision.")]
-    [Range(0f, 1f)]
+    [Tooltip("Text shown when the planet is visible but its identity is not yet known.")]
     [SerializeField]
-    private float partialRevealChance = 0.35f;
+    private string unknownLabelText =
+        "Unknown";
 
-    [Tooltip("Chance each character shows correctly at knowledgeState Detected while the planet is in Full vision.")]
-    [Range(0f, 1f)]
+
+    [Header("Debug")]
+
+    [Tooltip("Prints hover, visibility and draw decisions when the state changes.")]
     [SerializeField]
-    private float fullRevealChance = 0.85f;
+    private bool debugHoverLabels = false;
 
-    [Tooltip("How often garbled labels regenerate their static, in seconds. Too fast reads as unreadable noise rather than an intentional flicker.")]
+    [Tooltip("Also print cells that contain no planet. Useful for checking mouse-to-grid conversion.")]
     [SerializeField]
-    private float garbleRefreshInterval = 0.35f;
-
-    [SerializeField]
-    private string garbleCharacters = "!@#$%^&*-_=+?<>01";
-
-    [Tooltip("Shown for knowledgeState Unknown - a planet whose location is remembered but whose identity was never actually detected. Should rarely if ever be seen in normal play, since remembering a location almost always implies at least Detected.")]
-    [SerializeField]
-    private string unknownLabelText = "?????";
+    private bool debugEmptyCells = false;
 
 
-    private readonly Dictionary<string, PlanetLabel> labelsByPlanetId =
-        new Dictionary<string, PlanetLabel>();
+    private readonly Dictionary<string, PlanetLabel>
+        labelsByPlanetId =
+            new Dictionary<string, PlanetLabel>();
 
-    private float garbleTimer;
+    private Grid planetGrid;
+
+    private string activePlanetId;
+    private string lastDebugState;
+
+
+    private void Awake()
+    {
+        ResolveReferences();
+    }
+
+
+    private void Start()
+    {
+        ResolveReferences();
+
+        DebugState(
+            "PlanetLabelManager STARTED."
+        );
+    }
 
 
     private void Update()
     {
-        if (planetManager == null || visionManager == null)
+        if (!ResolveReferences())
         {
+            DebugState(
+                "NOT READY - " +
+                GetMissingReferenceDescription()
+            );
+
+            HideActiveLabel();
             return;
         }
 
 
-        garbleTimer += Time.deltaTime;
+        Planet hoveredPlanet =
+            GetHoveredPlanet(
+                out Vector3Int hoveredCell,
+                out Vector3 mouseWorldPosition,
+                out string hoverReason
+            );
 
-        bool refreshGarble =
-            garbleTimer >= garbleRefreshInterval;
 
-        if (refreshGarble)
+        if (hoveredPlanet == null)
         {
-            garbleTimer = 0.0f;
+            if (debugEmptyCells)
+            {
+                DebugState(
+                    $"NO LABEL - screen/world hover maps to cell {hoveredCell}, " +
+                    $"world {mouseWorldPosition}: {hoverReason}"
+                );
+            }
+            else
+            {
+                // Reset the state key when leaving a planet so hovering the
+                // same planet again produces fresh diagnostics.
+                lastDebugState =
+                    $"EMPTY:{hoveredCell}";
+            }
+
+            HideActiveLabel();
+            return;
         }
 
 
-        foreach (Planet planet in planetManager.Planets)
-        {
-            UpdateLabelForPlanet(planet, refreshGarble);
-        }
-    }
-
-
-    private void UpdateLabelForPlanet(Planet planet, bool refreshGarble)
-    {
         FogOfWar.VisibilityTier liveTier =
-            visionManager.GetLiveVisibility(planet.cell);
+            visionManager.GetLiveVisibility(
+                hoveredPlanet.cell
+            );
 
-        bool isKnown =
-            planet.visibility.knowledgeState !=
-            PlanetKnowledgeState.Unknown;
+        FogOfWar.VisibilityTier effectiveTier =
+            visionManager.GetEffectiveVisibility(
+                hoveredPlanet.cell
+            );
 
-        bool isRemembered =
-            isKnown &&
-            planet.visibility.rememberLocation;
-
-        if (liveTier == FogOfWar.VisibilityTier.Hidden &&
-            !isRemembered)
-        {
-            HideLabel(planet.id);
-            return;
-        }
+        PlanetKnowledgeState knowledgeState =
+            hoveredPlanet.visibility != null
+                ? hoveredPlanet.visibility.knowledgeState
+                : PlanetKnowledgeState.Unknown;
 
 
-        PlanetLabel label = GetOrCreateLabel(planet.id);
-
-        label.SetWorldPosition(
-            planetManager.GetPlanetWorldPosition(planet) +
-            labelOffset
+        DebugState(
+            $"PLANET HIT - cell {hoveredCell}, " +
+            $"planet \"{hoveredPlanet.id}\", " +
+            $"live {liveTier}, effective {effectiveTier}, " +
+            $"knowledge {knowledgeState}."
         );
 
-        label.SetActive(true);
 
-
-        switch (planet.visibility.knowledgeState)
+        // Effective visibility is what is actually visible through FogOfWar.
+        // This includes authored starting reveals and remembered/locked areas.
+        if (effectiveTier ==
+            FogOfWar.VisibilityTier.Hidden)
         {
-            case PlanetKnowledgeState.Identified:
+            DebugState(
+                $"NO LABEL - planet \"{hoveredPlanet.id}\" is effectively Hidden."
+            );
 
-                label.SetText(
-                    GetDisplayName(planet),
-                    identifiedColor
-                );
-
-                return;
-
-
-            case PlanetKnowledgeState.Unknown:
-
-                // Fixed text, nothing to regenerate - this only changes
-                // when knowledgeState itself changes, not on the garble timer.
-                if (!label.HasText)
-                {
-                    label.SetText(unknownLabelText, garbledColor);
-                }
-
-                return;
-
-
-            case PlanetKnowledgeState.Detected:
-            default:
-
-                if (!refreshGarble && label.HasText)
-                {
-                    // Not due for a refresh yet - leave the current
-                    // garbled text as-is rather than regenerating it
-                    // every frame.
-                    return;
-                }
-
-                float revealChance =
-                    liveTier == FogOfWar.VisibilityTier.Full
-                        ? fullRevealChance
-                        : partialRevealChance;
-
-                label.SetText(
-                    GenerateGarbledText(
-                        GetDisplayName(planet),
-                        revealChance
-                    ),
-                    garbledColor
-                );
-
-                return;
+            HideActiveLabel();
+            return;
         }
+
+
+        ShowLabel(
+            hoveredPlanet,
+            liveTier,
+            effectiveTier
+        );
     }
 
 
-    private string GetDisplayName(Planet planet)
+    /// <summary>
+    /// Fills missing scene references automatically.
+    /// </summary>
+    private bool ResolveReferences()
     {
-        return string.IsNullOrWhiteSpace(planet.displayName)
+        if (planetManager == null)
+        {
+            planetManager =
+                FindFirstObjectByType<PlanetManager>();
+        }
+
+        if (visionManager == null)
+        {
+            visionManager =
+                FindFirstObjectByType<VisionManager>();
+        }
+
+        if (mainCamera == null)
+        {
+            mainCamera =
+                Camera.main;
+        }
+
+        if (planetGrid == null &&
+            planetManager != null)
+        {
+            planetGrid =
+                planetManager.GetComponentInParent<Grid>();
+        }
+
+
+        return
+            planetManager != null &&
+            visionManager != null &&
+            mainCamera != null &&
+            planetGrid != null;
+    }
+
+
+    /// <summary>
+    /// Finds the planet under the mouse by converting the mouse ray to the
+    /// planet Grid plane, then comparing the resulting cell with Planet.cell.
+    ///
+    /// This deliberately does NOT use EventSystem.IsPointerOverGameObject().
+    /// A full-screen Canvas/Image can report the pointer as "over UI" across
+    /// the whole game view even when it is only decorative, which previously
+    /// prevented hover processing from ever reaching the grid conversion.
+    /// </summary>
+    private Planet GetHoveredPlanet(
+        out Vector3Int hoveredCell,
+        out Vector3 mouseWorldPosition,
+        out string reason)
+    {
+        hoveredCell =
+            new Vector3Int(
+                int.MinValue,
+                int.MinValue,
+                int.MinValue
+            );
+
+        mouseWorldPosition =
+            Vector3.zero;
+
+        reason =
+            string.Empty;
+
+
+        if (Mouse.current == null)
+        {
+            reason =
+                "Mouse.current is null.";
+
+            return null;
+        }
+
+
+        Vector2 mouseScreenPosition =
+            Mouse.current.position.ReadValue();
+
+
+        Ray mouseRay =
+            mainCamera.ScreenPointToRay(
+                new Vector3(
+                    mouseScreenPosition.x,
+                    mouseScreenPosition.y,
+                    0.0f
+                )
+            );
+
+
+        // The generated planet Tilemap is a child of PlanetManager and lives
+        // on the same XY grid plane. Using the manager's Z makes this robust if
+        // the whole map hierarchy is moved away from world Z = 0.
+        Plane gridPlane =
+            new Plane(
+                Vector3.forward,
+                new Vector3(
+                    0.0f,
+                    0.0f,
+                    planetManager.transform.position.z
+                )
+            );
+
+
+        if (!gridPlane.Raycast(
+                mouseRay,
+                out float rayDistance))
+        {
+            reason =
+                "Mouse ray did not intersect the planet grid plane.";
+
+            return null;
+        }
+
+
+        mouseWorldPosition =
+            mouseRay.GetPoint(
+                rayDistance
+            );
+
+
+        hoveredCell =
+            planetGrid.WorldToCell(
+                mouseWorldPosition
+            );
+
+
+        IReadOnlyList<Planet> planets =
+            planetManager.Planets;
+
+        for (int i = 0; i < planets.Count; i++)
+        {
+            Planet planet =
+                planets[i];
+
+            if (planet == null)
+            {
+                continue;
+            }
+
+            if (planet.cell ==
+                hoveredCell)
+            {
+                reason =
+                    $"Found planet \"{planet.id}\".";
+
+                return planet;
+            }
+        }
+
+
+        reason =
+            "No planet in hovered cell.";
+
+        return null;
+    }
+
+
+    /// <summary>
+    /// Shows the correct text for the hovered planet.
+    ///
+    /// Live Full is allowed to display the identity immediately so label
+    /// presentation cannot lag one frame behind VisionManager's knowledge
+    /// update. Otherwise only an already-Identified planet shows its real name.
+    /// </summary>
+    private void ShowLabel(
+        Planet planet,
+        FogOfWar.VisibilityTier liveTier,
+        FogOfWar.VisibilityTier effectiveTier)
+    {
+        if (activePlanetId !=
+            planet.id)
+        {
+            HideActiveLabel();
+        }
+
+
+        PlanetLabel label =
+            GetOrCreateLabel(
+                planet.id
+            );
+
+
+        Vector3 labelWorldPosition =
+            planetManager.GetPlanetWorldPosition(
+                planet
+            ) +
+            labelOffset;
+
+        label.SetWorldPosition(
+            labelWorldPosition
+        );
+
+
+        bool identityKnown =
+            liveTier ==
+                FogOfWar.VisibilityTier.Full ||
+            (
+                planet.visibility != null &&
+                planet.visibility.knowledgeState ==
+                    PlanetKnowledgeState.Identified
+            );
+
+
+        string textToDraw =
+            identityKnown
+                ? GetDisplayName(planet)
+                : unknownLabelText;
+
+        Color colorToDraw =
+            identityKnown
+                ? identifiedColor
+                : unknownColor;
+
+
+        label.SetText(
+            textToDraw,
+            colorToDraw
+        );
+
+        label.SetActive(
+            true
+        );
+
+        activePlanetId =
+            planet.id;
+
+
+        DebugState(
+            $"DRAW LABEL - planet \"{planet.id}\" | " +
+            $"text \"{textToDraw}\" | " +
+            $"live {liveTier} | effective {effectiveTier} | " +
+            $"knowledge {(planet.visibility != null ? planet.visibility.knowledgeState : PlanetKnowledgeState.Unknown)} | " +
+            $"world {labelWorldPosition}."
+        );
+    }
+
+
+    private string GetDisplayName(
+        Planet planet)
+    {
+        return string.IsNullOrWhiteSpace(
+            planet.displayName
+        )
             ? planet.id
             : planet.displayName;
     }
 
 
-    /// <summary>
-    /// Replaces each non-space character with a random garble character,
-    /// with revealChance probability of keeping the real one instead.
-    /// Never alters the planet's actual name/id - purely a display string.
-    /// </summary>
-    private string GenerateGarbledText(string realName, float revealChance)
+    private PlanetLabel GetOrCreateLabel(
+        string planetId)
     {
-        StringBuilder builder = new StringBuilder(realName.Length);
-
-        foreach (char character in realName)
-        {
-            if (character == ' ')
-            {
-                builder.Append(' ');
-                continue;
-            }
-
-            if (Random.value < revealChance)
-            {
-                builder.Append(character);
-            }
-            else
-            {
-                builder.Append(
-                    garbleCharacters[
-                        Random.Range(0, garbleCharacters.Length)
-                    ]
-                );
-            }
-        }
-
-        return builder.ToString();
-    }
+        string safeId =
+            string.IsNullOrWhiteSpace(planetId)
+                ? "(no-id)"
+                : planetId;
 
 
-    private PlanetLabel GetOrCreateLabel(string planetId)
-    {
-        if (labelsByPlanetId.TryGetValue(planetId, out PlanetLabel existing))
+        if (labelsByPlanetId.TryGetValue(
+                safeId,
+                out PlanetLabel existing))
         {
             return existing;
         }
+
 
         PlanetLabel label =
             PlanetLabel.Create(
@@ -257,39 +475,139 @@ public class PlanetLabelManager : MonoBehaviour
                 labelFont,
                 fontSize,
                 labelScale,
-                ResolveSortingLayerName(sortingLayerName),
+                ResolveSortingLayerName(
+                    sortingLayerName
+                ),
                 sortingOrder
             );
 
-        labelsByPlanetId.Add(planetId, label);
+
+        labelsByPlanetId.Add(
+            safeId,
+            label
+        );
+
+
+        DebugState(
+            $"CREATED PlanetLabel object for \"{safeId}\"."
+        );
+
 
         return label;
     }
 
 
-    private void HideLabel(string planetId)
+    private void HideActiveLabel()
     {
-        if (labelsByPlanetId.TryGetValue(planetId, out PlanetLabel label))
+        if (string.IsNullOrEmpty(
+                activePlanetId))
         {
-            label.SetActive(false);
+            return;
         }
+
+
+        string safeId =
+            string.IsNullOrWhiteSpace(activePlanetId)
+                ? "(no-id)"
+                : activePlanetId;
+
+
+        if (labelsByPlanetId.TryGetValue(
+                safeId,
+                out PlanetLabel label))
+        {
+            label.SetActive(
+                false
+            );
+        }
+
+
+        activePlanetId =
+            null;
     }
 
 
-    /// <summary>
-    /// Falls back to Default if the configured sorting layer no longer
-    /// exists, matching the convention used by FogOfWar/PlanetManager/
-    /// StarfieldPainter/RoutePathRenderer.
-    /// </summary>
-    private string ResolveSortingLayerName(string requestedName)
+    private void DebugState(
+        string message)
+    {
+        if (!debugHoverLabels)
+        {
+            return;
+        }
+
+        if (lastDebugState ==
+            message)
+        {
+            return;
+        }
+
+
+        lastDebugState =
+            message;
+
+        Debug.Log(
+            $"{name}: {message}",
+            this
+        );
+    }
+
+
+    private string GetMissingReferenceDescription()
+    {
+        List<string> missing =
+            new List<string>();
+
+        if (planetManager == null)
+        {
+            missing.Add(
+                "PlanetManager"
+            );
+        }
+
+        if (visionManager == null)
+        {
+            missing.Add(
+                "VisionManager"
+            );
+        }
+
+        if (mainCamera == null)
+        {
+            missing.Add(
+                "Camera.main - give the gameplay camera the MainCamera tag"
+            );
+        }
+
+        if (planetGrid == null)
+        {
+            missing.Add(
+                "Grid - PlanetManager must be underneath the map Grid"
+            );
+        }
+
+
+        return missing.Count == 0
+            ? "unknown reference problem"
+            : "missing " +
+              string.Join(
+                  ", ",
+                  missing
+              );
+    }
+
+
+    private string ResolveSortingLayerName(
+        string requestedName)
     {
         foreach (SortingLayer layer in SortingLayer.layers)
         {
-            if (layer.name == requestedName)
+            if (layer.name ==
+                requestedName)
             {
                 return requestedName;
             }
         }
+
 
         Debug.LogWarning(
             $"{name}: Sorting Layer \"{requestedName}\" does not exist. Falling back to Default.",

@@ -1839,19 +1839,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlanetLabelManager
   planetManager: {fileID: 648462893}
   visionManager: {fileID: 1705402916}
+  mainCamera: {fileID: 0}
   labelFont: {fileID: 12800000, guid: f72e92865f6c09f47b262c247e6dd405, type: 3}
-  fontSize: 12
-  labelScale: 0.02
+  fontSize: 20
+  labelScale: 0.5
   labelOffset: {x: 0, y: 0.6, z: 0}
   identifiedColor: {r: 1, g: 1, b: 1, a: 1}
-  garbledColor: {r: 0.6, g: 0.85, b: 1, a: 1}
-  sortingLayerName: Default
-  sortingOrder: 20
-  partialRevealChance: 0.35
-  fullRevealChance: 0.85
-  garbleRefreshInterval: 0.35
-  garbleCharacters: '!@#$%^&*-_=+?<>01'
+  unknownColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+  sortingLayerName: Foreground
+  sortingOrder: 2000
   unknownLabelText: ?????
+  debugHoverLabels: 1
+  debugEmptyCells: 0
 --- !u!1 &651697406
 GameObject:
   m_ObjectHideFlags: 0
@@ -15888,6 +15887,10 @@ MonoBehaviour:
   turnAngleThresholdDegrees: 20
   movementStyle: 1
   departureAccelDistance: 0.75
+  pathLookAheadDistance: 0.2
+  slowForHeadingError: 1
+  headingSlowAngle: 75
+  minimumHeadingSpeedFactor: 0.35
   rotationSpeed: 540
   arrivalDistance: 0.005
 --- !u!114 &1705402914

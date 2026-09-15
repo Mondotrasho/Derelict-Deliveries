@@ -60,10 +60,16 @@ public class VisionManager : MonoBehaviour
     [SerializeField]
     private bool autoRememberDiscoveredPlanets = true;
 
-    [Tooltip("At startup, import PlanetManager planets that are already marked Currently Visible as known locations. " +
-             "This supports planets intentionally configured as visible before VisionManager performs its first live-vision pass.")]
+    [Tooltip("At startup, import PlanetManager planets that are already marked Currently Visible as an authored starting reveal. " +
+             "This does NOT automatically mark them Discovered or Identified. It only makes the configured starting visibility actually appear through FogOfWar.")]
     [SerializeField]
     private bool importStartingVisiblePlanets = true;
+
+    [Tooltip("Fog visibility tier used for planets authored with Currently Visible enabled before Play begins. " +
+             "Use Partial for a visible-but-unidentified starting planet, or Full when the starting reveal should be completely clear.")]
+    [SerializeField]
+    private FogOfWar.VisibilityTier startingVisibleTier =
+        FogOfWar.VisibilityTier.Partial;
 
     [Tooltip("Fallback remembered tier for a planet that starts already known/remembered, " +
              "but has no live observation in this session.")]
@@ -116,6 +122,14 @@ public class VisionManager : MonoBehaviour
     // removed so deleted/renamed/unremembered planets do not leave stale fog.
     private readonly HashSet<string>
         managedPlanetLockIds =
+            new HashSet<string>();
+
+    // Authored starting visibility is separate from remembered/discovered
+    // visibility. These locks make a planet configured as Currently Visible in
+    // PlanetManager genuinely visible from frame one without falsely marking
+    // it Discovered, Remembered or Identified.
+    private readonly HashSet<string>
+        startingPlanetLockIds =
             new HashSet<string>();
 
     private readonly HashSet<string>
@@ -218,6 +232,13 @@ public class VisionManager : MonoBehaviour
                 FogOfWar.VisibilityTier.Partial;
         }
 
+        if (startingVisibleTier ==
+            FogOfWar.VisibilityTier.Hidden)
+        {
+            startingVisibleTier =
+                FogOfWar.VisibilityTier.Partial;
+        }
+
         if (preDiscoveredRememberedTier ==
             FogOfWar.VisibilityTier.Hidden)
         {
@@ -309,32 +330,62 @@ public class VisionManager : MonoBehaviour
 
             EnsurePlanetVisibilityData(planet);
 
-            // Capture the serialized/startup value before the first live pass
-            // overwrites Currently Visible from the player's real position.
+
+            // -------------------------------------------------------------
+            // Authored STARTING visibility
+            // -------------------------------------------------------------
+            //
+            // `currentlyVisible` is serialized, so before the first live
+            // visibility pass it can be used as a scene-authored starting
+            // condition. Importing it creates a separate FogOfWar lock so the
+            // planet is genuinely revealed from frame one.
+            //
+            // IMPORTANT:
+            // this does NOT force Discovered, RememberLocation or Knowledge.
+            // Those remain exactly as authored in PlanetManager.
+            //
+            // After this import, `currentlyVisible` returns to its normal
+            // runtime meaning: live player vision only.
             bool configuredStartingVisible =
                 planet.visibility.currentlyVisible;
 
             if (importStartingVisiblePlanets &&
                 configuredStartingVisible)
             {
-                planet.visibility.discovered = true;
+                FogOfWar.VisibilityTier revealTier =
+                    startingVisibleTier;
 
-                if (autoRememberDiscoveredPlanets)
+                if (revealTier ==
+                    FogOfWar.VisibilityTier.Hidden)
                 {
-                    planet.visibility.rememberLocation = true;
+                    revealTier =
+                        FogOfWar.VisibilityTier.Partial;
                 }
 
-                // A planet the designer configured as already visible at
-                // scene start is treated as fully known from the outset -
-                // there's no observed liveTier to derive Detected vs
-                // Identified from here, so this mirrors the old pre-
-                // knowledge-state behaviour where Discovered meant identity
-                // known too.
-                planet.visibility.RaiseKnowledgeState(
-                    PlanetKnowledgeState.Identified
+                string startingLockId =
+                    BuildStartingPlanetLockId(
+                        planet,
+                        i
+                    );
+
+                fogManager.SetLockedLocation(
+                    startingLockId,
+                    planet.cell,
+                    revealTier
+                );
+
+                startingPlanetLockIds.Add(
+                    startingLockId
                 );
             }
 
+
+            // -------------------------------------------------------------
+            // Authored DISCOVERED + REMEMBERED visibility
+            // -------------------------------------------------------------
+            //
+            // This is the existing persistent-map-location behaviour. Unlike
+            // Starting Visible above, it belongs to discovery/remember state.
             if (!planet.visibility.discovered ||
                 !planet.visibility.rememberLocation ||
                 !planet.revealFogWhenDiscovered ||
@@ -372,7 +423,8 @@ public class VisionManager : MonoBehaviour
         }
 
         managedPlanetLockCount =
-            managedPlanetLockIds.Count;
+            managedPlanetLockIds.Count +
+            startingPlanetLockIds.Count;
     }
 
 
@@ -384,33 +436,45 @@ public class VisionManager : MonoBehaviour
         public string Id { get; }
         public Vector3Int Cell { get; }
         public FogOfWar.VisibilityTier LiveTier { get; }
+        public FogOfWar.VisibilityTier EffectiveTier { get; }
+        public PlanetKnowledgeState KnowledgeState { get; }
         public bool CurrentlyVisible { get; }
         public bool Discovered { get; }
         public bool RememberLocation { get; }
         public bool RevealFogWhenDiscovered { get; }
         public bool HasFogLock { get; }
         public FogOfWar.VisibilityTier FogLockTier { get; }
+        public bool HasStartingFogLock { get; }
+        public FogOfWar.VisibilityTier StartingFogLockTier { get; }
 
         public PlanetVisionInfo(
             string id,
             Vector3Int cell,
             FogOfWar.VisibilityTier liveTier,
+            FogOfWar.VisibilityTier effectiveTier,
+            PlanetKnowledgeState knowledgeState,
             bool currentlyVisible,
             bool discovered,
             bool rememberLocation,
             bool revealFogWhenDiscovered,
             bool hasFogLock,
-            FogOfWar.VisibilityTier fogLockTier)
+            FogOfWar.VisibilityTier fogLockTier,
+            bool hasStartingFogLock,
+            FogOfWar.VisibilityTier startingFogLockTier)
         {
             Id = id;
             Cell = cell;
             LiveTier = liveTier;
+            EffectiveTier = effectiveTier;
+            KnowledgeState = knowledgeState;
             CurrentlyVisible = currentlyVisible;
             Discovered = discovered;
             RememberLocation = rememberLocation;
             RevealFogWhenDiscovered = revealFogWhenDiscovered;
             HasFogLock = hasFogLock;
             FogLockTier = fogLockTier;
+            HasStartingFogLock = hasStartingFogLock;
+            StartingFogLockTier = startingFogLockTier;
         }
     }
 
@@ -477,6 +541,11 @@ public class VisionManager : MonoBehaviour
                     playerCell
                 );
 
+            FogOfWar.VisibilityTier effectiveTier =
+                fogManager.GetVisibility(
+                    planet.cell
+                );
+
             string lockId =
                 string.IsNullOrWhiteSpace(planet.id)
                     ? null
@@ -496,17 +565,34 @@ public class VisionManager : MonoBehaviour
                     );
             }
 
+            string startingLockId =
+                BuildStartingPlanetLockId(
+                    planet,
+                    i
+                );
+
+            bool hasStartingFogLock =
+                fogManager.TryGetLockedLocation(
+                    startingLockId,
+                    out Vector3Int startingLockCell,
+                    out FogOfWar.VisibilityTier startingFogLockTier
+                );
+
             snapshot.Add(
                 new PlanetVisionInfo(
                     planet.id,
                     planet.cell,
                     liveTier,
+                    effectiveTier,
+                    planet.visibility.knowledgeState,
                     planet.visibility.currentlyVisible,
                     planet.visibility.discovered,
                     planet.visibility.rememberLocation,
                     planet.revealFogWhenDiscovered,
                     hasFogLock,
-                    fogLockTier
+                    fogLockTier,
+                    hasStartingFogLock,
+                    startingFogLockTier
                 )
             );
         }
@@ -626,6 +712,30 @@ public class VisionManager : MonoBehaviour
         return fogManager.GetPlayerVisibility(
             cell,
             playerCell
+        );
+    }
+
+
+    /// <summary>
+    /// Returns the visibility that is actually rendered through FogOfWar after
+    /// combining live player vision, remembered fog and locked locations.
+    ///
+    /// UI/hover presentation should normally use this query. Gameplay that
+    /// specifically needs to know whether the ship can see something RIGHT NOW
+    /// should continue using GetLiveVisibility().
+    /// </summary>
+    public FogOfWar.VisibilityTier GetEffectiveVisibility(
+        Vector3Int cell)
+    {
+        ResolveMissingReferences();
+
+        if (fogManager == null)
+        {
+            return FogOfWar.VisibilityTier.Hidden;
+        }
+
+        return fogManager.GetVisibility(
+            cell
         );
     }
 
@@ -778,6 +888,10 @@ public class VisionManager : MonoBehaviour
         managedPlanetLockIds.Add(
             lockId
         );
+
+        managedPlanetLockCount =
+            managedPlanetLockIds.Count +
+            startingPlanetLockIds.Count;
 
         if (!wasDiscovered)
         {
@@ -939,6 +1053,10 @@ public class VisionManager : MonoBehaviour
                 lockId
             );
         }
+
+        managedPlanetLockCount =
+            managedPlanetLockIds.Count +
+            startingPlanetLockIds.Count;
 
         lastPlanetDataHash =
             CalculatePlanetDataHash();
@@ -1159,7 +1277,8 @@ public class VisionManager : MonoBehaviour
         }
 
         managedPlanetLockCount =
-            managedPlanetLockIds.Count;
+            managedPlanetLockIds.Count +
+            startingPlanetLockIds.Count;
 
         // No PlanetManager rendering refresh is required here.
         //
@@ -1345,6 +1464,31 @@ public class VisionManager : MonoBehaviour
             planet.id;
 
         return true;
+    }
+
+
+    /// <summary>
+    /// Starting-visibility locks are intentionally separate from normal
+    /// discovery/remember locks. Including the list index prevents duplicate
+    /// or blank planet IDs from causing two authored starting reveals to fight
+    /// over one FogOfWar lock.
+    /// </summary>
+    private string BuildStartingPlanetLockId(
+        Planet planet,
+        int planetIndex)
+    {
+        string stablePart =
+            planet != null &&
+            !string.IsNullOrWhiteSpace(planet.id)
+                ? planet.id
+                : "no-id";
+
+        return
+            planetLockPrefix +
+            "start:" +
+            planetIndex +
+            ":" +
+            stablePart;
     }
 
 
