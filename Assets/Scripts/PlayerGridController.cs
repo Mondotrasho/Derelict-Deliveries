@@ -15,6 +15,11 @@ using UnityEngine;
 /// - Slows slightly when approaching a turn.
 /// - Accelerates again after the turn.
 /// - Smoothly slows to a stop at the final destination.
+///
+/// This controller only decides HOW the player physically travels a path.
+/// It does not decide what the route costs, whether it may be committed,
+/// or which cells make up a route in the first place - see RoutePlanner
+/// and MovementPlanController for that.
 /// </summary>
 public class PlayerGridController : MonoBehaviour
 {
@@ -57,6 +62,10 @@ public class PlayerGridController : MonoBehaviour
     [SerializeField]
     private float destinationSlowDistance = 0.75f;
 
+    [Tooltip("Speed floor while braking into the final cell, so the last few centimetres don't asymptotically crawl forever.")]
+    [SerializeField]
+    private float minimumFinalApproachSpeed = 0.4f;
+
 
     [Header("Rotation")]
 
@@ -86,6 +95,16 @@ public class PlayerGridController : MonoBehaviour
     /// this controller needing to know they exist.
     /// </summary>
     public event Action<Vector3Int> CellReached;
+
+
+    /// <summary>
+    /// Raised once, after the player finishes travelling the complete path
+    /// passed to MoveToCell/MoveAlongPath - i.e. after the final CellReached,
+    /// not per cell. MovementPlanController (and later TurnManager-style
+    /// systems) use this to know when it is safe to plan or commit the
+    /// next route.
+    /// </summary>
+    public event Action RouteCompleted;
 
 
     /// <summary>
@@ -149,10 +168,16 @@ public class PlayerGridController : MonoBehaviour
 
     /// <summary>
     /// Requests movement to a grid coordinate.
+    ///
+    /// The path is computed internally, which is convenient for direct
+    /// click-to-move testing (see GridPlayerInput). Anything that plans a
+    /// route ahead of time - RoutePlanner, then MovementPlanController -
+    /// should use MoveAlongPath instead, so the path that gets executed is
+    /// guaranteed to match the one that was previewed to the player.
     /// </summary>
     public void MoveToCell(Vector3Int destinationCell)
     {
-        if (gridMap == null || pathfinder == null)
+        if (pathfinder == null)
         {
             Debug.LogError(
                 "PlayerGridController is missing a required reference."
@@ -168,8 +193,27 @@ public class PlayerGridController : MonoBehaviour
                 destinationCell
             );
 
+        MoveAlongPath(path);
+    }
 
-        if (path.Count == 0)
+
+    /// <summary>
+    /// Executes an already-computed path, such as one just handed over by
+    /// MovementPlanController.Commit(). The path is not recalculated here -
+    /// whatever route was planned is exactly what gets travelled.
+    /// </summary>
+    public void MoveAlongPath(List<Vector3Int> path)
+    {
+        if (gridMap == null)
+        {
+            Debug.LogError(
+                "PlayerGridController is missing a required reference."
+            );
+
+            return;
+        }
+
+        if (path == null || path.Count == 0)
         {
             return;
         }
@@ -228,6 +272,8 @@ public class PlayerGridController : MonoBehaviour
 
         currentSpeed = 0.0f;
         movementCoroutine = null;
+
+        RouteCompleted?.Invoke();
     }
 
 
@@ -324,10 +370,23 @@ public class PlayerGridController : MonoBehaviour
                     destinationSlowDistance
                 );
 
-            return Mathf.Lerp(
-                0.0f,
-                cruiseSpeed,
-                SmoothStep(slowFactor)
+            float brakingSpeed =
+                Mathf.Lerp(
+                    0.0f,
+                    cruiseSpeed,
+                    SmoothStep(slowFactor)
+                );
+
+            // SmoothStep shrinks roughly with the square of the remaining
+            // distance, so without a floor the last few centimetres take
+            // longer and longer to close - the ship looks like it never
+            // quite arrives. Flooring the speed guarantees the approach
+            // finishes in bounded time; movementDistance is still clamped
+            // to distanceToCell in MoveToNextCell, so this cannot overshoot
+            // the cell centre.
+            return Mathf.Max(
+                brakingSpeed,
+                minimumFinalApproachSpeed
             );
         }
 
@@ -491,7 +550,10 @@ public class PlayerGridController : MonoBehaviour
     /// <summary>
     /// Immediately stops the current movement command.
     ///
-    /// The Player remains at its current world position.
+    /// The Player remains at its current world position. This is treated
+    /// as an interruption rather than a completion, so RouteCompleted is
+    /// not raised here - only CellReached, since the player's logical cell
+    /// still needs to be re-synced to wherever it actually stopped.
     /// </summary>
     public void StopMovement()
     {
