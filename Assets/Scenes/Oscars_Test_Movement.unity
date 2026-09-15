@@ -854,7 +854,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1442073121
   m_SortingLayer: 2
-  m_SortingOrder: 0
+  m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: 206012669, guid: 5ce6dd68a8ab8cd4e86beabf44cd8f82, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1688,6 +1688,7 @@ GameObject:
   m_Component:
   - component: {fileID: 648462892}
   - component: {fileID: 648462893}
+  - component: {fileID: 648462894}
   m_Layer: 0
   m_Name: PlanetManager
   m_TagString: Untagged
@@ -1730,12 +1731,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6826756070ddaa141803c4fbfd1bdfe7, type: 2}
   planets:
   - id: Green_Planet
+    displayName: 
     cell: {x: 11, y: -8, z: 0}
     tileIndex: 0
     visibility:
       currentlyVisible: 0
       discovered: 0
       rememberLocation: 0
+      knowledgeState: 0
     revealFogWhenDiscovered: 1
     animate: 1
     animationStrength: 1
@@ -1745,12 +1748,14 @@ MonoBehaviour:
       counters: []
       deliveries: []
   - id: Red_planet
+    displayName: 
     cell: {x: -8, y: -7, z: 0}
     tileIndex: 2
     visibility:
       currentlyVisible: 0
       discovered: 0
       rememberLocation: 0
+      knowledgeState: 0
     revealFogWhenDiscovered: 1
     animate: 1
     animationStrength: 1
@@ -1760,12 +1765,14 @@ MonoBehaviour:
       counters: []
       deliveries: []
   - id: Red_planet_moon
+    displayName: 
     cell: {x: -7, y: -6, z: 0}
     tileIndex: 4
     visibility:
       currentlyVisible: 0
       discovered: 0
       rememberLocation: 0
+      knowledgeState: 0
     revealFogWhenDiscovered: 0
     animate: 1
     animationStrength: 1
@@ -1775,12 +1782,14 @@ MonoBehaviour:
       counters: []
       deliveries: []
   - id: Grey_Planet
+    displayName: 
     cell: {x: 3, y: 5, z: 0}
     tileIndex: 3
     visibility:
       currentlyVisible: 1
       discovered: 0
       rememberLocation: 0
+      knowledgeState: 0
     revealFogWhenDiscovered: 1
     animate: 1
     animationStrength: 1
@@ -1790,12 +1799,14 @@ MonoBehaviour:
       counters: []
       deliveries: []
   - id: Yellow_Planet
+    displayName: 
     cell: {x: -15, y: 6, z: 0}
     tileIndex: 1
     visibility:
       currentlyVisible: 1
       discovered: 1
       rememberLocation: 0
+      knowledgeState: 0
     revealFogWhenDiscovered: 1
     animate: 1
     animationStrength: 1
@@ -1814,6 +1825,33 @@ MonoBehaviour:
   skewAmount: 0.0139
   skewSpeed: 0.48
   rotationWiggle: 14.25
+--- !u!114 &648462894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 648462891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ced144c7617996b488b797c0c840c997, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetLabelManager
+  planetManager: {fileID: 648462893}
+  visionManager: {fileID: 1705402916}
+  labelFont: {fileID: 12800000, guid: f72e92865f6c09f47b262c247e6dd405, type: 3}
+  fontSize: 12
+  labelScale: 0.02
+  labelOffset: {x: 0, y: 0.6, z: 0}
+  identifiedColor: {r: 1, g: 1, b: 1, a: 1}
+  garbledColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+  sortingLayerName: Default
+  sortingOrder: 20
+  partialRevealChance: 0.35
+  fullRevealChance: 0.85
+  garbleRefreshInterval: 0.35
+  garbleCharacters: '!@#$%^&*-_=+?<>01'
+  unknownLabelText: ?????
 --- !u!1 &651697406
 GameObject:
   m_ObjectHideFlags: 0
@@ -15821,6 +15859,7 @@ MonoBehaviour:
   orthogonalStepCost: 1
   diagonalStepCost: 2
   preventCornerCutting: 1
+  preferDiagonalMovement: 1
 --- !u!114 &1705402913
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15843,6 +15882,12 @@ MonoBehaviour:
   turnSlowDistance: 0.35
   destinationSlowDistance: 0.75
   minimumFinalApproachSpeed: 0.4
+  smoothPath: 1
+  smoothingSamplesPerStep: 3
+  smoothingTension: 0.856
+  turnAngleThresholdDegrees: 20
+  movementStyle: 1
+  departureAccelDistance: 0.75
   rotationSpeed: 540
   arrivalDistance: 0.005
 --- !u!114 &1705402914
@@ -15862,7 +15907,7 @@ MonoBehaviour:
   routePlanner: {fileID: 1705402917}
   movementPlanController: {fileID: 1705402918}
   commitButton: {fileID: 1698562352}
-  cancelButton: {fileID: 0}
+  cancelButton: {fileID: 1421736847}
 --- !u!4 &1705402915
 Transform:
   m_ObjectHideFlags: 0
@@ -15952,6 +15997,8 @@ MonoBehaviour:
   gridMap: {fileID: 28316566}
   movementAllowance: {fileID: 0}
   destinationMarker: {fileID: 0}
+  reticleSizePixels: 10
+  reticleBracketLengthPixels: 3
   pixelsPerUnit: 16
   dotSizePixels: 1
   gapPixels: 4
@@ -15976,7 +16023,7 @@ MonoBehaviour:
   routePlanner: {fileID: 1705402917}
   movementPlanController: {fileID: 1705402918}
   commitButton: {fileID: 1698562352}
-  cancelButton: {fileID: 0}
+  cancelButton: {fileID: 1421736847}
 --- !u!1 &1847002055
 GameObject:
   m_ObjectHideFlags: 0
