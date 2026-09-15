@@ -1845,10 +1845,14 @@ MonoBehaviour:
   labelScale: 0.5
   labelOffset: {x: 0, y: 0.6, z: 0}
   identifiedColor: {r: 1, g: 1, b: 1, a: 1}
-  unknownColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+  garbledColor: {r: 0.6, g: 0.85, b: 1, a: 1}
   sortingLayerName: Foreground
   sortingOrder: 2000
-  unknownLabelText: ?????
+  partialRevealChance: 0.35
+  fullRevealChance: 0.85
+  garbleRefreshInterval: 0.35
+  garbleCharacters: '!@#$%^&*-_=+?<>01'
+  unknownFallbackLength: 5
   debugHoverLabels: 1
   debugEmptyCells: 0
 --- !u!1 &651697406
@@ -16424,13 +16428,13 @@ MonoBehaviour:
   origin: {x: -25, y: -25, z: 0}
   size: {x: 50, y: 50}
   layers:
-  - density: 0.05
+  - density: 0.064
     parallaxFactor: 0.06
   - density: 0.04
     parallaxFactor: 0.047
   - density: 0.03
     parallaxFactor: 0.009
-  sortingLayerName: Default
+  sortingLayerName: Stars
   startingSortingOrder: -30
   referenceTransform: {fileID: 419753239}
   referenceAverageTime: 0.18
@@ -16472,7 +16476,7 @@ MonoBehaviour:
     topRight: {fileID: 11400000, guid: 1e21a081c1eecf74498c2f84fa501a9a, type: 2}
     bottomLeft: {fileID: 11400000, guid: 567b5f9a9377d1e45883676cfa297167, type: 2}
     bottomRight: {fileID: 11400000, guid: 796ea63e2a5bd534dadd7d0b29c7839a, type: 2}
-  blackHoleCount: 12
+  blackHoleCount: 6
   blackHoleMinSpacing: 2
   blackHoleParallaxLayerIndex: 0
   placeBlackHoles: 1
