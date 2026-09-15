@@ -13,6 +13,9 @@ public class Planet
     [Tooltip("Stable identifier used by code and future quest/vision systems.")]
     public string id = "Planet";
 
+    [Tooltip("Human-readable name shown by PlanetLabelManager once this planet is identified. Leave blank to fall back to id - existing planets in the scene need no changes.")]
+    public string displayName = "";
+
     [Tooltip("Grid cell occupied by this planet.")]
     public Vector3Int cell = Vector3Int.zero;
 

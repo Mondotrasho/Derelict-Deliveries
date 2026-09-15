@@ -32,6 +32,9 @@ public class PlanetVisibilityState
     [Tooltip("If discovered, keep the planet graphic visible when it leaves current vision.")]
     public bool rememberLocation = false;
 
+    [Tooltip("How well the player knows this planet - separate from Discovered/RememberLocation above, which continue to drive FogOfWar lock behaviour unchanged. PlanetLabelManager uses this instead to decide between an anonymous placeholder, a garbled name, or the real name.")]
+    public PlanetKnowledgeState knowledgeState = PlanetKnowledgeState.Unknown;
+
     /// <summary>
     /// Legacy/convenience state query.
     ///
@@ -66,5 +69,19 @@ public class PlanetVisibilityState
     public void SetRememberLocation(bool value)
     {
         rememberLocation = value;
+    }
+
+    /// <summary>
+    /// Raises knowledgeState to at least newState - never downgrades, so a
+    /// planet already Identified can't be silently walked back down to
+    /// Detected or Unknown. Matches the same "once known, not forgotten"
+    /// philosophy already used for Discovered/RememberLocation.
+    /// </summary>
+    public void RaiseKnowledgeState(PlanetKnowledgeState newState)
+    {
+        if ((int)newState > (int)knowledgeState)
+        {
+            knowledgeState = newState;
+        }
     }
 }

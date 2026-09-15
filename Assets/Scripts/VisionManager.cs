@@ -323,6 +323,16 @@ public class VisionManager : MonoBehaviour
                 {
                     planet.visibility.rememberLocation = true;
                 }
+
+                // A planet the designer configured as already visible at
+                // scene start is treated as fully known from the outset -
+                // there's no observed liveTier to derive Detected vs
+                // Identified from here, so this mirrors the old pre-
+                // knowledge-state behaviour where Discovered meant identity
+                // known too.
+                planet.visibility.RaiseKnowledgeState(
+                    PlanetKnowledgeState.Identified
+                );
             }
 
             if (!planet.visibility.discovered ||
@@ -707,6 +717,13 @@ public class VisionManager : MonoBehaviour
         planet.visibility.rememberLocation =
             true;
 
+        // Externally granting a location means the player now knows
+        // roughly WHERE this is, but not necessarily its exact identity -
+        // matches liveTier == Partial in the live-vision case above.
+        planet.visibility.RaiseKnowledgeState(
+            PlanetKnowledgeState.Detected
+        );
+
         if (string.IsNullOrWhiteSpace(planet.id))
         {
             Debug.LogWarning(
@@ -777,6 +794,86 @@ public class VisionManager : MonoBehaviour
 
         lastPlanetDataHash =
             CalculatePlanetDataHash();
+
+        return true;
+    }
+
+
+    /// <summary>
+    /// Externally grants full identification of a planet - e.g. a scanner
+    /// probe, a quest reward, or a purchased star chart that reveals a
+    /// planet's real name outright, without the player needing to fly
+    /// close enough to see it at Full live tier.
+    ///
+    /// Ensures the location is granted first (matching GrantPlanetLocation's
+    /// behaviour - fog lock, Discovered/RememberLocation), then raises
+    /// knowledge straight to Identified.
+    /// </summary>
+    public bool GrantPlanetIdentity(
+        string planetId,
+        FogOfWar.VisibilityTier rememberedTier =
+            FogOfWar.VisibilityTier.Full)
+    {
+        ResolveMissingReferences();
+
+        if (fogManager == null ||
+            planetManager == null)
+        {
+            return false;
+        }
+
+        Planet planet =
+            planetManager.FindPlanet(
+                planetId
+            );
+
+        if (planet == null)
+        {
+            Debug.LogWarning(
+                $"{name}: GrantPlanetIdentity could not find planet \"{planetId}\".",
+                this);
+
+            return false;
+        }
+
+        return GrantPlanetIdentity(
+            planet,
+            rememberedTier
+        );
+    }
+
+
+    /// <summary>
+    /// Direct Planet overload of GrantPlanetIdentity().
+    /// </summary>
+    public bool GrantPlanetIdentity(
+        Planet planet,
+        FogOfWar.VisibilityTier rememberedTier =
+            FogOfWar.VisibilityTier.Full)
+    {
+        if (planet == null)
+        {
+            return false;
+        }
+
+        bool locationGranted =
+            GrantPlanetLocation(
+                planet,
+                rememberedTier
+            );
+
+        if (!locationGranted)
+        {
+            return false;
+        }
+
+        EnsurePlanetVisibilityData(
+            planet
+        );
+
+        planet.visibility.RaiseKnowledgeState(
+            PlanetKnowledgeState.Identified
+        );
 
         return true;
     }
@@ -958,6 +1055,27 @@ public class VisionManager : MonoBehaviour
                 }
             }
 
+            // Knowledge tracks the actual observed tier, not just whether
+            // the discovery threshold was cleared - Partial only ever
+            // raises to Detected, Full raises straight to Identified.
+            // RaiseKnowledgeState is a one-way ratchet, so looking away
+            // (liveTier drops to Hidden) never regresses this.
+            if (currentlyVisible)
+            {
+                if (liveTier == FogOfWar.VisibilityTier.Full)
+                {
+                    planet.visibility.RaiseKnowledgeState(
+                        PlanetKnowledgeState.Identified
+                    );
+                }
+                else if (liveTier == FogOfWar.VisibilityTier.Partial)
+                {
+                    planet.visibility.RaiseKnowledgeState(
+                        PlanetKnowledgeState.Detected
+                    );
+                }
+            }
+
             if (wasCurrentlyVisible !=
                 planet.visibility.currentlyVisible)
             {
@@ -1058,6 +1176,20 @@ public class VisionManager : MonoBehaviour
         {
             planet.visibility =
                 new PlanetVisibilityState();
+        }
+
+        // Backward compatibility: scenes authored before PlanetKnowledgeState
+        // existed only ever set `discovered`, which used to mean "identity
+        // known" as well as "location known". Treat any such pre-existing
+        // data as already Identified, rather than silently regressing an
+        // already-discovered planet's label back to an anonymous "?????".
+        if (planet.visibility.discovered &&
+            planet.visibility.knowledgeState ==
+            PlanetKnowledgeState.Unknown)
+        {
+            planet.visibility.RaiseKnowledgeState(
+                PlanetKnowledgeState.Identified
+            );
         }
     }
 
