@@ -771,6 +771,64 @@ public class PlanetManager : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Finds the planet occupying one grid cell. Returns null when the
+    /// cell contains no authored planet.
+    ///
+    /// This is the preferred integration point for event/interaction code:
+    /// callers should not duplicate their own loop over Planets simply to
+    /// answer "did the player enter a planet cell?".
+    /// </summary>
+    public Planet FindPlanetAtCell(Vector3Int cell)
+    {
+        return planets.Find(
+            planet =>
+                planet != null &&
+                planet.cell == cell
+        );
+    }
+
+
+    /// <summary>
+    /// Try-pattern equivalent of FindPlanetAtCell.
+    /// </summary>
+    public bool TryGetPlanetAtCell(
+        Vector3Int cell,
+        out Planet planet)
+    {
+        planet = FindPlanetAtCell(cell);
+        return planet != null;
+    }
+
+
+    /// <summary>
+    /// Returns all authored planets carrying the requested event tag.
+    /// The returned list is a snapshot; changing it does not modify the
+    /// manager's planet collection.
+    /// </summary>
+    public List<Planet> GetPlanetsWithTag(string tag)
+    {
+        List<Planet> result = new List<Planet>();
+
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            return result;
+        }
+
+        foreach (Planet planet in planets)
+        {
+            if (planet != null &&
+                planet.eventState != null &&
+                planet.eventState.HasTag(tag))
+            {
+                result.Add(planet);
+            }
+        }
+
+        return result;
+    }
+
+
     public Vector3 GetPlanetWorldPosition(
         Planet planet)
     {
