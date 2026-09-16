@@ -378,6 +378,48 @@ public class MovementAllowance : MonoBehaviour
     /// </summary>
     public List<int> GetTurnSegmentBreakpoints(IReadOnlyList<Vector3Int> path)
     {
+        if (playerController == null)
+        {
+            Debug.LogError(
+                "MovementAllowance has no PlayerGridController assigned."
+            );
+
+            return new List<int>();
+        }
+
+        return ComputeTurnSegmentBreakpoints(
+            playerController.CurrentCell,
+            path,
+            currentMovementPoints
+        );
+    }
+
+
+    /// <summary>
+    /// Same idea as GetTurnSegmentBreakpoints, but for a path that isn't
+    /// starting from wherever the player currently is, and where every
+    /// window - including the first - is priced against the full
+    /// MaxMovementPoints rather than whatever's left right now.
+    ///
+    /// For segmenting a queued remainder for display purposes while a
+    /// different segment is still actively executing: none of it starts
+    /// moving until a later, full-budget turn, so it shouldn't matter
+    /// what CurrentMovementPoints happens to be right now, or where the
+    /// player physically is. See RoutePathRenderer.
+    /// </summary>
+    public List<int> GetFutureTurnSegmentBreakpoints(
+        Vector3Int fromCell,
+        IReadOnlyList<Vector3Int> path)
+    {
+        return ComputeTurnSegmentBreakpoints(fromCell, path, maxMovementPoints);
+    }
+
+
+    private List<int> ComputeTurnSegmentBreakpoints(
+        Vector3Int fromCell,
+        IReadOnlyList<Vector3Int> path,
+        int firstWindowBudget)
+    {
         List<int> breakpoints = new List<int>();
 
         if (path == null || path.Count == 0)
@@ -385,19 +427,10 @@ public class MovementAllowance : MonoBehaviour
             return breakpoints;
         }
 
-        if (playerController == null)
-        {
-            Debug.LogError(
-                "MovementAllowance has no PlayerGridController assigned."
-            );
 
-            return breakpoints;
-        }
+        Vector3Int previousCell = fromCell;
 
-
-        Vector3Int previousCell = playerController.CurrentCell;
-
-        int budgetRemainingThisWindow = currentMovementPoints;
+        int budgetRemainingThisWindow = firstWindowBudget;
 
         for (int i = 0; i < path.Count; i++)
         {

@@ -290,6 +290,58 @@ public class PlayerGridController : MonoBehaviour
 
 
     /// <summary>
+    /// The portion of the most recent MoveAlongPath command that hasn't
+    /// been reached yet - shrinks by one cell every time CellEntered
+    /// fires, empty once the command finishes. Intended for drawing the
+    /// currently-executing segment as consumed from the ship's end while
+    /// it travels, rather than redrawing the whole thing from scratch on
+    /// every frame.
+    /// </summary>
+    public IReadOnlyList<Vector3Int> RemainingCommandedPath
+    {
+        get
+        {
+            if (currentCommandedPath == null ||
+                cellsReachedInCurrentCommand >= currentCommandedPath.Count)
+            {
+                return emptyPath;
+            }
+
+            return currentCommandedPath.GetRange(
+                cellsReachedInCurrentCommand,
+                currentCommandedPath.Count - cellsReachedInCurrentCommand
+            );
+        }
+    }
+
+
+    /// <summary>
+    /// The final cell of the most recent MoveAlongPath command - fixed for
+    /// the entire duration of that command, regardless of how far through
+    /// it the ship has actually travelled. Null once nothing is currently
+    /// commanded. Deliberately NOT the same as the last element of
+    /// RemainingCommandedPath, which becomes empty for one frame right at
+    /// arrival - callers wanting a stable "where is this segment headed"
+    /// reticle position should use this instead.
+    /// </summary>
+    public Vector3Int? CurrentCommandTargetCell
+    {
+        get
+        {
+            if (currentCommandedPath == null || currentCommandedPath.Count == 0)
+            {
+                return null;
+            }
+
+            return currentCommandedPath[currentCommandedPath.Count - 1];
+        }
+    }
+
+
+    private static readonly List<Vector3Int> emptyPath = new List<Vector3Int>();
+
+
+    /// <summary>
     /// Acquires one independent movement interruption. If the ship is moving,
     /// the first active interruption pauses and preserves the unfinished route.
     ///

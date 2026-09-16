@@ -16369,6 +16369,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoutePlanner
   playerController: {fileID: 1705402913}
   pathfinder: {fileID: 1705402912}
+  movementAllowance: {fileID: 0}
 --- !u!114 &1705402918
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16402,16 +16403,29 @@ MonoBehaviour:
   gridMap: {fileID: 28316566}
   movementAllowance: {fileID: 1705402921}
   movementPlanController: {fileID: 1705402918}
+  turnManager: {fileID: 0}
   destinationMarker: {fileID: 0}
   reticleSizePixels: 10
   reticleBracketLengthPixels: 3
   pixelsPerUnit: 16
   dotSizePixels: 1
   gapPixels: 4
-  affordableColor: {r: 0.3, g: 1, b: 0.4, a: 1}
-  excessColor: {r: 1, g: 0.35, b: 0.3, a: 1}
+  segmentColors:
+  - {r: 0.3, g: 1, b: 0.4, a: 1}
+  - {r: 1, g: 0.85, b: 0.3, a: 1}
+  - {r: 1, g: 0.55, b: 0.3, a: 1}
+  - {r: 1, g: 0.35, b: 0.3, a: 1}
   sortingLayerName: Foreground
   sortingOrder: 122
+  showTurnLabels: 1
+  placeLabelOnTarget: 1
+  turnLabelPrefix: '#'
+  useCurrentTurnNumbering: 0
+  labelFont: {fileID: 12800000, guid: f72e92865f6c09f47b262c247e6dd405, type: 3}
+  labelFontSize: 20
+  labelWorldSize: 0.28
+  labelSidewaysOffsetUnits: 1
+  labelVerticalOffsetScale: 0.45
 --- !u!114 &1705402920
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17049,6 +17063,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShipState
   movementController: {fileID: 1705402913}
   resources: {fileID: 2078833602}
+  movementPlanController: {fileID: 0}
   eventState:
     tags: []
     flags: []
