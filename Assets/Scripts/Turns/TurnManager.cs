@@ -115,19 +115,45 @@ public class TurnManager : MonoBehaviour
     }
 
 
+    private bool isEndingTurn;
+
+
     /// <summary>
     /// Advances the turn counter and notifies anything listening for a
     /// turn to have ended. Wired automatically to waitTurnButton's click
     /// if one is assigned. Also fine to call directly from other code -
     /// MovementAllowance calls this itself when a turn's movement budget
     /// runs out, if it is configured to do that.
+    ///
+    /// Safe to call re-entrantly - if something calls EndTurn() again
+    /// from within a TurnEnded subscriber triggered by an EndTurn() call
+    /// already in progress, the nested call is a no-op rather than
+    /// double-incrementing the turn or firing TurnEnded twice. This
+    /// matters for MovementPlanController, which may call EndTurn() from
+    /// its own TurnEnded handler to make committing a queued segment and
+    /// ending the turn behave as one action regardless of which one was
+    /// actually pressed.
     /// </summary>
     public void EndTurn()
     {
-        currentTurn++;
-        TicksThisTurn = 0;
+        if (isEndingTurn)
+        {
+            return;
+        }
 
-        TurnEnded?.Invoke(currentTurn);
+        isEndingTurn = true;
+
+        try
+        {
+            currentTurn++;
+            TicksThisTurn = 0;
+
+            TurnEnded?.Invoke(currentTurn);
+        }
+        finally
+        {
+            isEndingTurn = false;
+        }
     }
 
 
