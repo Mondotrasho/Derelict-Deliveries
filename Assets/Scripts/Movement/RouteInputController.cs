@@ -124,6 +124,15 @@ public class RouteInputController : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        if (IsRouteInputBlocked())
+        {
+            // If an interruption begins mid-drag, do not let the held
+            // mouse resume editing the route when gameplay input unlocks.
+            isDragging = false;
+            lastCursorCell = null;
+            return;
+        }
+
         if (Mouse.current != null)
         {
             bool overUI =
@@ -176,7 +185,10 @@ public class RouteInputController : MonoBehaviour
     /// </summary>
     private void HandleCommitButtonClicked()
     {
-        movementPlanController?.CommitSegment();
+        if (!IsRouteInputBlocked())
+        {
+            movementPlanController?.CommitSegment();
+        }
     }
 
 
@@ -185,7 +197,22 @@ public class RouteInputController : MonoBehaviour
     /// </summary>
     private void HandleCancelButtonClicked()
     {
-        movementPlanController?.Cancel();
+        if (!IsRouteInputBlocked())
+        {
+            movementPlanController?.Cancel();
+        }
+    }
+
+
+    /// <summary>
+    /// Blocking is owned by the movement/plan boundary, not by Combat, Events
+    /// or any other feature directly. This prevents route editing, commit and
+    /// cancel input from leaking through a modal gameplay interruption.
+    /// </summary>
+    private bool IsRouteInputBlocked()
+    {
+        return movementPlanController != null &&
+               movementPlanController.IsMovementInterrupted;
     }
 
 

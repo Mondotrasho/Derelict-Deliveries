@@ -29,6 +29,10 @@ public class PlayerShipState : MonoBehaviour
     [SerializeField]
     private ShipResources resources;
 
+    [Tooltip("Optional. Used by CancelCurrentJourney() to clear planned/queued route state as well as physical movement.")]
+    [SerializeField]
+    private MovementPlanController movementPlanController;
+
 
     [Header("Persistent Event State")]
 
@@ -179,6 +183,29 @@ public class PlayerShipState : MonoBehaviour
 
 
     /// <summary>
+    /// Permanently discards the complete current journey: physical movement,
+    /// any freshly planned route, and any queued multi-turn remainder.
+    ///
+    /// This is the integration-facing operation for an event/combat result
+    /// that invalidates the old travel plan. It keeps outside systems from
+    /// needing to know that physical and logical route state live in separate
+    /// movement components.
+    /// </summary>
+    public void CancelCurrentJourney()
+    {
+        if (movementController != null)
+        {
+            movementController.StopMovement();
+        }
+
+        if (movementPlanController != null)
+        {
+            movementPlanController.Cancel();
+        }
+    }
+
+
+    /// <summary>
     /// Permanently discards the current physical movement command.
     /// This is separate from releasing an interruption: a combat/event system
     /// can cancel the old journey first, then release its interruption without
@@ -203,6 +230,12 @@ public class PlayerShipState : MonoBehaviour
         if (resources == null)
         {
             resources = GetComponent<ShipResources>();
+        }
+
+        if (movementPlanController == null)
+        {
+            movementPlanController =
+                GetComponentInChildren<MovementPlanController>(true);
         }
     }
 

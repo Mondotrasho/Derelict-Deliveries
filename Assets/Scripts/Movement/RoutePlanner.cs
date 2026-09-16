@@ -6,9 +6,10 @@ using UnityEngine;
 /// Owns the currently planned route for the player.
 ///
 /// RoutePlanner only decides WHICH cells the player intends to travel
-/// through next. It does not draw anything (RoutePathRenderer), does not
-/// check movement allowance (MovementAllowance), and does not move the
-/// player (MovementPlanController / PlayerGridController).
+/// through next. It does not draw anything (RoutePathRenderer), enforce or
+/// spend the movement budget (MovementAllowance), or move the player
+/// (MovementPlanController / PlayerGridController). When MovementAllowance is
+/// available it may use its public step-cost API to choose the cheapest route.
 /// </summary>
 public class RoutePlanner : MonoBehaviour
 {
@@ -19,6 +20,10 @@ public class RoutePlanner : MonoBehaviour
 
     [SerializeField]
     private GridPathfinder pathfinder;
+
+    [Tooltip("Optional. When assigned, automatic A* route choice uses the same final movement costs as the player's budget, including registered feature modifiers.")]
+    [SerializeField]
+    private MovementAllowance movementAllowance;
 
 
     private Vector3Int? plannedDestination;
@@ -58,6 +63,45 @@ public class RoutePlanner : MonoBehaviour
     }
 
 
+    private void Awake()
+    {
+        // RoutePlanner and MovementAllowance currently live together on the
+        // MovementPlanning object. Auto-resolving keeps the existing scene
+        // compatible while still allowing an explicit reference if the
+        // hierarchy changes later.
+        if (movementAllowance == null)
+        {
+            movementAllowance = GetComponent<MovementAllowance>();
+        }
+    }
+
+
+    /// <summary>
+    /// Uses the player's final movement-cost API when available so route
+    /// choice can avoid an expensive hazard rather than merely charging for it
+    /// after the path has already been chosen. Falls back to normal base-cost
+    /// A* when no MovementAllowance is assigned.
+    /// </summary>
+    private List<Vector3Int> FindPlayerPath(
+        Vector3Int startCell,
+        Vector3Int destinationCell)
+    {
+        if (movementAllowance != null)
+        {
+            return pathfinder.FindPath(
+                startCell,
+                destinationCell,
+                movementAllowance.GetMovementCost
+            );
+        }
+
+        return pathfinder.FindPath(
+            startCell,
+            destinationCell
+        );
+    }
+
+
     /// <summary>
     /// Requests a candidate route from the player's current cell to
     /// destinationCell. Replaces any previously planned route, even if
@@ -88,7 +132,7 @@ public class RoutePlanner : MonoBehaviour
         plannedDestination = destinationCell;
 
         plannedPath =
-            pathfinder.FindPath(
+            FindPlayerPath(
                 playerController.CurrentCell,
                 destinationCell
             );
@@ -190,7 +234,7 @@ public class RoutePlanner : MonoBehaviour
             // route. FindPath already only ever returns legal steps, so
             // every cell in this segment will pass CanStepBetween too.
             List<Vector3Int> bridgeSegment =
-                pathfinder.FindPath(lastCell, cell);
+                FindPlayerPath(lastCell, cell);
 
             changed = false;
 

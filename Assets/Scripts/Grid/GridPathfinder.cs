@@ -139,7 +139,8 @@ public class GridPathfinder : MonoBehaviour
 
 
     /// <summary>
-    /// Finds a path from startCell to destinationCell.
+    /// Finds a path from startCell to destinationCell using this
+    /// GridPathfinder's normal base orthogonal/diagonal costs.
     ///
     /// The returned path does not include the starting cell.
     /// An empty list means either no movement is needed or no path was found.
@@ -147,6 +148,55 @@ public class GridPathfinder : MonoBehaviour
     public List<Vector3Int> FindPath(
         Vector3Int startCell,
         Vector3Int destinationCell)
+    {
+        return FindPathInternal(
+            startCell,
+            destinationCell,
+            GetBaseStepCost,
+            true
+        );
+    }
+
+
+    /// <summary>
+    /// Finds the cheapest legal path using a caller-supplied step-cost
+    /// function. This is the integration point for terrain, hazard or
+    /// ship-specific movement costs without putting those feature rules into
+    /// GridPathfinder.
+    ///
+    /// The callback must return a positive cost for each legal adjacent step.
+    /// Because arbitrary feature costs may not match this class's heuristic,
+    /// this overload deliberately uses a zero heuristic (Dijkstra behaviour)
+    /// so the returned route remains correct.
+    /// </summary>
+    public List<Vector3Int> FindPath(
+        Vector3Int startCell,
+        Vector3Int destinationCell,
+        System.Func<Vector3Int, Vector3Int, int> stepCostFunction)
+    {
+        if (stepCostFunction == null)
+        {
+            Debug.LogError(
+                "FindPath requires a stepCostFunction for the custom-cost overload."
+            );
+
+            return new List<Vector3Int>();
+        }
+
+        return FindPathInternal(
+            startCell,
+            destinationCell,
+            stepCostFunction,
+            false
+        );
+    }
+
+
+    private List<Vector3Int> FindPathInternal(
+        Vector3Int startCell,
+        Vector3Int destinationCell,
+        System.Func<Vector3Int, Vector3Int, int> stepCostFunction,
+        bool useBaseHeuristic)
     {
         List<Vector3Int> emptyPath = new List<Vector3Int>();
 
@@ -190,7 +240,10 @@ public class GridPathfinder : MonoBehaviour
         PathNode startNode = new PathNode(startCell);
 
         startNode.GCost = 0;
-        startNode.HCost = CalculateHeuristic(startCell, destinationCell);
+        startNode.HCost =
+            useBaseHeuristic
+                ? CalculateHeuristic(startCell, destinationCell)
+                : 0;
 
         openNodes.Add(startNode);
         knownNodes.Add(startCell, startNode);
@@ -231,14 +284,21 @@ public class GridPathfinder : MonoBehaviour
                     direction.y != 0;
 
                 int stepCost =
-                    GetBaseStepCost(
-                        currentNode.Cell,
-                        neighbourCell
+                    Mathf.Max(
+                        1,
+                        stepCostFunction(
+                            currentNode.Cell,
+                            neighbourCell
+                        )
                     );
 
+                long rawNewGCost =
+                    (long)currentNode.GCost + stepCost;
+
                 int newGCost =
-                    currentNode.GCost +
-                    stepCost;
+                    rawNewGCost >= int.MaxValue
+                        ? int.MaxValue
+                        : (int)rawNewGCost;
 
 
                 if (!knownNodes.TryGetValue(
@@ -249,10 +309,12 @@ public class GridPathfinder : MonoBehaviour
 
                     neighbourNode.GCost = newGCost;
                     neighbourNode.HCost =
-                        CalculateHeuristic(
-                            neighbourCell,
-                            destinationCell
-                        );
+                        useBaseHeuristic
+                            ? CalculateHeuristic(
+                                neighbourCell,
+                                destinationCell
+                            )
+                            : 0;
 
                     neighbourNode.Parent = currentNode;
 
@@ -266,16 +328,9 @@ public class GridPathfinder : MonoBehaviour
                 bool isCheaper =
                     newGCost < neighbourNode.GCost;
 
-                // With diagonalStepCost at its default (2x orthogonal),
-                // a diagonal route and an equivalent staircase route cost
-                // exactly the same - so without a tie-break, whichever
-                // shape reached a cell first "wins" and never gets
-                // replaced (newGCost < GCost is strict). Since directions
-                // are checked orthogonal-first, that meant staircases by
-                // default. This tie-break lets an equal-cost diagonal
-                // step take over from an existing orthogonal one, purely
-                // for a smoother-looking route - it does not change the
-                // base step costs exposed through GetBaseStepCost.
+                // Equal-cost routes prefer a diagonal arrival when requested,
+                // preserving the existing smoother-looking tie-break without
+                // changing which route is considered cheapest.
                 bool isEqualCostButSmoother =
                     preferDiagonalMovement &&
                     newGCost == neighbourNode.GCost &&
@@ -435,14 +490,22 @@ public class GridPathfinder : MonoBehaviour
                     continue;
                 }
 
-                int newCost =
-                    currentCost +
-                    stepCostFunction(currentCell, neighbourCell);
+                int stepCost =
+                    Mathf.Max(
+                        1,
+                        stepCostFunction(currentCell, neighbourCell)
+                    );
 
-                if (newCost > maxBudget)
+                long rawNewCost =
+                    (long)currentCost + stepCost;
+
+                if (rawNewCost > maxBudget ||
+                    rawNewCost >= int.MaxValue)
                 {
                     continue;
                 }
+
+                int newCost = (int)rawNewCost;
 
                 if (bestCostSoFar.TryGetValue(
                         neighbourCell,

@@ -191,6 +191,21 @@ public class MovementPlanController : MonoBehaviour
 
 
     /// <summary>
+    /// True while an outside feature currently owns one or more movement
+    /// interruption handles. Route-input scripts use this public boundary
+    /// rather than reaching into PlayerGridController themselves.
+    /// </summary>
+    public bool IsMovementInterrupted
+    {
+        get
+        {
+            return playerController != null &&
+                   playerController.IsMovementInterrupted;
+        }
+    }
+
+
+    /// <summary>
     /// True when there is something committable right now and the player
     /// is free to start it - either a freshly planned route, or a queued
     /// remainder if nothing new has been planned since. MovementAllowance

@@ -59,12 +59,24 @@ public class MovementAllowance : MonoBehaviour
 
     private int currentMovementPoints;
 
+    // Feature-owned movement cost rules register here rather than adding
+    // hazard/event-specific code to MovementAllowance.
+    private readonly List<IMovementCostModifier> movementCostModifiers =
+        new List<IMovementCostModifier>();
+
 
     /// <summary>
     /// Raised whenever CurrentMovementPoints changes, so renderers and UI
     /// can refresh without polling every frame.
     /// </summary>
     public event Action AllowanceChanged;
+
+    /// <summary>
+    /// Raised whenever the set or state of movement-cost rules changes.
+    /// Route/range visuals can refresh without knowing which outside feature
+    /// supplied the rule.
+    /// </summary>
+    public event Action MovementCostRulesChanged;
 
 
     /// <summary>
@@ -138,15 +150,12 @@ public class MovementAllowance : MonoBehaviour
 
 
     /// <summary>
-    /// Cost to travel from one cell into an adjacent cell. When a
-    /// GridPathfinder is assigned this uses its exposed base step cost, keeping
-    /// A* route choice and the player budget on the same numbers. The local
-    /// orthogonal/diagonal fields are fallback values only.
-    ///
-    /// This method remains the player-budget seam where later terrain or
-    /// hazard surcharges can be layered without changing UI callers.
+    /// Base cost to travel from one cell into an adjacent cell before any
+    /// feature-owned modifiers are applied. When a GridPathfinder is assigned
+    /// this uses its exposed base step cost, keeping A* and the player budget
+    /// on the same numbers. Local orthogonal/diagonal fields are fallback only.
     /// </summary>
-    public int GetMovementCost(Vector3Int fromCell, Vector3Int toCell)
+    public int GetBaseMovementCost(Vector3Int fromCell, Vector3Int toCell)
     {
         if (pathfinder != null)
         {
@@ -162,6 +171,87 @@ public class MovementAllowance : MonoBehaviour
         return isDiagonalStep
             ? costPerDiagonalCell
             : costPerOrthogonalCell;
+    }
+
+
+    /// <summary>
+    /// Final player movement cost for one adjacent step. Starts with the base
+    /// orthogonal/diagonal price, then adds every registered
+    /// IMovementCostModifier surcharge.
+    ///
+    /// Outside features should register a modifier rather than editing this
+    /// class. Negative modifier results are ignored so a feature cannot
+    /// accidentally make a step free or produce an invalid A* cost.
+    /// </summary>
+    public int GetMovementCost(Vector3Int fromCell, Vector3Int toCell)
+    {
+        long totalCost = GetBaseMovementCost(fromCell, toCell);
+
+        foreach (IMovementCostModifier modifier in movementCostModifiers)
+        {
+            if (modifier == null)
+            {
+                continue;
+            }
+
+            int additionalCost =
+                Mathf.Max(
+                    0,
+                    modifier.GetAdditionalMovementCost(fromCell, toCell)
+                );
+
+            totalCost += additionalCost;
+
+            if (totalCost >= int.MaxValue)
+            {
+                return int.MaxValue;
+            }
+        }
+
+        return Mathf.Max(1, (int)totalCost);
+    }
+
+
+    /// <summary>
+    /// Registers one feature-owned movement-cost rule. Safe to call more than
+    /// once for the same object; duplicates are ignored.
+    /// </summary>
+    public bool RegisterMovementCostModifier(IMovementCostModifier modifier)
+    {
+        if (modifier == null || movementCostModifiers.Contains(modifier))
+        {
+            return false;
+        }
+
+        movementCostModifiers.Add(modifier);
+        MovementCostRulesChanged?.Invoke();
+        return true;
+    }
+
+
+    /// <summary>
+    /// Removes a previously registered movement-cost rule.
+    /// </summary>
+    public bool UnregisterMovementCostModifier(IMovementCostModifier modifier)
+    {
+        if (modifier == null || !movementCostModifiers.Remove(modifier))
+        {
+            return false;
+        }
+
+        MovementCostRulesChanged?.Invoke();
+        return true;
+    }
+
+
+    /// <summary>
+    /// Call when an already-registered modifier changed its internal state
+    /// without being registered/unregistered. This lets route/range displays
+    /// refresh while keeping the modifier's implementation outside this class.
+    /// </summary>
+    public void NotifyMovementCostsChanged()
+    {
+        MovementCostRulesChanged?.Invoke();
     }
 
 

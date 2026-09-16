@@ -60,6 +60,7 @@ public class TurnStatusDisplay : MonoBehaviour
         if (movementAllowance != null)
         {
             movementAllowance.AllowanceChanged += HandleChanged;
+            movementAllowance.MovementCostRulesChanged += HandleChanged;
         }
 
         if (routePlanner != null)
@@ -89,6 +90,7 @@ public class TurnStatusDisplay : MonoBehaviour
         if (movementAllowance != null)
         {
             movementAllowance.AllowanceChanged -= HandleChanged;
+            movementAllowance.MovementCostRulesChanged -= HandleChanged;
         }
 
         if (routePlanner != null)

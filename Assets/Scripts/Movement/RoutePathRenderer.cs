@@ -136,6 +136,7 @@ public class RoutePathRenderer : MonoBehaviour
         if (movementAllowance != null)
         {
             movementAllowance.AllowanceChanged += HandleAllowanceChanged;
+            movementAllowance.MovementCostRulesChanged += HandleAllowanceChanged;
         }
 
         if (movementPlanController != null)
@@ -155,6 +156,7 @@ public class RoutePathRenderer : MonoBehaviour
         if (movementAllowance != null)
         {
             movementAllowance.AllowanceChanged -= HandleAllowanceChanged;
+            movementAllowance.MovementCostRulesChanged -= HandleAllowanceChanged;
         }
 
         if (movementPlanController != null)

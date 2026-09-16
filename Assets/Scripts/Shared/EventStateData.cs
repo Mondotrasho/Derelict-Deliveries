@@ -18,11 +18,15 @@ public interface IEventState
     bool RemoveTag(string tag);
 
     bool GetFlag(string key, bool fallback = false);
+    bool TryGetFlag(string key, out bool value);
     void SetFlag(string key, bool value);
+    bool RemoveFlag(string key);
 
     int GetCounter(string key, int fallback = 0);
+    bool TryGetCounter(string key, out int value);
     void SetCounter(string key, int value);
     int IncrementCounter(string key, int delta = 1);
+    bool RemoveCounter(string key);
 }
 
 
@@ -40,8 +44,9 @@ public interface IEventState
 /// - Flags: "MetCultLeader", "FoundLostCapsule".
 /// - Counters: "IndustrialJobsCompleted", "FactionAReputation".
 ///
-/// PlanetEventState derives from this type. PlayerShipState also owns one,
-/// so event code can use the same basic API for both planet and player state.
+/// PlanetEventState keeps its own serialized layout, while PlayerShipState
+/// owns this type directly. Both implement IEventState, so event code can use
+/// the same basic API for planet and player state without coupling them.
 /// </summary>
 [Serializable]
 public class EventStateData : IEventState
