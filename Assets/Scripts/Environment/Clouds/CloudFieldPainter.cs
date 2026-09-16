@@ -298,7 +298,7 @@ public sealed class CloudFieldPainter : MonoBehaviour
     [SerializeField] private bool debugDrawFieldGuide = true;
 
     private CloudMass mass;
-    private CloudTileRenderer renderer;
+    private CloudTileRenderer cloudRenderer;
 
     private readonly List<SkeletonCloud> clouds = new List<SkeletonCloud>();
     private readonly HashSet<int> rasterPixels = new HashSet<int>();
@@ -905,8 +905,8 @@ public sealed class CloudFieldPainter : MonoBehaviour
         {
             // Noise, skin thickness and several other non-structural visual values
             // can affect the raster immediately, even before another physics step.
-            if (RasteriseSkeletonField() && renderer != null)
-                renderer.UpdateChangedTiles(mass, origin, size);
+            if (RasteriseSkeletonField() && cloudRenderer != null)
+                cloudRenderer.UpdateChangedTiles(mass, origin, size);
         }
 
 #if UNITY_EDITOR
@@ -932,13 +932,13 @@ public sealed class CloudFieldPainter : MonoBehaviour
             return;
 
         DisposeRenderer();
-        renderer = new CloudTileRenderer(
+        cloudRenderer = new CloudTileRenderer(
             cloudTilemap,
             TilePixelSize,
             pixelsPerUnit,
             cloudColour);
 
-        renderer.RenderAll(mass, origin, size);
+        cloudRenderer.RenderAll(mass, origin, size);
     }
 
     private void CaptureAppliedSignatures()
@@ -1048,13 +1048,13 @@ public sealed class CloudFieldPainter : MonoBehaviour
 
         RasteriseSkeletonField();
 
-        renderer = new CloudTileRenderer(
+        cloudRenderer = new CloudTileRenderer(
             cloudTilemap,
             TilePixelSize,
             pixelsPerUnit,
             cloudColour);
 
-        renderer.RenderAll(mass, origin, size);
+        cloudRenderer.RenderAll(mass, origin, size);
         CaptureAppliedSignatures();
         ReportMassWarningIfNeeded();
         UpdateDebugOverlayRenderer();
@@ -1272,7 +1272,7 @@ public sealed class CloudFieldPainter : MonoBehaviour
         ExpelJointsFromBlockedSpace();
         RasteriseSkeletonField();
 
-        renderer.UpdateChangedTiles(mass, origin, size);
+        cloudRenderer.UpdateChangedTiles(mass, origin, size);
         ReportMassWarningIfNeeded();
         return removed;
     }
@@ -1289,7 +1289,7 @@ public sealed class CloudFieldPainter : MonoBehaviour
             return;
 
         RasteriseSkeletonField();
-        renderer.UpdateChangedTiles(mass, origin, size);
+        cloudRenderer.UpdateChangedTiles(mass, origin, size);
         ReportMassWarningIfNeeded();
     }
 
@@ -1323,7 +1323,7 @@ public sealed class CloudFieldPainter : MonoBehaviour
         StepSkeletonSimulation(Mathf.Min(dt, 0.35f));
 
         if (RasteriseSkeletonField())
-            renderer.UpdateChangedTiles(mass, origin, size);
+            cloudRenderer.UpdateChangedTiles(mass, origin, size);
     }
 
     [ContextMenu("Render Cloud Field")]
@@ -1333,7 +1333,7 @@ public sealed class CloudFieldPainter : MonoBehaviour
             return;
 
         EnsureRenderer();
-        renderer.RenderAll(mass, origin, size);
+        cloudRenderer.RenderAll(mass, origin, size);
     }
 
     public bool ContainsCloud(Vector3Int tilePosition)
@@ -1420,7 +1420,7 @@ public sealed class CloudFieldPainter : MonoBehaviour
         StepSkeletonSimulation(Mathf.Max(0.001f, deltaTime));
 
         if (RasteriseSkeletonField())
-            renderer.UpdateChangedTiles(mass, origin, size);
+            cloudRenderer.UpdateChangedTiles(mass, origin, size);
     }
 
     /// <summary>
@@ -2225,18 +2225,18 @@ public sealed class CloudFieldPainter : MonoBehaviour
         if (mass != null && clouds.Count > 0)
         {
             EnsureRenderer();
-            return renderer != null;
+            return cloudRenderer != null;
         }
 
         GenerateCloud();
-        return mass != null && clouds.Count > 0 && renderer != null;
+        return mass != null && clouds.Count > 0 && cloudRenderer != null;
     }
 
     private void EnsureRenderer()
     {
-        if (renderer == null && cloudTilemap != null)
+        if (cloudRenderer == null && cloudTilemap != null)
         {
-            renderer = new CloudTileRenderer(
+            cloudRenderer = new CloudTileRenderer(
                 cloudTilemap,
                 TilePixelSize,
                 pixelsPerUnit,
@@ -2935,11 +2935,11 @@ public sealed class CloudFieldPainter : MonoBehaviour
 
     private void DisposeRenderer()
     {
-        if (renderer == null)
+        if (cloudRenderer == null)
             return;
 
-        renderer.Dispose();
-        renderer = null;
+        cloudRenderer.Dispose();
+        cloudRenderer = null;
     }
 
 #if UNITY_EDITOR

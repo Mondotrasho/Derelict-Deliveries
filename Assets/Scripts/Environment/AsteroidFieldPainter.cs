@@ -200,6 +200,44 @@ public class AsteroidFieldPainter : MonoBehaviour
 
     // ==================== Query / Consume ====================
 
+    /// <summary>
+    /// True when the requested grid cell currently contains an asteroid tile.
+    /// This is the simplest per-cell query for movement hazards, mining or
+    /// event placement code.
+    /// </summary>
+    public bool HasAsteroidAtCell(Vector3Int cell)
+    {
+        return asteroidTilemap != null &&
+               asteroidTilemap.GetTile(cell) != null;
+    }
+
+
+    /// <summary>
+    /// Snapshot of every currently occupied asteroid cell in the Tilemap.
+    /// The returned list is independent of the painter and may be filtered or
+    /// cached by the caller without modifying asteroid state.
+    /// </summary>
+    public List<Vector3Int> GetAllAsteroidCells()
+    {
+        List<Vector3Int> result = new List<Vector3Int>();
+
+        if (asteroidTilemap == null)
+        {
+            return result;
+        }
+
+        foreach (Vector3Int cell in asteroidTilemap.cellBounds.allPositionsWithin)
+        {
+            if (asteroidTilemap.GetTile(cell) != null)
+            {
+                result.Add(cell);
+            }
+        }
+
+        return result;
+    }
+
+
     /// <summary>True if any asteroid tile exists anywhere inside the given cell-space square/rectangle.</summary>
     public bool HasTilesInArea(BoundsInt area)
     {
@@ -232,19 +270,67 @@ public class AsteroidFieldPainter : MonoBehaviour
         return result;
     }
 
-    /// <summary>Removes ("consumes") any asteroid tiles inside the given area.</summary>
+    /// <summary>
+    /// Removes ("consumes") any asteroid tiles inside the given area.
+    /// Retained for existing callers; use ConsumeAreaAndCount when the caller
+    /// needs to know how much material was actually present.
+    /// </summary>
     public void ConsumeArea(BoundsInt area)
     {
-        if (asteroidTilemap == null) return;
-
-        foreach (var cell in area.allPositionsWithin)
-            asteroidTilemap.SetTile(cell, null);
+        ConsumeAreaAndCount(area);
     }
 
-    /// <summary>Removes ("consumes") the asteroid tile at a single cell, if any.</summary>
+
+    /// <summary>
+    /// Removes asteroid tiles inside area and returns the number actually
+    /// removed. Useful for mining/reward code without requiring it to query
+    /// and then mutate the field in two separate passes.
+    /// </summary>
+    public int ConsumeAreaAndCount(BoundsInt area)
+    {
+        if (asteroidTilemap == null)
+        {
+            return 0;
+        }
+
+        int consumed = 0;
+
+        foreach (Vector3Int cell in area.allPositionsWithin)
+        {
+            if (TryConsumeCell(cell))
+            {
+                consumed++;
+            }
+        }
+
+        return consumed;
+    }
+
+
+    /// <summary>
+    /// Removes ("consumes") the asteroid tile at a single cell, if any.
+    /// Retained for existing callers that do not need a result.
+    /// </summary>
     public void ConsumeCell(Vector3Int cell)
     {
-        asteroidTilemap?.SetTile(cell, null);
+        TryConsumeCell(cell);
+    }
+
+
+    /// <summary>
+    /// Removes one asteroid cell and returns true only when a tile was actually
+    /// present and consumed. This is the preferred mutation API for mining and
+    /// one-off world events.
+    /// </summary>
+    public bool TryConsumeCell(Vector3Int cell)
+    {
+        if (!HasAsteroidAtCell(cell))
+        {
+            return false;
+        }
+
+        asteroidTilemap.SetTile(cell, null);
+        return true;
     }
 
     // ==================== Internals ====================
