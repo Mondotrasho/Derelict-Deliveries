@@ -27,6 +27,10 @@ public class MovementAllowance : MonoBehaviour
     [SerializeField]
     private TurnManager turnManager;
 
+    [Tooltip("Optional but recommended. When assigned, MovementAllowance uses GridPathfinder's base step costs so A* route choice and player budget pricing cannot drift apart. It is also required for reachable-cell queries.")]
+    [SerializeField]
+    private GridPathfinder pathfinder;
+
 
     [Header("Timing")]
 
@@ -44,11 +48,11 @@ public class MovementAllowance : MonoBehaviour
 
     [Header("Cost")]
 
-    [Tooltip("Cost to move into one orthogonal (N/S/E/W) cell.")]
+    [Tooltip("Fallback orthogonal cost used only when no GridPathfinder is assigned.")]
     [SerializeField]
     private int costPerOrthogonalCell = 1;
 
-    [Tooltip("Cost to move into one diagonal cell. Should match GridPathfinder's diagonalStepCost - GridPathfinder deliberately doesn't know about MovementAllowance, so the two fields are not shared automatically and a mismatch would let the pathfinder pick routes this budget disagrees about the price of.")]
+    [Tooltip("Fallback diagonal cost used only when no GridPathfinder is assigned.")]
     [SerializeField]
     private int costPerDiagonalCell = 2;
 
@@ -87,6 +91,22 @@ public class MovementAllowance : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Remaining movement as a 0-1 value for UI bars/dials. The underlying
+    /// integer values remain available through CurrentMovementPoints and
+    /// MaxMovementPoints.
+    /// </summary>
+    public float RemainingFraction
+    {
+        get
+        {
+            return maxMovementPoints > 0
+                ? (float)currentMovementPoints / maxMovementPoints
+                : 0.0f;
+        }
+    }
+
+
     private void OnEnable()
     {
         if (turnManager != null)
@@ -118,13 +138,21 @@ public class MovementAllowance : MonoBehaviour
 
 
     /// <summary>
-    /// Cost to travel from one cell into an adjacent cell. Diagonal steps
-    /// (both axes changing) use costPerDiagonalCell; everything else uses
-    /// costPerOrthogonalCell. This is also the seam for later per-terrain
-    /// or hazard-based variable costs.
+    /// Cost to travel from one cell into an adjacent cell. When a
+    /// GridPathfinder is assigned this uses its exposed base step cost, keeping
+    /// A* route choice and the player budget on the same numbers. The local
+    /// orthogonal/diagonal fields are fallback values only.
+    ///
+    /// This method remains the player-budget seam where later terrain or
+    /// hazard surcharges can be layered without changing UI callers.
     /// </summary>
     public int GetMovementCost(Vector3Int fromCell, Vector3Int toCell)
     {
+        if (pathfinder != null)
+        {
+            return pathfinder.GetBaseStepCost(fromCell, toCell);
+        }
+
         Vector3Int delta = toCell - fromCell;
 
         bool isDiagonalStep =
@@ -239,6 +267,127 @@ public class MovementAllowance : MonoBehaviour
         }
 
         return affordableCount;
+    }
+
+
+    /// <summary>
+    /// Splits path into the sequence of turn-sized chunks it would
+    /// actually take to travel the whole thing - the first chunk priced
+    /// against CurrentMovementPoints (whatever's left right now), every
+    /// chunk after that against MaxMovementPoints (a turn will have ended
+    /// and refilled by the time it executes). Returns the cumulative cell
+    /// count at the end of each chunk - e.g. [5, 12, 18] for an 18-cell
+    /// path means cells 0-4 this turn, 5-11 the turn after, 12-17 the
+    /// turn after that.
+    ///
+    /// A path that fits in the current budget returns a single-entry list
+    /// equal to path.Count - the "many turns" case and the ordinary "it
+    /// all fits" case are the same shape, not two different ones.
+    /// MovementPlanController.CommitSegment() relies on that to treat
+    /// both uniformly.
+    /// </summary>
+    public List<int> GetTurnSegmentBreakpoints(IReadOnlyList<Vector3Int> path)
+    {
+        List<int> breakpoints = new List<int>();
+
+        if (path == null || path.Count == 0)
+        {
+            return breakpoints;
+        }
+
+        if (playerController == null)
+        {
+            Debug.LogError(
+                "MovementAllowance has no PlayerGridController assigned."
+            );
+
+            return breakpoints;
+        }
+
+
+        Vector3Int previousCell = playerController.CurrentCell;
+
+        int budgetRemainingThisWindow = currentMovementPoints;
+
+        for (int i = 0; i < path.Count; i++)
+        {
+            int cost = GetMovementCost(previousCell, path[i]);
+
+            // A single step costing more than a full turn's budget can
+            // never be affordable no matter how many turns pass - without
+            // this check the loop would keep opening new windows that
+            // can still never fit it.
+            if (cost > maxMovementPoints)
+            {
+                Debug.LogWarning(
+                    $"MovementAllowance: a single step in this path costs {cost}, " +
+                    "more than any turn's full budget - it can never be " +
+                    "travelled, segmented or not."
+                );
+
+                break;
+            }
+
+            if (cost > budgetRemainingThisWindow)
+            {
+                breakpoints.Add(i);
+                budgetRemainingThisWindow = maxMovementPoints;
+            }
+
+            budgetRemainingThisWindow -= cost;
+            previousCell = path[i];
+        }
+
+        breakpoints.Add(path.Count);
+
+        return breakpoints;
+    }
+
+
+    /// <summary>
+    /// Convenience overload for the player's current position. This is the
+    /// normal API for a movement-range overlay: the caller does not need to
+    /// know which movement component owns the current cell.
+    /// </summary>
+    public Dictionary<Vector3Int, int> GetReachableCellsThisTurn()
+    {
+        if (playerController == null)
+        {
+            Debug.LogError(
+                "MovementAllowance has no PlayerGridController assigned."
+            );
+
+            return new Dictionary<Vector3Int, int>();
+        }
+
+        return GetReachableCellsThisTurn(playerController.CurrentCell);
+    }
+
+
+    /// <summary>
+    /// Every cell reachable from fromCell without exceeding the movement
+    /// points remaining right now - the "how far can I go this turn"
+    /// query. Thin wrapper around GridPathfinder.GetReachableCells,
+    /// supplying CurrentMovementPoints as the budget and GetMovementCost
+    /// as the pricing, so callers don't need to know that pairing
+    /// themselves.
+    /// </summary>
+    public Dictionary<Vector3Int, int> GetReachableCellsThisTurn(Vector3Int fromCell)
+    {
+        if (pathfinder == null)
+        {
+            Debug.LogError(
+                "MovementAllowance has no GridPathfinder assigned."
+            );
+
+            return new Dictionary<Vector3Int, int>();
+        }
+
+        return pathfinder.GetReachableCells(
+            fromCell,
+            currentMovementPoints,
+            GetMovementCost
+        );
     }
 
 

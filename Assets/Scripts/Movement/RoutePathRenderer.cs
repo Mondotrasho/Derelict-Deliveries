@@ -2,20 +2,34 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Draws the route currently owned by RoutePlanner as a pixelated dashed
-/// line - a row of small square dots rather than a smooth LineRenderer -
-/// split into the affordable prefix and any "over budget" tail according
-/// to MovementAllowance.
+/// Draws the route currently being planned or partway through a
+/// multi-turn journey, as a pixelated dashed line - a row of small square
+/// dots rather than a smooth LineRenderer - split into the affordable
+/// prefix and any "over budget" tail according to MovementAllowance, plus
+/// one reticle at the end of every turn-sized segment
+/// (MovementAllowance.GetTurnSegmentBreakpoints) rather than only at the
+/// final destination.
 ///
-/// This renderer only converts cells into world-space dot positions - it
-/// does not decide affordability itself (MovementAllowance does), and it
-/// does not move or commit anything.
+/// Draws whichever of RoutePlanner's live plan or
+/// MovementPlanController's queued remainder is currently relevant - the
+/// same priority MovementPlanController itself uses to decide what
+/// CommitSegment() would actually commit - so the remaining legs of a
+/// multi-turn journey stay visible even after the first segment has
+/// already been committed and cleared from RoutePlanner.
 ///
-/// Zero scene setup required: all dot GameObjects are created and pooled
-/// automatically as children of this object. Dot size/spacing are given
-/// in pixels rather than world units, assuming pixelsPerUnit matches how
-/// the project's 8x8 tiles map to world units (1 world unit = 1 tile is
-/// the common convention - adjust pixelsPerUnit if that's not the case).
+/// This renderer only converts cells into world-space dot/reticle
+/// positions - it does not decide affordability itself (MovementAllowance
+/// does), and it does not move or commit anything.
+///
+/// Zero scene setup required: all dot and reticle GameObjects are created
+/// and pooled automatically, at scene root rather than as children of
+/// this object - they need to stay fixed in world space regardless of
+/// where this component itself lives (e.g. under the moving ship, purely
+/// for scene organisation), so they're deliberately not parented to
+/// anything that could move. Dot size/spacing are given in pixels rather
+/// than world units, assuming pixelsPerUnit matches how the project's
+/// 8x8 tiles map to world units (1 world unit = 1 tile is the common
+/// convention - adjust pixelsPerUnit if that's not the case).
 /// </summary>
 public class RoutePathRenderer : MonoBehaviour
 {
@@ -30,13 +44,17 @@ public class RoutePathRenderer : MonoBehaviour
     [SerializeField]
     private GridMap gridMap;
 
-    [Tooltip("Optional. If assigned, the route is split into affordable/excess segments.")]
+    [Tooltip("Optional. If assigned, the route is split into affordable/excess segments and into turn-sized reticle checkpoints.")]
     [SerializeField]
     private MovementAllowance movementAllowance;
 
+    [Tooltip("Optional. If assigned, a queued remainder from a previous segment commit is drawn as a continuation of the route, even once RoutePlanner's own plan has been cleared.")]
+    [SerializeField]
+    private MovementPlanController movementPlanController;
+
     [Header("Destination Reticle")]
 
-    [Tooltip("Optional. If assigned, this is moved to the destination instead of the auto-generated reticle below - use this if you want your own themed marker art.")]
+    [Tooltip("Optional. If assigned, this is moved to the FINAL destination instead of the auto-generated reticle pool - use this if you want your own themed marker art for the end of the route. Every earlier turn-segment checkpoint always uses the auto-generated pool regardless.")]
     [SerializeField]
     private Transform destinationMarker;
 
@@ -89,8 +107,11 @@ public class RoutePathRenderer : MonoBehaviour
     private readonly List<SpriteRenderer> affordablePool = new List<SpriteRenderer>();
     private readonly List<SpriteRenderer> excessPool = new List<SpriteRenderer>();
 
-    // Only created when destinationMarker is left unassigned in the Inspector.
-    private SpriteRenderer autoDestinationMarker;
+    // One reticle per turn-segment checkpoint, grown/reused the same way
+    // the dot pools are. If destinationMarker is assigned, it takes over
+    // the position of the LAST checkpoint each draw, and this pool is
+    // used for every checkpoint before it.
+    private readonly List<SpriteRenderer> reticlePool = new List<SpriteRenderer>();
 
 
     private void Awake()
@@ -102,11 +123,6 @@ public class RoutePathRenderer : MonoBehaviour
 
         excessDotsContainer =
             CreateContainer("ExcessRouteDots");
-
-        if (destinationMarker == null)
-        {
-            autoDestinationMarker = CreateReticle();
-        }
     }
 
 
@@ -121,6 +137,11 @@ public class RoutePathRenderer : MonoBehaviour
         {
             movementAllowance.AllowanceChanged += HandleAllowanceChanged;
         }
+
+        if (movementPlanController != null)
+        {
+            movementPlanController.QueuedRemainderChanged += HandleQueuedRemainderChanged;
+        }
     }
 
 
@@ -134,6 +155,11 @@ public class RoutePathRenderer : MonoBehaviour
         if (movementAllowance != null)
         {
             movementAllowance.AllowanceChanged -= HandleAllowanceChanged;
+        }
+
+        if (movementPlanController != null)
+        {
+            movementPlanController.QueuedRemainderChanged -= HandleQueuedRemainderChanged;
         }
     }
 
@@ -161,32 +187,39 @@ public class RoutePathRenderer : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Deliberately NOT parented to this component's own transform - this
+    /// object may live under the ship (e.g. as a child used purely for
+    /// scene organisation), and dots/reticles need to stay fixed in world
+    /// space as the ship flies past them, not travel along with it. Every
+    /// position is set explicitly every redraw regardless, so there's no
+    /// benefit to parenting them under anything that moves.
+    /// </summary>
     private Transform CreateContainer(string containerName)
     {
-        GameObject container = new GameObject(containerName);
-
-        container.transform.SetParent(
-            transform,
-            false
-        );
+        GameObject container =
+            new GameObject($"{name}_{containerName}");
 
         return container.transform;
     }
 
 
     /// <summary>
-    /// Builds the auto-generated destination marker: a small square
-    /// texture with four corner brackets, like a targeting reticle,
-    /// point-filtered so it stays crisp at any scale.
+    /// Builds one auto-generated reticle marker: a small square texture
+    /// with four corner brackets, like a targeting reticle, point-filtered
+    /// so it stays crisp at any scale. Used both for the pooled per-segment
+    /// checkpoints and, when destinationMarker is left unassigned, for the
+    /// final destination too.
+    ///
+    /// Deliberately not parented to this component's own transform, for
+    /// the same reason as CreateContainer above - it needs to stay fixed
+    /// in world space, not travel with whatever GameObject this script
+    /// happens to live on.
     /// </summary>
-    private SpriteRenderer CreateReticle()
+    private SpriteRenderer CreateReticle(string objectName)
     {
-        GameObject reticleObject = new GameObject("DestinationReticle");
-
-        reticleObject.transform.SetParent(
-            transform,
-            false
-        );
+        GameObject reticleObject =
+            new GameObject($"{name}_{objectName}");
 
         SpriteRenderer reticle =
             reticleObject.AddComponent<SpriteRenderer>();
@@ -297,28 +330,71 @@ public class RoutePathRenderer : MonoBehaviour
     /// </summary>
     private void HandleRouteChanged(List<Vector3Int> path)
     {
-        DrawPath(path);
+        // Deliberately ignore the path parameter and re-derive it fresh -
+        // RouteChanged fires with an empty path the instant
+        // MovementPlanController.CommitSegment() clears RoutePlanner as
+        // part of committing, and drawing that literally would blank out
+        // a queued remainder that should still be visible.
+        RedrawFromCurrentState();
     }
 
 
     /// <summary>
     /// Remaining movement points can change (e.g. spent by a previous
     /// commit) without the planned route itself changing, so redraw using
-    /// whatever RoutePlanner currently has planned.
+    /// whatever is currently relevant.
     /// </summary>
     private void HandleAllowanceChanged()
     {
-        if (routePlanner != null)
+        RedrawFromCurrentState();
+    }
+
+
+    /// <summary>
+    /// A segment commit can leave a new queued remainder, or clear the
+    /// last one, without RoutePlanner's own plan changing at all - redraw
+    /// to match either way.
+    /// </summary>
+    private void HandleQueuedRemainderChanged()
+    {
+        RedrawFromCurrentState();
+    }
+
+
+    private void RedrawFromCurrentState()
+    {
+        DrawPath(GetPathToDraw());
+    }
+
+
+    /// <summary>
+    /// A freshly planned RoutePlanner route if one exists - it always
+    /// takes priority, the same as MovementPlanController.CommitSegment()
+    /// would treat it - otherwise MovementPlanController's queued
+    /// remainder from a previous segment, otherwise nothing to draw.
+    /// </summary>
+    private List<Vector3Int> GetPathToDraw()
+    {
+        if (routePlanner != null && routePlanner.HasPlannedRoute)
         {
-            DrawPath(new List<Vector3Int>(routePlanner.PlannedPath));
+            return new List<Vector3Int>(routePlanner.PlannedPath);
         }
+
+        if (movementPlanController != null &&
+            movementPlanController.HasQueuedRemainder)
+        {
+            return new List<Vector3Int>(movementPlanController.QueuedRemainder);
+        }
+
+        return null;
     }
 
 
     /// <summary>
     /// Rebuilds the dashed dots from the player's current position through
     /// every cell in the planned path - split at the point where the
-    /// route stops being affordable.
+    /// route stops being affordable - and places one reticle at the end
+    /// of every turn-sized segment.
     /// </summary>
     private void DrawPath(List<Vector3Int> path)
     {
@@ -337,7 +413,7 @@ public class RoutePathRenderer : MonoBehaviour
             DeactivateFrom(affordablePool, 0);
             DeactivateFrom(excessPool, 0);
 
-            SetDestinationMarkerActive(false);
+            HideAllReticles();
 
             return;
         }
@@ -405,56 +481,100 @@ public class RoutePathRenderer : MonoBehaviour
         DeactivateFrom(excessPool, excessDotCount);
 
 
-        Vector3 destinationWorldPosition =
-            gridMap.CellToWorld(path[path.Count - 1]);
+        List<int> breakpoints =
+            movementAllowance != null
+                ? movementAllowance.GetTurnSegmentBreakpoints(path)
+                : new List<int> { path.Count };
 
-        bool destinationIsAffordable =
-            affordableCellCount >= path.Count;
-
-        SetDestinationMarkerActive(
-            true,
-            destinationWorldPosition,
-            destinationIsAffordable
-        );
+        DrawSegmentReticles(path, breakpoints);
     }
 
 
     /// <summary>
-    /// Drives whichever destination marker is in play - your own assigned
-    /// Transform if one was set, otherwise the auto-generated reticle,
-    /// recoloured to match whether the full route is currently affordable.
+    /// Places one reticle at the end of every turn-segment breakpoint -
+    /// the first (this-turn) checkpoint in affordableColor, every later
+    /// one in excessColor, the same two-colour vocabulary the dashes
+    /// already use. If destinationMarker is assigned, it takes over the
+    /// position of only the LAST checkpoint (the true final destination);
+    /// every earlier checkpoint always uses the auto-generated pool
+    /// regardless, since a single custom Transform can't stand in for
+    /// more than one position at once.
     /// </summary>
-    private void SetDestinationMarkerActive(
-        bool active,
-        Vector3 worldPosition = default,
-        bool isAffordable = true)
+    private void DrawSegmentReticles(List<Vector3Int> path, List<int> breakpoints)
     {
+        int pooledReticleCount = 0;
+
+        for (int segmentIndex = 0; segmentIndex < breakpoints.Count; segmentIndex++)
+        {
+            int cellIndex = breakpoints[segmentIndex] - 1;
+
+            if (cellIndex < 0 || cellIndex >= path.Count)
+            {
+                continue;
+            }
+
+            Vector3 worldPosition =
+                gridMap.CellToWorld(path[cellIndex]);
+
+            bool isFinalSegment =
+                segmentIndex == breakpoints.Count - 1;
+
+            if (isFinalSegment && destinationMarker != null)
+            {
+                destinationMarker.gameObject.SetActive(true);
+                destinationMarker.position = worldPosition;
+
+                continue;
+            }
+
+            Color color =
+                segmentIndex == 0
+                    ? affordableColor
+                    : excessColor;
+
+            SpriteRenderer reticle =
+                GetOrCreateReticle(pooledReticleCount);
+
+            reticle.transform.position = worldPosition;
+            reticle.color = color;
+            reticle.gameObject.SetActive(true);
+
+            pooledReticleCount++;
+        }
+
+        DeactivateFrom(reticlePool, pooledReticleCount);
+    }
+
+
+    private void HideAllReticles()
+    {
+        DeactivateFrom(reticlePool, 0);
+
         if (destinationMarker != null)
         {
-            destinationMarker.gameObject.SetActive(active);
-
-            if (active)
-            {
-                destinationMarker.position = worldPosition;
-            }
-
-            return;
+            destinationMarker.gameObject.SetActive(false);
         }
+    }
 
-        if (autoDestinationMarker != null)
+
+    /// <summary>
+    /// Reuses a pooled reticle if one already exists at this index,
+    /// otherwise creates a new one - same growth-only pooling as
+    /// GetOrCreateDot below.
+    /// </summary>
+    private SpriteRenderer GetOrCreateReticle(int index)
+    {
+        if (index < reticlePool.Count)
         {
-            autoDestinationMarker.gameObject.SetActive(active);
-
-            if (active)
-            {
-                autoDestinationMarker.transform.position = worldPosition;
-
-                autoDestinationMarker.color =
-                    isAffordable
-                        ? affordableColor
-                        : excessColor;
-            }
+            return reticlePool[index];
         }
+
+        SpriteRenderer reticle =
+            CreateReticle($"SegmentReticle_{index}");
+
+        reticlePool.Add(reticle);
+
+        return reticle;
     }
 
 

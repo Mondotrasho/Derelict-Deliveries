@@ -45,7 +45,7 @@ public class RouteInputController : MonoBehaviour
 
     [Header("UI (Optional)")]
 
-    [Tooltip("Optional Canvas Button. Clicking it calls the same Commit() that pressing Enter does.")]
+    [Tooltip("Optional Canvas Button. Clicking it calls the same CommitSegment() that pressing Enter does.")]
     [SerializeField]
     private Button commitButton;
 
@@ -160,7 +160,7 @@ public class RouteInputController : MonoBehaviour
         {
             if (Keyboard.current.enterKey.wasPressedThisFrame)
             {
-                movementPlanController?.Commit();
+                movementPlanController?.CommitSegment();
             }
 
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -176,7 +176,7 @@ public class RouteInputController : MonoBehaviour
     /// </summary>
     private void HandleCommitButtonClicked()
     {
-        movementPlanController?.Commit();
+        movementPlanController?.CommitSegment();
     }
 
 

@@ -24,6 +24,12 @@ using UnityEngine;
 /// Optionally reports real cells crossed to a TurnManager as ticks (see
 /// cellsPerTick) - this is the only place movement and the shared clock
 /// touch. TurnManager itself has no reference back to this script.
+///
+/// Movement can be interrupted mid-command and continued later without
+/// losing progress - see PauseMovement/ResumeMovement - independent of
+/// StopMovement's ordinary, non-resumable halt. Works identically for
+/// both movement styles, since it tracks progress through the commanded
+/// cell list itself rather than anything style-specific.
 /// </summary>
 public class PlayerGridController : MonoBehaviour
 {
@@ -165,6 +171,32 @@ public class PlayerGridController : MonoBehaviour
     // toward the next tick is never lost between calls.
     private int cellsSinceLastTick;
 
+    // The path most recently handed to MoveAlongPath, and how many of its
+    // cells have actually been reached so far. Together these let
+    // PauseMovement work out exactly what's left un-executed, regardless
+    // of which movement style is running - both set fresh by
+    // MoveAlongPath, both cleared once a route finishes normally.
+    private List<Vector3Int> currentCommandedPath;
+    private int cellsReachedInCurrentCommand;
+
+    // Set by PauseMovement, consumed by ResumeMovement. Null whenever
+    // nothing is currently paused.
+    private List<Vector3Int> pausedRemainingPath;
+
+    // Outside systems do not toggle one shared pause bool. Each interruption
+    // receives its own handle, so releasing Combat cannot resume movement
+    // while a separate Event interruption is still active.
+    private readonly Dictionary<int, MovementInterruptionHandle>
+        movementInterruptions =
+            new Dictionary<int, MovementInterruptionHandle>();
+
+    private int nextMovementInterruptionId = 1;
+
+    // True only when the first active interruption itself paused an in-flight
+    // route. Used so releasing the final interruption does not auto-resume a
+    // route that some other piece of code had already paused manually.
+    private bool movementWasPausedByInterruption;
+
     // Tracked independently of playerSprite so heading works identically
     // with or without a visual sprite assigned, and survives across
     // separate MoveAlongPath calls rather than resetting between routes.
@@ -172,12 +204,29 @@ public class PlayerGridController : MonoBehaviour
 
 
     /// <summary>
-    /// Raised each time the player arrives at a new grid cell - including every
-    /// intermediate cell along a multi-cell path, not just the final destination.
-    /// Other systems (fog of war, triggers, etc.) subscribe to this rather than
-    /// this controller needing to know they exist.
+    /// Raised whenever this controller publishes its logical cell, including
+    /// real movement arrivals, initial placement, and pause/stop re-sync. This
+    /// remains the broad compatibility signal used by systems such as fog.
+    /// Feature triggers that specifically mean "the player entered a cell"
+    /// should subscribe to CellEntered instead.
     /// </summary>
     public event Action<Vector3Int> CellReached;
+
+
+    /// <summary>
+    /// Raised only when active movement physically reaches a real commanded
+    /// grid cell. Unlike CellReached, this is not raised for initial spawn or
+    /// pause/stop re-synchronisation. Event/interaction systems should prefer
+    /// this when they specifically mean "the player entered a new cell".
+    /// </summary>
+    public event Action<Vector3Int> CellEntered;
+
+
+    /// <summary>
+    /// Raised only when the overall interrupted/not-interrupted state changes.
+    /// The argument is the new IsMovementInterrupted value.
+    /// </summary>
+    public event Action<bool> MovementInterruptionChanged;
 
 
     /// <summary>
@@ -203,6 +252,32 @@ public class PlayerGridController : MonoBehaviour
 
 
     /// <summary>
+    /// True when a previous movement command was paused (see
+    /// PauseMovement) and has an un-executed remainder waiting for
+    /// ResumeMovement. False once resumed, replaced by a fresh
+    /// MoveAlongPath call, or if nothing was ever paused.
+    /// </summary>
+    public bool HasPausedMovement
+    {
+        get
+        {
+            return pausedRemainingPath != null &&
+                   pausedRemainingPath.Count > 0;
+        }
+    }
+
+
+    /// <summary>
+    /// True while one or more outside systems hold a movement interruption.
+    /// New movement commands are rejected until all handles are released.
+    /// </summary>
+    public bool IsMovementInterrupted
+    {
+        get { return movementInterruptions.Count > 0; }
+    }
+
+
+    /// <summary>
     /// Current logical grid cell occupied by the player.
     /// </summary>
     public Vector3Int CurrentCell
@@ -210,6 +285,81 @@ public class PlayerGridController : MonoBehaviour
         get
         {
             return currentCell;
+        }
+    }
+
+
+    /// <summary>
+    /// Acquires one independent movement interruption. If the ship is moving,
+    /// the first active interruption pauses and preserves the unfinished route.
+    ///
+    /// Keep the returned handle and call Release()/Dispose() when the outside
+    /// system is finished. Movement only resumes automatically after the final
+    /// active interruption is released.
+    /// </summary>
+    public MovementInterruptionHandle AcquireMovementInterruption(
+        string reason)
+    {
+        int id = nextMovementInterruptionId++;
+
+        MovementInterruptionHandle handle =
+            new MovementInterruptionHandle(
+                this,
+                id,
+                reason
+            );
+
+        bool wasAlreadyInterrupted = IsMovementInterrupted;
+
+        movementInterruptions.Add(id, handle);
+
+        if (!wasAlreadyInterrupted)
+        {
+            movementWasPausedByInterruption = IsMoving;
+
+            if (IsMoving)
+            {
+                PauseMovement();
+            }
+
+            MovementInterruptionChanged?.Invoke(true);
+        }
+
+        return handle;
+    }
+
+
+    /// <summary>
+    /// Called by MovementInterruptionHandle.Release(). Outside code normally
+    /// releases the handle rather than calling this directly.
+    /// </summary>
+    internal void ReleaseMovementInterruption(
+        MovementInterruptionHandle handle)
+    {
+        if (handle == null ||
+            !movementInterruptions.Remove(handle.Id))
+        {
+            return;
+        }
+
+        handle.MarkReleasedByOwner();
+
+        if (IsMovementInterrupted)
+        {
+            return;
+        }
+
+        bool shouldResume =
+            movementWasPausedByInterruption &&
+            HasPausedMovement;
+
+        movementWasPausedByInterruption = false;
+
+        MovementInterruptionChanged?.Invoke(false);
+
+        if (shouldResume)
+        {
+            ResumeMovement();
         }
     }
 
@@ -289,10 +439,31 @@ public class PlayerGridController : MonoBehaviour
 
     /// <summary>
     /// Executes an already-computed path, such as one just handed over by
-    /// MovementPlanController.Commit(). The path is not recalculated here -
-    /// whatever route was planned is exactly what gets travelled.
+    /// MovementPlanController.CommitSegment(). The path is not
+    /// recalculated here - whatever route was planned is exactly what
+    /// gets travelled.
+    ///
+    /// Also fine to call with a path that isn't the full remainder of a
+    /// paused command - e.g. combat handing back an adjusted route after
+    /// an interruption. Starting anything new here always discards
+    /// whatever PauseMovement had previously stored; call ResumeMovement
+    /// instead if the exact paused remainder is what should continue.
     /// </summary>
     public void MoveAlongPath(List<Vector3Int> path)
+    {
+        TryMoveAlongPath(path);
+    }
+
+
+    /// <summary>
+    /// Try-pattern version of MoveAlongPath. Returns false without changing
+    /// movement state when the command is invalid or an outside system is
+    /// currently interrupting movement.
+    ///
+    /// MovementPlanController uses this so budget/queued-route state is only
+    /// committed after the physical movement layer accepts the command.
+    /// </summary>
+    public bool TryMoveAlongPath(List<Vector3Int> path)
     {
         if (gridMap == null)
         {
@@ -300,12 +471,17 @@ public class PlayerGridController : MonoBehaviour
                 "PlayerGridController is missing a required reference."
             );
 
-            return;
+            return false;
+        }
+
+        if (IsMovementInterrupted)
+        {
+            return false;
         }
 
         if (path == null || path.Count == 0)
         {
-            return;
+            return false;
         }
 
 
@@ -315,6 +491,10 @@ public class PlayerGridController : MonoBehaviour
             StopCoroutine(movementCoroutine);
         }
 
+        currentCommandedPath = new List<Vector3Int>(path);
+        cellsReachedInCurrentCommand = 0;
+        pausedRemainingPath = null;
+
 
         movementCoroutine =
             StartCoroutine(
@@ -322,6 +502,8 @@ public class PlayerGridController : MonoBehaviour
                     ? FollowPathArcLength(path)
                     : FollowPath(path)
             );
+
+        return true;
     }
 
 
@@ -380,13 +562,18 @@ public class PlayerGridController : MonoBehaviour
             {
                 currentCell = step.ArrivedCell.Value;
                 CellReached?.Invoke(currentCell);
+                CellEntered?.Invoke(currentCell);
                 ReportMovementTick();
+                cellsReachedInCurrentCommand++;
             }
         }
 
 
         currentSpeed = 0.0f;
         movementCoroutine = null;
+
+        currentCommandedPath = null;
+        cellsReachedInCurrentCommand = 0;
 
         RouteCompleted?.Invoke();
     }
@@ -446,6 +633,9 @@ public class PlayerGridController : MonoBehaviour
 
             currentSpeed = 0.0f;
             movementCoroutine = null;
+
+            currentCommandedPath = null;
+            cellsReachedInCurrentCommand = 0;
 
             RouteCompleted?.Invoke();
 
@@ -668,6 +858,9 @@ public class PlayerGridController : MonoBehaviour
         currentSpeed = 0.0f;
         movementCoroutine = null;
 
+        currentCommandedPath = null;
+        cellsReachedInCurrentCommand = 0;
+
         RouteCompleted?.Invoke();
     }
 
@@ -845,7 +1038,9 @@ public class PlayerGridController : MonoBehaviour
 
         currentCell = steps[index].ArrivedCell.Value;
         CellReached?.Invoke(currentCell);
+        CellEntered?.Invoke(currentCell);
         ReportMovementTick();
+        cellsReachedInCurrentCommand++;
     }
 
 
@@ -1297,21 +1492,13 @@ public class PlayerGridController : MonoBehaviour
 
 
     /// <summary>
-    /// Immediately stops the current movement command.
-    ///
-    /// The Player remains at its current world position. This is treated
-    /// as an interruption rather than a completion, so RouteCompleted is
-    /// not raised here - only CellReached, since the player's logical cell
-    /// still needs to be re-synced to wherever it actually stopped.
+    /// Shared by StopMovement and PauseMovement: halts whichever coroutine
+    /// is running and re-syncs the logical cell to wherever the ship
+    /// actually physically stopped. Does not touch commanded-path or
+    /// pause-state bookkeeping - callers decide what happens to that.
     /// </summary>
-    public void StopMovement()
+    private void HaltCoroutineAndResyncCell()
     {
-        if (movementCoroutine == null)
-        {
-            return;
-        }
-
-
         StopCoroutine(
             movementCoroutine
         );
@@ -1327,5 +1514,100 @@ public class PlayerGridController : MonoBehaviour
             );
 
         CellReached?.Invoke(currentCell);
+    }
+
+
+    /// <summary>
+    /// Immediately stops the current movement command for good.
+    ///
+    /// The Player remains at its current world position. This is treated
+    /// as an interruption rather than a completion, so RouteCompleted is
+    /// not raised here - only CellReached, since the player's logical cell
+    /// still needs to be re-synced to wherever it actually stopped.
+    ///
+    /// Unlike PauseMovement, nothing is kept to resume later - whatever
+    /// was left of the current command is discarded outright. Use
+    /// PauseMovement instead for an interruption (e.g. entering combat)
+    /// that might continue the same command afterwards.
+    /// </summary>
+    public void StopMovement()
+    {
+        if (movementCoroutine != null)
+        {
+            HaltCoroutineAndResyncCell();
+        }
+
+        // Stop means discard, even if the ship was already stationary because
+        // PauseMovement stored an unfinished remainder earlier. This is what
+        // lets an event/combat system cancel an interrupted journey before it
+        // releases its MovementInterruptionHandle.
+        currentCommandedPath = null;
+        cellsReachedInCurrentCommand = 0;
+        pausedRemainingPath = null;
+        movementWasPausedByInterruption = false;
+    }
+
+
+    /// <summary>
+    /// Halts the current movement command the same way StopMovement does,
+    /// but remembers whatever cells of it hadn't been reached yet, so a
+    /// later ResumeMovement() can continue exactly where this left off.
+    ///
+    /// Intended for a temporary interruption that isn't a turn boundary -
+    /// entering combat mid-route, for example, possibly resuming again
+    /// within the same turn once it resolves. Safe to call even if
+    /// nothing is currently moving (no-op).
+    ///
+    /// To resume with a different path instead of the exact remainder
+    /// (combat repositioned the ship, the destination changed), just call
+    /// MoveAlongPath directly with the new path rather than
+    /// ResumeMovement - that also correctly discards this paused state.
+    /// </summary>
+    public void PauseMovement()
+    {
+        if (movementCoroutine == null)
+        {
+            return;
+        }
+
+        // Snapshot before halting - HaltCoroutineAndResyncCell clears
+        // movementCoroutine, but the commanded-path bookkeeping survives
+        // it untouched, so this can happen either order. Doing it first
+        // just keeps the two concerns visually separate here.
+        List<Vector3Int> remainder = null;
+
+        if (currentCommandedPath != null &&
+            cellsReachedInCurrentCommand < currentCommandedPath.Count)
+        {
+            remainder =
+                currentCommandedPath.GetRange(
+                    cellsReachedInCurrentCommand,
+                    currentCommandedPath.Count - cellsReachedInCurrentCommand
+                );
+        }
+
+        HaltCoroutineAndResyncCell();
+
+        pausedRemainingPath = remainder;
+    }
+
+
+    /// <summary>
+    /// Continues whatever PauseMovement most recently paused, from
+    /// exactly where it left off. No-op if HasPausedMovement is false.
+    /// Equivalent to calling MoveAlongPath with the stored remainder,
+    /// which is in fact exactly what this does.
+    /// </summary>
+    public void ResumeMovement()
+    {
+        if (IsMovementInterrupted || !HasPausedMovement)
+        {
+            return;
+        }
+
+        List<Vector3Int> remainder = pausedRemainingPath;
+        pausedRemainingPath = null;
+
+        MoveAlongPath(remainder);
     }
 }

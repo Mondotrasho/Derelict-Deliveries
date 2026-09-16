@@ -31,7 +31,7 @@ public class GridPathfinder : MonoBehaviour
     [SerializeField]
     private int orthogonalStepCost = 1;
 
-    [Tooltip("Cost of moving into one diagonal cell. Defaulting to 2x the orthogonal cost means a diagonal step costs exactly what two orthogonal steps would have - so it never provides a raw distance shortcut, only a smoother-looking route. Keep this in sync with MovementAllowance's matching field: GridPathfinder deliberately doesn't know about MovementAllowance, so the two costs are not shared automatically.")]
+    [Tooltip("Cost of moving into one diagonal cell. Defaulting to 2x the orthogonal cost means a diagonal step costs exactly what two orthogonal steps would have - so it never provides a raw distance shortcut, only a smoother-looking route. MovementAllowance uses these base costs when this GridPathfinder is assigned.")]
     [SerializeField]
     private int diagonalStepCost = 2;
 
@@ -39,9 +39,52 @@ public class GridPathfinder : MonoBehaviour
     [SerializeField]
     private bool preventCornerCutting = true;
 
-    [Tooltip("When a diagonal route and a staircase route cost exactly the same, prefer the diagonal one so paths don't default to zigzagging. Purely a shape preference - does not change what MovementAllowance charges.")]
+    [Tooltip("When a diagonal route and a staircase route cost exactly the same, prefer the diagonal one so paths don't default to zigzagging. Purely a shape preference - does not change the numeric step costs.")]
     [SerializeField]
     private bool preferDiagonalMovement = true;
+
+
+    /// <summary>Whether diagonal steps are currently allowed by this pathfinder.</summary>
+    public bool AllowDiagonalMovement
+    {
+        get { return allowDiagonalMovement; }
+    }
+
+
+    /// <summary>Base cost used by A* for one orthogonal step.</summary>
+    public int OrthogonalStepCost
+    {
+        get { return orthogonalStepCost; }
+    }
+
+
+    /// <summary>Base cost used by A* for one diagonal step.</summary>
+    public int DiagonalStepCost
+    {
+        get { return diagonalStepCost; }
+    }
+
+
+    /// <summary>
+    /// Returns this pathfinder's base cost for one adjacent step.
+    ///
+    /// This is exposed so NPC movement-range tools and other systems can use
+    /// the same pricing that FindPath uses without duplicating Inspector
+    /// settings. Terrain/hazard surcharges can still be layered by a caller
+    /// through the GetReachableCells(stepCostFunction) overload.
+    /// </summary>
+    public int GetBaseStepCost(Vector3Int fromCell, Vector3Int toCell)
+    {
+        Vector3Int delta = toCell - fromCell;
+
+        bool isDiagonalStep =
+            delta.x != 0 &&
+            delta.y != 0;
+
+        return isDiagonalStep
+            ? diagonalStepCost
+            : orthogonalStepCost;
+    }
 
 
     /// <summary>
@@ -66,6 +109,33 @@ public class GridPathfinder : MonoBehaviour
         new Vector3Int(-1, -1, 0),
         new Vector3Int(-1, 1, 0)
     };
+
+
+    /// <summary>
+    /// Calculates the base cost of an already-computed path using the same
+    /// orthogonal/diagonal pricing as FindPath. The path is expected not to
+    /// include startCell, matching FindPath's returned format.
+    /// </summary>
+    public int CalculateBasePathCost(
+        Vector3Int startCell,
+        IReadOnlyList<Vector3Int> path)
+    {
+        if (path == null || path.Count == 0)
+        {
+            return 0;
+        }
+
+        int total = 0;
+        Vector3Int previousCell = startCell;
+
+        foreach (Vector3Int cell in path)
+        {
+            total += GetBaseStepCost(previousCell, cell);
+            previousCell = cell;
+        }
+
+        return total;
+    }
 
 
     /// <summary>
@@ -161,9 +231,10 @@ public class GridPathfinder : MonoBehaviour
                     direction.y != 0;
 
                 int stepCost =
-                    isDiagonalStep
-                        ? diagonalStepCost
-                        : orthogonalStepCost;
+                    GetBaseStepCost(
+                        currentNode.Cell,
+                        neighbourCell
+                    );
 
                 int newGCost =
                     currentNode.GCost +
@@ -204,8 +275,7 @@ public class GridPathfinder : MonoBehaviour
                 // default. This tie-break lets an equal-cost diagonal
                 // step take over from an existing orthogonal one, purely
                 // for a smoother-looking route - it does not change the
-                // cost charged by MovementAllowance, which prices the
-                // final path's actual cell deltas independently.
+                // base step costs exposed through GetBaseStepCost.
                 bool isEqualCostButSmoother =
                     preferDiagonalMovement &&
                     newGCost == neighbourNode.GCost &&
@@ -248,6 +318,152 @@ public class GridPathfinder : MonoBehaviour
         Vector3Int delta = node.Cell - node.Parent.Cell;
 
         return delta.x != 0 && delta.y != 0;
+    }
+
+
+    /// <summary>
+    /// Every cell reachable from startCell without exceeding maxBudget, using
+    /// the exact same base step costs as FindPath. This is the simplest entry
+    /// point for an NPC movement-range query or generic range overlay.
+    ///
+    /// Use the overload that accepts stepCostFunction when a feature needs
+    /// additional terrain/resource/hazard costs.
+    /// </summary>
+    public Dictionary<Vector3Int, int> GetReachableCells(
+        Vector3Int startCell,
+        int maxBudget)
+    {
+        return GetReachableCells(
+            startCell,
+            maxBudget,
+            GetBaseStepCost
+        );
+    }
+
+
+    /// <summary>
+    /// Every cell reachable from startCell without exceeding maxBudget,
+    /// using stepCostFunction to price each step - not this class's own
+    /// orthogonalStepCost/diagonalStepCost, which only shape FindPath's
+    /// route choice and have nothing to do with any budget. Pass
+    /// MovementAllowance.GetMovementCost (or equivalent) as
+    /// stepCostFunction to answer "what can I actually reach this turn" -
+    /// see MovementAllowance.GetReachableCellsThisTurn for exactly that.
+    ///
+    /// Legality is still this class's own CanStepBetween, the same rule
+    /// FindPath and RoutePlanner's manual drag-drawing both already use -
+    /// obstacles, corner-cutting, and the diagonal-movement toggle all
+    /// apply identically here.
+    ///
+    /// Returns every reachable cell mapped to the cheapest cumulative cost
+    /// found to reach it (startCell itself is not included - a budget of
+    /// 0 reaches nothing). Dijkstra rather than A*, since there is no
+    /// single destination to aim a heuristic at.
+    /// </summary>
+    public Dictionary<Vector3Int, int> GetReachableCells(
+        Vector3Int startCell,
+        int maxBudget,
+        System.Func<Vector3Int, Vector3Int, int> stepCostFunction)
+    {
+        Dictionary<Vector3Int, int> reachable =
+            new Dictionary<Vector3Int, int>();
+
+        if (gridMap == null)
+        {
+            Debug.LogError("GridPathfinder has no GridMap assigned.");
+            return reachable;
+        }
+
+        if (stepCostFunction == null)
+        {
+            Debug.LogError(
+                "GetReachableCells requires a stepCostFunction."
+            );
+
+            return reachable;
+        }
+
+        if (maxBudget <= 0)
+        {
+            return reachable;
+        }
+
+
+        List<Vector3Int> directions =
+            new List<Vector3Int>(OrthogonalDirections);
+
+        if (allowDiagonalMovement)
+        {
+            directions.AddRange(DiagonalDirections);
+        }
+
+
+        // Same open/closed shape as FindPath, but expanding outward from
+        // one start cell against a cost ceiling instead of racing toward
+        // one destination - so nodes only need their accumulated cost,
+        // not FindPath's separate heuristic/FCost machinery.
+        Dictionary<Vector3Int, int> bestCostSoFar =
+            new Dictionary<Vector3Int, int> { { startCell, 0 } };
+
+        List<Vector3Int> frontier = new List<Vector3Int> { startCell };
+
+        while (frontier.Count > 0)
+        {
+            int bestIndex = 0;
+
+            for (int i = 1; i < frontier.Count; i++)
+            {
+                if (bestCostSoFar[frontier[i]] <
+                    bestCostSoFar[frontier[bestIndex]])
+                {
+                    bestIndex = i;
+                }
+            }
+
+            Vector3Int currentCell = frontier[bestIndex];
+            int currentCost = bestCostSoFar[currentCell];
+
+            frontier.RemoveAt(bestIndex);
+
+
+            foreach (Vector3Int direction in directions)
+            {
+                Vector3Int neighbourCell = currentCell + direction;
+
+                if (!CanStepBetween(currentCell, neighbourCell))
+                {
+                    continue;
+                }
+
+                int newCost =
+                    currentCost +
+                    stepCostFunction(currentCell, neighbourCell);
+
+                if (newCost > maxBudget)
+                {
+                    continue;
+                }
+
+                if (bestCostSoFar.TryGetValue(
+                        neighbourCell,
+                        out int knownCost) &&
+                    knownCost <= newCost)
+                {
+                    continue;
+                }
+
+                bestCostSoFar[neighbourCell] = newCost;
+
+                if (!frontier.Contains(neighbourCell))
+                {
+                    frontier.Add(neighbourCell);
+                }
+            }
+        }
+
+        bestCostSoFar.Remove(startCell);
+
+        return bestCostSoFar;
     }
 
 
