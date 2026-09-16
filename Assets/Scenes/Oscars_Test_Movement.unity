@@ -16227,6 +16227,8 @@ GameObject:
   - component: {fileID: 1705402915}
   - component: {fileID: 1705402913}
   - component: {fileID: 1705402916}
+  - component: {fileID: 2078833602}
+  - component: {fileID: 2078833601}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -17033,6 +17035,42 @@ RectTransform:
   m_AnchoredPosition: {x: -483.8354, y: -45}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2078833601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 282904ca010de2a4ba09fdc5f90d4aab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerShipState
+  movementController: {fileID: 1705402913}
+  resources: {fileID: 2078833602}
+  eventState:
+    tags: []
+    flags: []
+    counters: []
+--- !u!114 &2078833602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3844d5e4688aadf4db359f2ea5c7250f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipResources
+  maxHullIntegrity: 100
+  hullIntegrity: 100
+  maxFuel: 100
+  fuel: 100
+  maxCrew: 10
+  crew: 1
 --- !u!114 &2088822714
 MonoBehaviour:
   m_ObjectHideFlags: 0
