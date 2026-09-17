@@ -1,0 +1,114 @@
+{
+  "terminal": {
+    "title": "SYS://CARGO_MODEL_REVIEW",
+    "status": "MODEL FEEDBACK",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "pilot"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "charlie",
+      "colour": "#67D8FF"
+    },
+    {
+      "id": "pilot",
+      "colour": "#FFB000"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "charlie",
+      "text": "What is this?"
+    },
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "A centre for ants?"
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "It's a scale model, Charlie."
+    },
+    {
+      "tick": 3,
+      "speaker": "charlie",
+      "text": "Then why is everything so small?"
+    },
+    {
+      "tick": 4,
+      "speaker": "pilot",
+      "text": "Because that is what scale model means."
+    },
+    {
+      "tick": 5,
+      "speaker": "charlie",
+      "text": "I am not signing off on a building nobody can fit inside."
+    },
+    {
+      "tick": 6,
+      "speaker": "pilot",
+      "text": "Nobody is supposed to fit inside it."
+    },
+    {
+      "tick": 7,
+      "speaker": "charlie",
+      "text": "Then we agree. Serious design flaw."
+    },
+    {
+      "tick": 8,
+      "speaker": "pilot",
+      "text": "It opens up. Look, the roof comes off."
+    },
+    {
+      "tick": 9,
+      "speaker": "charlie",
+      "text": "So now the building is also broken."
+    },
+    {
+      "tick": 10,
+      "speaker": "pilot",
+      "text": "It is an architectural model."
+    },
+    {
+      "tick": 11,
+      "speaker": "charlie",
+      "text": "I have seen heist films. This is clearly the bit where we stand around the tiny casino."
+    },
+    {
+      "tick": 12,
+      "speaker": "pilot",
+      "text": "There is no casino."
+    },
+    {
+      "tick": 13,
+      "speaker": "charlie",
+      "text": "Then why did you make me wear the black turtleneck?"
+    },
+    {
+      "tick": 14,
+      "speaker": "pilot",
+      "text": "You are always wearing that."
+    },
+    {
+      "tick": 15,
+      "speaker": "charlie",
+      "text": "Exactly. I came prepared."
+    }
+  ]
+}

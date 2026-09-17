@@ -1,0 +1,149 @@
+{
+  "terminal": {
+    "title": "SYS://PORT_AUTHORITY//DESK_04",
+    "status": "FORM 88-B REQUIRED",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "clerk",
+    "right": "charlie"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "clerk",
+      "colour": "#FFD76A"
+    },
+    {
+      "id": "charlie",
+      "colour": "#67D8FF"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 40,
+    "lineInterval": 0.8,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "clerk",
+      "text": "Purpose of docking?"
+    },
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "Stopping the ship from continuing to move."
+    },
+    {
+      "tick": 2,
+      "speaker": "clerk",
+      "text": "I meant the reason for your visit."
+    },
+    {
+      "tick": 3,
+      "speaker": "charlie",
+      "text": "Oh. Fuel, food, and ideally no paperwork."
+    },
+    {
+      "tick": 4,
+      "speaker": "clerk",
+      "text": "You selected the paperwork dock."
+    },
+    {
+      "tick": 5,
+      "speaker": "charlie",
+      "text": "There is a paperwork dock?"
+    },
+    {
+      "tick": 6,
+      "speaker": "clerk",
+      "text": "There are three."
+    },
+    {
+      "tick": 7,
+      "speaker": "charlie",
+      "text": "Can I undock?"
+    },
+    {
+      "tick": 8,
+      "speaker": "clerk",
+      "text": "You'll need Form 88-C."
+    },
+    {
+      "tick": 9,
+      "speaker": "charlie",
+      "text": "What happens if I don't fill it in?"
+    },
+    {
+      "tick": 10,
+      "speaker": "clerk",
+      "text": "Form 88-D."
+    },
+    {
+      "tick": 11,
+      "speaker": "charlie",
+      "text": "And if I refuse that?"
+    },
+    {
+      "tick": 12,
+      "speaker": "clerk",
+      "text": "Form 88-E, refusal to acknowledge Form 88-D."
+    },
+    {
+      "tick": 13,
+      "speaker": "charlie",
+      "text": "This feels like the bit in a film where somebody eventually flips the desk."
+    },
+    {
+      "tick": 14,
+      "speaker": "clerk",
+      "text": "Desk damage requires Form 12-A."
+    },
+    {
+      "tick": 15,
+      "speaker": "charlie",
+      "text": "Of course it does."
+    },
+    {
+      "tick": 16,
+      "speaker": "clerk",
+      "text": "Triplicate."
+    },
+    {
+      "tick": 17,
+      "speaker": "charlie",
+      "text": "Can I just surrender?"
+    },
+    {
+      "tick": 18,
+      "speaker": "clerk",
+      "text": "Different department."
+    },
+    {
+      "tick": 19,
+      "speaker": "charlie",
+      "text": "Where?"
+    },
+    {
+      "tick": 20,
+      "speaker": "clerk",
+      "text": "Desk 05."
+    },
+    {
+      "tick": 21,
+      "speaker": "charlie",
+      "text": "There is a Desk 05?"
+    },
+    {
+      "tick": 22,
+      "speaker": "clerk",
+      "text": "No. You'll need to apply for one."
+    }
+  ]
+}

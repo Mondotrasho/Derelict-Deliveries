@@ -1,0 +1,41 @@
+{
+  "terminal": {
+    "title": "SYS://SEC_COMMAND//HOSTAGE_LINE",
+    "status": "LIVE NEGOTIATION",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "bosscop",
+    "right": "charlie"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    { "id": "bosscop", "colour": "#FF6B6B" },
+    { "id": "charlie", "colour": "#67D8FF" }
+  ],
+  "timing": {
+    "charactersPerSecond": 41,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    { "tick": 0, "speaker": "bosscop", "text": "What are your demands?" },
+    { "tick": 1, "speaker": "charlie", "text": "A helicopter and a sandwich." },
+    { "tick": 2, "speaker": "bosscop", "text": "In that order?" },
+    { "tick": 3, "speaker": "charlie", "text": "Sandwich first. I don't fly on an empty stomach." },
+    { "tick": 4, "speaker": "bosscop", "text": "What kind of sandwich?" },
+    { "tick": 5, "speaker": "charlie", "text": "Are you negotiating my demands or my lunch order?" },
+    { "tick": 6, "speaker": "bosscop", "text": "Both, apparently." },
+    { "tick": 7, "speaker": "charlie", "text": "Turkey. No crusts. I contain multitudes." },
+    { "tick": 8, "speaker": "bosscop", "text": "And the helicopter?" },
+    { "tick": 9, "speaker": "charlie", "text": "Optional now. The sandwich really tied the whole demand together." },
+    { "tick": 10, "speaker": "bosscop", "text": "So you'll surrender for a sandwich." },
+    { "tick": 11, "speaker": "charlie", "text": "I'll surrender for a good sandwich. Standards, boss." },
+    { "tick": 12, "speaker": "bosscop", "text": "Coming right up." }
+  ]
+}

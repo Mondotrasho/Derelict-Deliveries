@@ -1,0 +1,94 @@
+{
+  "terminal": {
+    "title": "SYS://SECURITY//OBSERVATION",
+    "status": "MIRROR PRACTICE DETECTED",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "cop"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "charlie",
+      "colour": "#67D8FF"
+    },
+    {
+      "id": "cop",
+      "colour": "#FF6666"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "cop",
+      "text": "Who are you talking to?"
+    },
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "Nobody."
+    },
+    {
+      "tick": 2,
+      "speaker": "cop",
+      "text": "You have been pointing at your reflection for six minutes."
+    },
+    {
+      "tick": 3,
+      "speaker": "charlie",
+      "text": "I am refining my threatening presence."
+    },
+    {
+      "tick": 4,
+      "speaker": "cop",
+      "text": "You asked the mirror if it had an appointment."
+    },
+    {
+      "tick": 5,
+      "speaker": "charlie",
+      "text": "Professional intimidation."
+    },
+    {
+      "tick": 6,
+      "speaker": "cop",
+      "text": "Then you apologised to it."
+    },
+    {
+      "tick": 7,
+      "speaker": "charlie",
+      "text": "It looked startled."
+    },
+    {
+      "tick": 8,
+      "speaker": "cop",
+      "text": "It looked exactly like you."
+    },
+    {
+      "tick": 9,
+      "speaker": "charlie",
+      "text": "Exactly. Terrifying."
+    },
+    {
+      "tick": 10,
+      "speaker": "cop",
+      "text": "Please stop interrogating station fixtures."
+    },
+    {
+      "tick": 11,
+      "speaker": "charlie",
+      "text": "The mirror knows what it did."
+    }
+  ]
+}

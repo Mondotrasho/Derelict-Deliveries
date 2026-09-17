@@ -1,0 +1,41 @@
+{
+  "terminal": {
+    "title": "SYS://SEC_COMMAND//OP_LOWKEY",
+    "status": "MISSION BRIEF",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "bosscop",
+    "right": "cop"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    { "id": "bosscop", "colour": "#FF6B6B" },
+    { "id": "cop", "colour": "#8EDBFF" }
+  ],
+  "timing": {
+    "charactersPerSecond": 41,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    { "tick": 0, "speaker": "bosscop", "text": "You're going undercover tonight." },
+    { "tick": 1, "speaker": "cop", "text": "As who?" },
+    { "tick": 2, "speaker": "bosscop", "text": "A regular guy at a regular party." },
+    { "tick": 3, "speaker": "cop", "text": "I can do that. I am a regular guy." },
+    { "tick": 4, "speaker": "bosscop", "text": "Lose the badge, the holster, and the way you say 'freeze.'" },
+    { "tick": 5, "speaker": "cop", "text": "What's wrong with how I say freeze?" },
+    { "tick": 6, "speaker": "bosscop", "text": "You say it like it's a threat and a greeting." },
+    { "tick": 7, "speaker": "cop", "text": "It usually is both." },
+    { "tick": 8, "speaker": "bosscop", "text": "Not tonight. Tonight you're 'Dave from accounting.'" },
+    { "tick": 9, "speaker": "cop", "text": "Does Dave carry a firearm?" },
+    { "tick": 10, "speaker": "bosscop", "text": "Dave carries a light beer and minds his business." },
+    { "tick": 11, "speaker": "cop", "text": "This is going to be a long night for Dave." },
+    { "tick": 12, "speaker": "bosscop", "text": "It's going to be a long night for all of us." }
+  ]
+}

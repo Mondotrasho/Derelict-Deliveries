@@ -1,0 +1,139 @@
+{
+  "terminal": {
+    "title": "SYS://SECURITY_CHECKPOINT//C12",
+    "status": "IDENTITY HOLD",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "cop",
+    "right": "cultist"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "cop",
+      "colour": "#8EDBFF"
+    },
+    {
+      "id": "cultist",
+      "colour": "#D48CFF"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 36,
+    "lineInterval": 0.9,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "cop",
+      "text": "Name and destination."
+    },
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "Names are cages. Destination is inevitable."
+    },
+    {
+      "tick": 2,
+      "speaker": "cop",
+      "text": "I need something that fits in the two boxes on my screen."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "Write 'pilgrim' and 'the final door'."
+    },
+    {
+      "tick": 4,
+      "speaker": "cop",
+      "text": "The final door is not in the destination list."
+    },
+    {
+      "tick": 5,
+      "speaker": "cultist",
+      "text": "It will be."
+    },
+    {
+      "tick": 6,
+      "speaker": "cop",
+      "text": "I'm putting 'transit lounge'."
+    },
+    {
+      "tick": 7,
+      "speaker": "cultist",
+      "text": "Acceptable. The lounge also ends."
+    },
+    {
+      "tick": 8,
+      "speaker": "cop",
+      "text": "Please move along."
+    },
+    {
+      "tick": 9,
+      "speaker": "cultist",
+      "text": "The wheels of authority turn slowly."
+    },
+    {
+      "tick": 10,
+      "speaker": "cop",
+      "text": "They'd turn faster if you gave me an actual destination."
+    },
+    {
+      "tick": 11,
+      "speaker": "cultist",
+      "text": "Beyond."
+    },
+    {
+      "tick": 12,
+      "speaker": "cop",
+      "text": "Beyond what?"
+    },
+    {
+      "tick": 13,
+      "speaker": "cultist",
+      "text": "Everything."
+    },
+    {
+      "tick": 14,
+      "speaker": "cop",
+      "text": "I'm writing 'food court'."
+    },
+    {
+      "tick": 15,
+      "speaker": "cultist",
+      "text": "There are signs."
+    },
+    {
+      "tick": 16,
+      "speaker": "cop",
+      "text": "There are literally signs. One says food court."
+    },
+    {
+      "tick": 17,
+      "speaker": "cultist",
+      "text": "Then prophecy has spoken."
+    },
+    {
+      "tick": 18,
+      "speaker": "cop",
+      "text": "I need a holiday."
+    },
+    {
+      "tick": 19,
+      "speaker": "cultist",
+      "text": "Rest is the rehearsal for oblivion."
+    },
+    {
+      "tick": 20,
+      "speaker": "cop",
+      "text": "Transit lounge. Go."
+    }
+  ]
+}

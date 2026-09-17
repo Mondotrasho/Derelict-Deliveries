@@ -1,0 +1,139 @@
+{
+  "terminal": {
+    "title": "SYS://SEC_COMMAND//BRIEFING",
+    "status": "PRIORITY LOW-ish",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "cop",
+    "right": "bosscop"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "cop",
+      "colour": "#8EDBFF"
+    },
+    {
+      "id": "bosscop",
+      "colour": "#FF6B6B"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 41,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "bosscop",
+      "text": "We have a situation."
+    },
+    {
+      "tick": 1,
+      "speaker": "cop",
+      "text": "How bad?"
+    },
+    {
+      "tick": 2,
+      "speaker": "bosscop",
+      "text": "Someone stole the evidence locker."
+    },
+    {
+      "tick": 3,
+      "speaker": "cop",
+      "text": "Something from the evidence locker?"
+    },
+    {
+      "tick": 4,
+      "speaker": "bosscop",
+      "text": "No. The locker."
+    },
+    {
+      "tick": 5,
+      "speaker": "cop",
+      "text": "The entire locker?"
+    },
+    {
+      "tick": 6,
+      "speaker": "bosscop",
+      "text": "Including the bit bolted to the floor."
+    },
+    {
+      "tick": 7,
+      "speaker": "cop",
+      "text": "Do we have any evidence?"
+    },
+    {
+      "tick": 8,
+      "speaker": "bosscop",
+      "text": "That question is currently considered insensitive."
+    },
+    {
+      "tick": 9,
+      "speaker": "cop",
+      "text": "Do we have suspects?"
+    },
+    {
+      "tick": 10,
+      "speaker": "bosscop",
+      "text": "Everyone who owns a trolley, forklift, or unreasonable confidence."
+    },
+    {
+      "tick": 11,
+      "speaker": "cop",
+      "text": "So the whole station."
+    },
+    {
+      "tick": 12,
+      "speaker": "bosscop",
+      "text": "Good. You're learning."
+    },
+    {
+      "tick": 13,
+      "speaker": "cop",
+      "text": "Should I cordon off the crime scene?"
+    },
+    {
+      "tick": 14,
+      "speaker": "bosscop",
+      "text": "We would, but the crime scene was inside the locker."
+    },
+    {
+      "tick": 15,
+      "speaker": "cop",
+      "text": "Right."
+    },
+    {
+      "tick": 16,
+      "speaker": "bosscop",
+      "text": "Try looking dramatically at the security footage. It works in films."
+    },
+    {
+      "tick": 17,
+      "speaker": "cop",
+      "text": "Can I enhance it?"
+    },
+    {
+      "tick": 18,
+      "speaker": "bosscop",
+      "text": "Only if you can also invent six more pixels."
+    },
+    {
+      "tick": 19,
+      "speaker": "cop",
+      "text": "I'll squint."
+    },
+    {
+      "tick": 20,
+      "speaker": "bosscop",
+      "text": "Excellent police work."
+    }
+  ]
+}

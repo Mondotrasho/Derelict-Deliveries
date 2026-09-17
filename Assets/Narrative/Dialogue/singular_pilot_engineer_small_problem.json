@@ -1,0 +1,104 @@
+{
+  "terminal": {
+    "title": "SYS://ENGINEERING//FLIGHT_COMMS",
+    "status": "MINOR ISSUE CLAIMED",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "engineer"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "pilot",
+      "colour": "#FFB000"
+    },
+    {
+      "id": "engineer",
+      "colour": "#42FF7B"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "pilot",
+      "text": "Engineering, I have a small situation."
+    },
+    {
+      "tick": 1,
+      "speaker": "engineer",
+      "text": "Small situations do not usually call Engineering."
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "One of the panels has stopped being attached."
+    },
+    {
+      "tick": 3,
+      "speaker": "engineer",
+      "text": "Inside panel or outside panel?"
+    },
+    {
+      "tick": 4,
+      "speaker": "pilot",
+      "text": "It was outside when we began this conversation."
+    },
+    {
+      "tick": 5,
+      "speaker": "engineer",
+      "text": "And now?"
+    },
+    {
+      "tick": 6,
+      "speaker": "pilot",
+      "text": "It has begun exploring independent career options."
+    },
+    {
+      "tick": 7,
+      "speaker": "engineer",
+      "text": "Anything else?"
+    },
+    {
+      "tick": 8,
+      "speaker": "pilot",
+      "text": "There is a new light on the console."
+    },
+    {
+      "tick": 9,
+      "speaker": "engineer",
+      "text": "Colour?"
+    },
+    {
+      "tick": 10,
+      "speaker": "pilot",
+      "text": "The expensive one."
+    },
+    {
+      "tick": 11,
+      "speaker": "engineer",
+      "text": "That is not a colour."
+    },
+    {
+      "tick": 12,
+      "speaker": "pilot",
+      "text": "You would understand if you could see it."
+    },
+    {
+      "tick": 13,
+      "speaker": "engineer",
+      "text": "I understand perfectly. Stop calling it a small situation."
+    }
+  ]
+}

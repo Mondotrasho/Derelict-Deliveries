@@ -1,0 +1,187 @@
+{
+  "terminal": {
+    "title": "SYS://PORT_AUTHORITY//FORM_TRIAL",
+    "status": "LOGIC NOT REQUIRED",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "clerk"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "charlie",
+      "colour": "#67D8FF"
+    },
+    {
+      "id": "clerk",
+      "colour": "#E8E8DE"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 40,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "clerk",
+      "text": "Two forms. One authorises departure. The other requests another form."
+    },
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "And you won't tell me which is which."
+    },
+    {
+      "tick": 10,
+      "speaker": "clerk",
+      "text": "You chose the left form."
+    },
+    {
+      "tick": 11,
+      "speaker": "charlie",
+      "text": "I based that decision on absolutely nothing.",
+      "nextTick": 40
+    },
+    {
+      "tick": 20,
+      "speaker": "clerk",
+      "text": "You chose the right form."
+    },
+    {
+      "tick": 21,
+      "speaker": "charlie",
+      "text": "I based that decision on distrusting the left form.",
+      "nextTick": 40
+    },
+    {
+      "tick": 30,
+      "speaker": "clerk",
+      "text": "You swapped the forms before choosing."
+    },
+    {
+      "tick": 31,
+      "speaker": "charlie",
+      "text": "Now neither of us knows what my reasoning was.",
+      "nextTick": 40
+    },
+    {
+      "tick": 40,
+      "speaker": "clerk",
+      "text": "Interesting."
+    },
+    {
+      "tick": 41,
+      "speaker": "charlie",
+      "text": "Was I right?"
+    },
+    {
+      "tick": 42,
+      "speaker": "clerk",
+      "text": "No. Both were Form 88-B."
+    },
+    {
+      "tick": 43,
+      "speaker": "charlie",
+      "text": "Then what was the test?"
+    },
+    {
+      "tick": 44,
+      "speaker": "clerk",
+      "text": "Whether you would read the heading."
+    },
+    {
+      "tick": 50,
+      "speaker": "clerk",
+      "text": "Sign box seven."
+    },
+    {
+      "tick": 51,
+      "speaker": "charlie",
+      "text": "There are two box sevens.",
+      "nextTick": 80
+    },
+    {
+      "tick": 60,
+      "speaker": "clerk",
+      "text": "Initial every page instead."
+    },
+    {
+      "tick": 61,
+      "speaker": "charlie",
+      "text": "There are forty-three pages.",
+      "nextTick": 80
+    },
+    {
+      "tick": 70,
+      "speaker": "clerk",
+      "text": "You refuse to sign."
+    },
+    {
+      "tick": 71,
+      "speaker": "charlie",
+      "text": "At last, a decision I understand.",
+      "nextTick": 80
+    },
+    {
+      "tick": 80,
+      "speaker": "clerk",
+      "text": "Very good. Now we can begin the actual departure paperwork."
+    },
+    {
+      "tick": 81,
+      "speaker": "charlie",
+      "text": "I have been defeated by stationery."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Choose left",
+          "line": "Left form. Final answer.",
+          "nextTick": 10
+        },
+        {
+          "text": "Choose right",
+          "line": "Right form. It looks less smug.",
+          "nextTick": 20
+        },
+        {
+          "text": "Swap them first",
+          "line": "I'm swapping them before I choose.",
+          "nextTick": 30
+        }
+      ]
+    },
+    {
+      "tick": 44,
+      "options": [
+        {
+          "text": "Sign box seven",
+          "line": "Fine. Show me box seven.",
+          "nextTick": 50
+        },
+        {
+          "text": "Initial everything",
+          "line": "I'll initial the whole cursed stack.",
+          "nextTick": 60
+        },
+        {
+          "text": "Refuse",
+          "line": "I refuse to sign anything else.",
+          "nextTick": 70
+        }
+      ]
+    }
+  ]
+}

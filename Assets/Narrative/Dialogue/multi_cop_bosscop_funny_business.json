@@ -1,0 +1,182 @@
+{
+  "terminal": {
+    "title": "SYS://SEC_COMMAND//BRIEFING_ROOM",
+    "status": "TONE MISINTERPRETED",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "cop",
+    "right": "bosscop"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "cop",
+      "colour": "#FF6666"
+    },
+    {
+      "id": "bosscop",
+      "colour": "#D48CFF"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "bosscop",
+      "text": "You were smiling during my briefing."
+    },
+    {
+      "tick": 1,
+      "speaker": "cop",
+      "text": "Was I?"
+    },
+    {
+      "tick": 10,
+      "speaker": "bosscop",
+      "text": "You thought something I said was funny."
+    },
+    {
+      "tick": 11,
+      "speaker": "cop",
+      "text": "Not funny. More... structurally surprising.",
+      "nextTick": 40
+    },
+    {
+      "tick": 20,
+      "speaker": "bosscop",
+      "text": "So you admit it was funny."
+    },
+    {
+      "tick": 21,
+      "speaker": "cop",
+      "text": "I admit the phrase 'tactical stapler incident' has a rhythm.",
+      "nextTick": 40
+    },
+    {
+      "tick": 30,
+      "speaker": "bosscop",
+      "text": "You blame the printer."
+    },
+    {
+      "tick": 31,
+      "speaker": "cop",
+      "text": "It printed your threat assessment in Comic Sans.",
+      "nextTick": 40
+    },
+    {
+      "tick": 40,
+      "speaker": "bosscop",
+      "text": "Fine. Explain exactly what amused you."
+    },
+    {
+      "tick": 41,
+      "speaker": "cop",
+      "text": "This feels like a trap with follow-up paperwork."
+    },
+    {
+      "tick": 50,
+      "speaker": "bosscop",
+      "text": "You claim it was the wording."
+    },
+    {
+      "tick": 51,
+      "speaker": "cop",
+      "text": "The suspect was described as 'aggressively medium height'.",
+      "nextTick": 80
+    },
+    {
+      "tick": 60,
+      "speaker": "bosscop",
+      "text": "You claim nerves."
+    },
+    {
+      "tick": 61,
+      "speaker": "cop",
+      "text": "I smile when frightened. It has ruined several arrests.",
+      "nextTick": 80
+    },
+    {
+      "tick": 70,
+      "speaker": "bosscop",
+      "text": "You decide silence is safer."
+    },
+    {
+      "tick": 71,
+      "speaker": "cop",
+      "text": "...",
+      "nextTick": 80
+    },
+    {
+      "tick": 80,
+      "speaker": "bosscop",
+      "text": "Good. Now take this seriously."
+    },
+    {
+      "tick": 81,
+      "speaker": "cop",
+      "text": "Absolutely."
+    },
+    {
+      "tick": 82,
+      "speaker": "bosscop",
+      "text": "The tactical stapler is still missing."
+    },
+    {
+      "tick": 83,
+      "speaker": "cop",
+      "text": "I am fighting for my life here."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Clarify",
+          "line": "I wouldn't call it funny.",
+          "nextTick": 10
+        },
+        {
+          "text": "Double down",
+          "line": "A little, yes.",
+          "nextTick": 20
+        },
+        {
+          "text": "Blame printer",
+          "line": "It was the printer.",
+          "nextTick": 30
+        }
+      ]
+    },
+    {
+      "tick": 41,
+      "options": [
+        {
+          "text": "Blame wording",
+          "line": "It was the wording.",
+          "nextTick": 50
+        },
+        {
+          "text": "Claim nerves",
+          "line": "Nervous reaction.",
+          "nextTick": 60
+        },
+        {
+          "text": "Say nothing",
+          "line": "...",
+          "nextTick": 70
+        }
+      ]
+    }
+  ]
+}

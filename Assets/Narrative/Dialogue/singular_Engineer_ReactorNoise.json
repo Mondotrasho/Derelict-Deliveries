@@ -1,0 +1,134 @@
+{
+  "terminal": {
+    "title": "SYS://ENGINEERING//LOCAL_COMMS",
+    "status": "REACTOR DECK",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "engineer"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "pilot",
+      "colour": "#FFB000"
+    },
+    {
+      "id": "engineer",
+      "colour": "#42FF7B"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 44,
+    "lineInterval": 0.7,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "pilot",
+      "text": "The reactor is making a noise."
+    },
+    {
+      "tick": 1,
+      "speaker": "engineer",
+      "text": "It is a reactor. Most of its job is making noises."
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "This one sounds expensive."
+    },
+    {
+      "tick": 3,
+      "speaker": "engineer",
+      "text": "Describe it."
+    },
+    {
+      "tick": 4,
+      "speaker": "pilot",
+      "text": "Sort of a clunk, then a hum, then a noise like a cupboard falling down stairs."
+    },
+    {
+      "tick": 5,
+      "speaker": "engineer",
+      "text": "That is extremely specific."
+    },
+    {
+      "tick": 6,
+      "speaker": "pilot",
+      "text": "Is that good?"
+    },
+    {
+      "tick": 7,
+      "speaker": "engineer",
+      "text": "No. But it has saved me a diagnostic cycle."
+    },
+    {
+      "tick": 8,
+      "speaker": "pilot",
+      "text": "Should I stop flying?"
+    },
+    {
+      "tick": 9,
+      "speaker": "engineer",
+      "text": "I would stop asking questions before the answer becomes inconvenient."
+    },
+    {
+      "tick": 10,
+      "speaker": "pilot",
+      "text": "The red warning light is blinking now."
+    },
+    {
+      "tick": 11,
+      "speaker": "engineer",
+      "text": "Which red warning light?"
+    },
+    {
+      "tick": 12,
+      "speaker": "pilot",
+      "text": "The one labelled 'DO NOT IGNORE'."
+    },
+    {
+      "tick": 13,
+      "speaker": "engineer",
+      "text": "Ah. Marketing insisted on that label."
+    },
+    {
+      "tick": 14,
+      "speaker": "pilot",
+      "text": "Should I press anything?"
+    },
+    {
+      "tick": 15,
+      "speaker": "engineer",
+      "text": "Only if it says 'MUTE ALARM'. Even then, emotionally prepare yourself."
+    },
+    {
+      "tick": 16,
+      "speaker": "pilot",
+      "text": "Can you talk me through this like I'm in one of those disaster films?"
+    },
+    {
+      "tick": 17,
+      "speaker": "engineer",
+      "text": "In those films they cut away before the paperwork."
+    },
+    {
+      "tick": 18,
+      "speaker": "pilot",
+      "text": "That is not reassuring."
+    },
+    {
+      "tick": 19,
+      "speaker": "engineer",
+      "text": "Neither is the reactor."
+    }
+  ]
+}

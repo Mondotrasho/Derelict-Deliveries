@@ -1,0 +1,172 @@
+{
+  "terminal": {
+    "title": "SYS://UNKNOWN//CHOICE_PROTOCOL",
+    "status": "DESTINY HAS BUTTONS",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "pilot",
+      "colour": "#FFB000"
+    },
+    {
+      "id": "cultist",
+      "colour": "#C58CFF"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "cultist",
+      "text": "Before you are three switches. One reveals truth, one grants peace, and one is green."
+    },
+    {
+      "tick": 1,
+      "speaker": "pilot",
+      "text": "The green one is labelled 'KETTLE'."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "You have selected truth."
+    },
+    {
+      "tick": 11,
+      "speaker": "pilot",
+      "text": "Truth appears to be the reading light.",
+      "nextTick": 40
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "You have selected peace."
+    },
+    {
+      "tick": 21,
+      "speaker": "pilot",
+      "text": "Peace has disabled artificial gravity.",
+      "nextTick": 40
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "You reject the offered paths."
+    },
+    {
+      "tick": 31,
+      "speaker": "pilot",
+      "text": "I reject touching mystery switches on company time.",
+      "nextTick": 40
+    },
+    {
+      "tick": 40,
+      "speaker": "cultist",
+      "text": "Then the second trial begins."
+    },
+    {
+      "tick": 41,
+      "speaker": "pilot",
+      "text": "There is a second trial?"
+    },
+    {
+      "tick": 50,
+      "speaker": "cultist",
+      "text": "Instructions are the cage of instinct."
+    },
+    {
+      "tick": 51,
+      "speaker": "pilot",
+      "text": "Fine. Where is the cage's instruction manual?",
+      "nextTick": 80
+    },
+    {
+      "tick": 60,
+      "speaker": "cultist",
+      "text": "You press both. Bold."
+    },
+    {
+      "tick": 61,
+      "speaker": "pilot",
+      "text": "The lights are flashing and the kettle is screaming.",
+      "nextTick": 80
+    },
+    {
+      "tick": 70,
+      "speaker": "cultist",
+      "text": "You simply walk away."
+    },
+    {
+      "tick": 71,
+      "speaker": "pilot",
+      "text": "It is my strongest spiritual technique.",
+      "nextTick": 80
+    },
+    {
+      "tick": 80,
+      "speaker": "cultist",
+      "text": "The prophecy did not account for workplace safety training."
+    },
+    {
+      "tick": 81,
+      "speaker": "pilot",
+      "text": "Few prophecies do."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Press red",
+          "line": "Fine. Red switch.",
+          "nextTick": 10
+        },
+        {
+          "text": "Press blue",
+          "line": "Blue looks less legally actionable.",
+          "nextTick": 20
+        },
+        {
+          "text": "Touch nothing",
+          "line": "I choose the ancient path of not touching random switches.",
+          "nextTick": 30
+        }
+      ]
+    },
+    {
+      "tick": 41,
+      "options": [
+        {
+          "text": "Ask for instructions",
+          "line": "Can I get instructions before the next revelation?",
+          "nextTick": 50
+        },
+        {
+          "text": "Press both",
+          "line": "I am pressing both this time.",
+          "nextTick": 60
+        },
+        {
+          "text": "Leave",
+          "line": "No. I am leaving.",
+          "nextTick": 70
+        }
+      ]
+    }
+  ]
+}

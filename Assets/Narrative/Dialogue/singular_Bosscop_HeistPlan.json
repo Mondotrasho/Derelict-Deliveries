@@ -1,0 +1,43 @@
+{
+  "terminal": {
+    "title": "SYS://SEC_COMMAND//WAR_ROOM",
+    "status": "PLAN REVIEW",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "bosscop",
+    "right": "cultist"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    { "id": "bosscop", "colour": "#FF6B6B" },
+    { "id": "cultist", "colour": "#D48CFF" }
+  ],
+  "timing": {
+    "charactersPerSecond": 40,
+    "lineInterval": 0.8,
+    "automaticMode": "false"
+  },
+  "lines": [
+    { "tick": 0, "speaker": "bosscop", "text": "Walk me through the plan one more time." },
+    { "tick": 1, "speaker": "cultist", "text": "We enter through the vents of fate." },
+    { "tick": 2, "speaker": "bosscop", "text": "There are no vents. It's a single-storey building." },
+    { "tick": 3, "speaker": "cultist", "text": "Then we enter through the door of fate." },
+    { "tick": 4, "speaker": "bosscop", "text": "That's just the door." },
+    { "tick": 5, "speaker": "cultist", "text": "Every door is a door of fate if you believe hard enough." },
+    { "tick": 6, "speaker": "bosscop", "text": "What's the fallback if the alarm trips?" },
+    { "tick": 7, "speaker": "cultist", "text": "We were never here." },
+    { "tick": 8, "speaker": "bosscop", "text": "We're wearing name tags." },
+    { "tick": 9, "speaker": "cultist", "text": "We were never here, spiritually." },
+    { "tick": 10, "speaker": "bosscop", "text": "I need an exit strategy, not a mantra." },
+    { "tick": 11, "speaker": "cultist", "text": "The exit strategy is the same as the entrance strategy, reversed." },
+    { "tick": 12, "speaker": "bosscop", "text": "That's just walking out the door." },
+    { "tick": 13, "speaker": "cultist", "text": "The door of fate." },
+    { "tick": 14, "speaker": "bosscop", "text": "I'm bringing someone else next time." }
+  ]
+}

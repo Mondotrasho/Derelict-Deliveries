@@ -1,0 +1,197 @@
+{
+  "terminal": {
+    "title": "SYS://ENGINEERING//AIRLOCK",
+    "status": "HATCH REFUSING COOPERATION",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "engineer"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "pilot",
+      "colour": "#FFB000"
+    },
+    {
+      "id": "engineer",
+      "colour": "#42FF7B"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "pilot",
+      "text": "Engineering, open the inner hatch."
+    },
+    {
+      "tick": 1,
+      "speaker": "engineer",
+      "text": "No."
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "That answer feels unusually personal."
+    },
+    {
+      "tick": 10,
+      "speaker": "engineer",
+      "text": "The pressure sensor says the corridor is vacuum."
+    },
+    {
+      "tick": 11,
+      "speaker": "pilot",
+      "text": "The corridor is visibly full of people.",
+      "nextTick": 40
+    },
+    {
+      "tick": 20,
+      "speaker": "engineer",
+      "text": "You are threatening an airlock."
+    },
+    {
+      "tick": 21,
+      "speaker": "pilot",
+      "text": "I need it to understand the seriousness of the situation.",
+      "nextTick": 40
+    },
+    {
+      "tick": 30,
+      "speaker": "engineer",
+      "text": "Emergency override requested."
+    },
+    {
+      "tick": 31,
+      "speaker": "pilot",
+      "text": "Excellent."
+    },
+    {
+      "tick": 32,
+      "speaker": "engineer",
+      "text": "Override denied."
+    },
+    {
+      "tick": 33,
+      "speaker": "pilot",
+      "text": "Less excellent.",
+      "nextTick": 40
+    },
+    {
+      "tick": 40,
+      "speaker": "engineer",
+      "text": "I can reset the sensor, but I need a reason code."
+    },
+    {
+      "tick": 41,
+      "speaker": "pilot",
+      "text": "Of course you do."
+    },
+    {
+      "tick": 50,
+      "speaker": "engineer",
+      "text": "Reason entered: sensor disagrees with observable universe."
+    },
+    {
+      "tick": 51,
+      "speaker": "pilot",
+      "text": "Finally, a code with some honesty.",
+      "nextTick": 80
+    },
+    {
+      "tick": 60,
+      "speaker": "engineer",
+      "text": "Reason entered: pilot becoming annoying."
+    },
+    {
+      "tick": 61,
+      "speaker": "pilot",
+      "text": "That is an official code?",
+      "nextTick": 80
+    },
+    {
+      "tick": 70,
+      "speaker": "engineer",
+      "text": "Reason entered: miscellaneous."
+    },
+    {
+      "tick": 71,
+      "speaker": "pilot",
+      "text": "The backbone of every maintenance department.",
+      "nextTick": 80
+    },
+    {
+      "tick": 80,
+      "speaker": "engineer",
+      "text": "Reset complete. Hatch opening."
+    },
+    {
+      "tick": 81,
+      "speaker": "pilot",
+      "text": "Thank you."
+    },
+    {
+      "tick": 82,
+      "speaker": "engineer",
+      "text": "Wrong hatch."
+    },
+    {
+      "tick": 83,
+      "speaker": "pilot",
+      "text": "I take back the thank you."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 2,
+      "options": [
+        {
+          "text": "Reason with engineer",
+          "line": "Tell me why it won't open.",
+          "nextTick": 10
+        },
+        {
+          "text": "Threaten the hatch",
+          "line": "Open it before I start threatening machinery.",
+          "nextTick": 20
+        },
+        {
+          "text": "Emergency override",
+          "line": "Use the emergency override.",
+          "nextTick": 30
+        }
+      ]
+    },
+    {
+      "tick": 41,
+      "options": [
+        {
+          "text": "Tell the truth",
+          "line": "Code it as 'sensor disagrees with reality'.",
+          "nextTick": 50
+        },
+        {
+          "text": "Blame me",
+          "line": "Put down 'pilot becoming annoying'.",
+          "nextTick": 60
+        },
+        {
+          "text": "Miscellaneous",
+          "line": "Just choose miscellaneous.",
+          "nextTick": 70
+        }
+      ]
+    }
+  ]
+}

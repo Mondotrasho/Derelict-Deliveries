@@ -1,0 +1,83 @@
+{
+  "terminal": {
+    "title": "SYS://ENGINEERING//DECISION_TEST",
+    "status": "PLAYER INPUT REQUIRED",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "engineer"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "engineer",
+      "text": "Before we continue, I need you to answer one question."
+    },
+    {
+      "tick": 1,
+      "speaker": "pilot",
+      "text": "That sentence has never improved my day."
+    },
+    {
+      "tick": 10,
+      "speaker": "engineer",
+      "text": "The coolant manifold has developed what the manual calls an exciting new geometry."
+    },
+    {
+      "tick": 11,
+      "speaker": "pilot",
+      "text": "Is that engineering language for broken?",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "engineer",
+      "text": "Charlie has not been within six decks of the reactor."
+    },
+    {
+      "tick": 21,
+      "speaker": "pilot",
+      "text": "That has never stopped me blaming Charlie before.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "engineer",
+      "text": "Either way, please stop touching switches while I am talking."
+    },
+    {
+      "tick": 31,
+      "speaker": "pilot",
+      "text": "I have moved my hands to a completely different set of switches."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Ask what broke",
+          "line": "Fine. What broke?",
+          "nextTick": 10
+        },
+        {
+          "text": "Blame Charlie",
+          "line": "Before we continue, Charlie did it.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

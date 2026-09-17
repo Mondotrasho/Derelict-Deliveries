@@ -1,0 +1,144 @@
+{
+  "terminal": {
+    "title": "SYS://MAINTENANCE_REQUEST//UNKNOWN",
+    "status": "UNVERIFIED CALLER",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "cultist",
+    "right": "engineer"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "cultist",
+      "colour": "#D48CFF"
+    },
+    {
+      "id": "engineer",
+      "colour": "#42FF7B"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 38,
+    "lineInterval": 0.85,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "cultist",
+      "text": "The machine beneath us has begun to sing."
+    },
+    {
+      "tick": 1,
+      "speaker": "engineer",
+      "text": "Is it the ventilation fan?"
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "Its hymn grows louder when we approach the red valve."
+    },
+    {
+      "tick": 3,
+      "speaker": "engineer",
+      "text": "That is absolutely the ventilation fan."
+    },
+    {
+      "tick": 4,
+      "speaker": "cultist",
+      "text": "We have prepared offerings."
+    },
+    {
+      "tick": 5,
+      "speaker": "engineer",
+      "text": "Please do not put offerings in the fan."
+    },
+    {
+      "tick": 6,
+      "speaker": "cultist",
+      "text": "The machine rejects our devotion."
+    },
+    {
+      "tick": 7,
+      "speaker": "engineer",
+      "text": "The machine rejects loose fabric, fingers, and warranty violations."
+    },
+    {
+      "tick": 8,
+      "speaker": "cultist",
+      "text": "You speak its laws with confidence."
+    },
+    {
+      "tick": 9,
+      "speaker": "engineer",
+      "text": "I wrote the maintenance sticker."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "The red valve has begun to tremble."
+    },
+    {
+      "tick": 11,
+      "speaker": "engineer",
+      "text": "Do not touch the red valve."
+    },
+    {
+      "tick": 12,
+      "speaker": "cultist",
+      "text": "It calls to us."
+    },
+    {
+      "tick": 13,
+      "speaker": "engineer",
+      "text": "It has a loose washer."
+    },
+    {
+      "tick": 14,
+      "speaker": "cultist",
+      "text": "You reduce mystery to hardware."
+    },
+    {
+      "tick": 15,
+      "speaker": "engineer",
+      "text": "That's basically the job description."
+    },
+    {
+      "tick": 16,
+      "speaker": "cultist",
+      "text": "In the old stories, the chosen one descends into the machine."
+    },
+    {
+      "tick": 17,
+      "speaker": "engineer",
+      "text": "In the maintenance manual, the chosen one signs the isolation permit first."
+    },
+    {
+      "tick": 18,
+      "speaker": "cultist",
+      "text": "There is a permit?"
+    },
+    {
+      "tick": 19,
+      "speaker": "engineer",
+      "text": "Three pages."
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "The machine truly hates us."
+    },
+    {
+      "tick": 21,
+      "speaker": "engineer",
+      "text": "No, that's procurement."
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "terminal": {
+    "title": "SYS://MESS//LUNCH_BREAK",
+    "status": "NUTRITION QUESTIONABLE",
+    "systemFontSize": 18,
+    "scanlines": "true",
+    "systemFont": "Kenney Pixel"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "charlie"
+  },
+  "textColours": {
+    "left": null,
+    "right": null
+  },
+  "characterColours": [
+    {
+      "id": "pilot",
+      "colour": "#FFB000"
+    },
+    {
+      "id": "charlie",
+      "colour": "#67D8FF"
+    }
+  ],
+  "timing": {
+    "charactersPerSecond": 42,
+    "lineInterval": 0.75,
+    "automaticMode": "false"
+  },
+  "lines": [
+    {
+      "tick": 0,
+      "speaker": "pilot",
+      "text": "You know what they charge for a burger on Europa Station?"
+    },
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "Enough to make the cow request hazard pay?"
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "Fourteen credits. Doesn't even come with chips."
+    },
+    {
+      "tick": 3,
+      "speaker": "charlie",
+      "text": "What does it come with?"
+    },
+    {
+      "tick": 4,
+      "speaker": "pilot",
+      "text": "A little card saying the lettuce was grown locally."
+    },
+    {
+      "tick": 5,
+      "speaker": "charlie",
+      "text": "Locally where? Europa has ice and disappointment."
+    },
+    {
+      "tick": 6,
+      "speaker": "pilot",
+      "text": "Hydroponics deck. They call it sustainable."
+    },
+    {
+      "tick": 7,
+      "speaker": "charlie",
+      "text": "What do they call the big burger?"
+    },
+    {
+      "tick": 8,
+      "speaker": "pilot",
+      "text": "The Atmospheric Entry."
+    },
+    {
+      "tick": 9,
+      "speaker": "charlie",
+      "text": "Why?"
+    },
+    {
+      "tick": 10,
+      "speaker": "pilot",
+      "text": "Because after eating one you need heat shielding."
+    },
+    {
+      "tick": 11,
+      "speaker": "charlie",
+      "text": "Any sauce?"
+    },
+    {
+      "tick": 12,
+      "speaker": "pilot",
+      "text": "Three choices. Red, yellow, and legally distinct beige."
+    },
+    {
+      "tick": 13,
+      "speaker": "charlie",
+      "text": "Space travel was a mistake."
+    }
+  ]
+}
