@@ -776,6 +776,66 @@ MonoBehaviour:
   m_InstancedGameObject: {fileID: 0}
   m_Flags: 3
   m_ColliderType: 1
+--- !u!1 &347676559
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 347676561}
+  - component: {fileID: 347676560}
+  m_Layer: 0
+  m_Name: DialogueTriggerManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &347676560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 347676559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc9d17b38bd730842a051e6adccf066e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetDialogueTestTrigger
+  player: {fileID: 2078833601}
+  planetManager: {fileID: 648462893}
+  dialoguePanel: {fileID: 2031162150}
+  runBootSequence: 0
+  triggerEachPlanetOnlyOnce: 0
+  disableWhileDialogueOpen: []
+  yellowPlanetId: Yellow_Planet
+  yellowPlanetDialogue: {fileID: 4900000, guid: 412fc1db5764ab549a4d59c3ca7c6605, type: 3}
+  greyPlanetId: Grey_Planet
+  greyPlanetDialogue: {fileID: 4900000, guid: f7c4f7919b403624c95bead0137244ef, type: 3}
+  redPlanetId: Red_planet
+  redPlanetDialogue: {fileID: 4900000, guid: add037795f36b5443b8ea77129f12381, type: 3}
+  redMoonId: Red_planet_moon
+  redMoonDialogue: {fileID: 4900000, guid: af0fe1383701e0f4f8de96c5fba928c3, type: 3}
+  bluePlanetId: Green_Planet
+  bluePlanetDialogue: {fileID: 4900000, guid: a3703e4c4ed613046a492e8415da1920, type: 3}
+--- !u!4 &347676561
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 347676559}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1175.8904, y: 819.5115, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &419753238
 GameObject:
   m_ObjectHideFlags: 0
@@ -1735,7 +1795,7 @@ MonoBehaviour:
   m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 00000000214af455e51f7efb
+  m_ApplyToSortingLayers: 00000000214af455e51f7efb07e3a41d
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -2601,6 +2661,7 @@ RectTransform:
   - {fileID: 1107294072}
   - {fileID: 1971338029}
   - {fileID: 449378688}
+  - {fileID: 2031162149}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -11089,7 +11150,7 @@ Tilemap:
     m_Data: {r: 1.67e-43, g: 1.67e-43, b: 1.67e-43, a: 1.67e-43}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.9625436, g: 0.8820755, b: 1, a: 1}
   m_Origin: {x: -18, y: -12, z: 0}
   m_Size: {x: 36, y: 22, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
@@ -11137,7 +11198,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: ab45c3c9e546af54f95eaf4f680c7afc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -17056,6 +17117,282 @@ RectTransform:
   m_AnchoredPosition: {x: -483.8354, y: -45}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &2031162148
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2031162149}
+  - component: {fileID: 2031162152}
+  - component: {fileID: 2031162151}
+  - component: {fileID: 2031162150}
+  m_Layer: 5
+  m_Name: Dialogue panel (Starts disabled)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &2031162149
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031162148}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 824059745}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -15.115173, y: 27.346313}
+  m_SizeDelta: {x: -114.1504, y: -194.6925}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2031162150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031162148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5978731dadb25fc4ea1159edf66c0348, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialoguePanelController
+  dialogueJson: {fileID: 4900000, guid: a3703e4c4ed613046a492e8415da1920, type: 3}
+  characterDefinitions:
+  - characterId: charlie
+    displayName: CHARLIE
+    sprite: {fileID: 21300000, guid: c086744cfff94b04e99738e442d7eeb7, type: 3}
+    fontName: Kenney Future
+    fontSize: 30
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 1
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 0.40392157, g: 0.84705883, b: 1, a: 1}
+  - characterId: pilot
+    displayName: PILOT
+    sprite: {fileID: -7169610267031536943, guid: 167c81228c4bb0f40bbb369954976cf0, type: 3}
+    fontName: Kenney Future Narrow
+    fontSize: 27
+    verticalAlignment: 0
+    flipWhenLeft: 1
+    flipWhenRight: 0
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 1, g: 0.6901961, b: 0, a: 1}
+  - characterId: engineer
+    displayName: ENGINEER
+    sprite: {fileID: 21300000, guid: 35573cdb47adba34389ba74434eb9831, type: 3}
+    fontName: Kenney Rocket
+    fontSize: 24
+    verticalAlignment: 2
+    flipWhenLeft: 1
+    flipWhenRight: 0
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 0.25882354, g: 1, b: 0.48235294, a: 1}
+  - characterId: cop
+    displayName: COP
+    sprite: {fileID: 21300000, guid: 627dc0b747255904491dec5774c4889d, type: 3}
+    fontName: Kenney Pixel Square
+    fontSize: 25
+    verticalAlignment: 2
+    flipWhenLeft: 1
+    flipWhenRight: 0
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 0.5568628, g: 0.85882354, b: 1, a: 1}
+  - characterId: bosscop
+    displayName: BOSSCOP
+    sprite: {fileID: 21300000, guid: 8cfbc3d6498d46e4988833e9ad4103ff, type: 3}
+    fontName: Kenney High Square
+    fontSize: 29
+    verticalAlignment: 2
+    flipWhenLeft: 1
+    flipWhenRight: 0
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 1, g: 0.41960785, b: 0.41960785, a: 1}
+  - characterId: clerk
+    displayName: CLERK
+    sprite: {fileID: 21300000, guid: c4076a4e68a429842af417778bffe15c, type: 3}
+    fontName: Kenney Mini Square Mono
+    fontSize: 25
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 1
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 1, g: 0.84313726, b: 0.41568628, a: 1}
+  - characterId: cultist
+    displayName: CULTIST
+    sprite: {fileID: 21300000, guid: f195dbf407db1f244b10b2d7efef9e60, type: 3}
+    fontName: Kenney Blocks
+    fontSize: 28
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 1
+    portraitScale: 1
+    overrideTextColour: 1
+    textColour: {r: 0.83137256, g: 0.54901963, b: 1, a: 1}
+  hidePortraitWhenNoSprite: 1
+  sideAreaFraction: 0.2
+  controlsHeightFraction: 0.128
+  outerInsetFraction: 0.018
+  portraitPaddingFraction: 0.018
+  topInsetFraction: 0.0589
+  panelBackgroundSprite: {fileID: 21300000, guid: 5ea700773f52f334ca9c0f9abfc56ea0, type: 3}
+  useSlicedPanelBackground: 1
+  tintPanelBackgroundWithTerminalColour: 0
+  panelBackgroundTint: {r: 1, g: 1, b: 1, a: 1}
+  defaultScanlines: 1
+  scanlineThickness: 8
+  scanlineGap: 8
+  scanlineOpacity: 0.313
+  playPortraitAppearEffect: 1
+  portraitAppearDuration: 0.55
+  portraitAppearJitter: 5
+  animateSpeakingPortrait: 1
+  speakingScaleAmount: 0.045
+  speakingPulseSpeed: 7.5
+  instantSpeechPulseDuration: 0.22
+  colourPreset: 1
+  customBackgroundColour: {r: 0.0627451, g: 0.03529412, b: 0, a: 1}
+  customPrimaryColour: {r: 1, g: 0.6901961, b: 0, a: 1}
+  customDimColour: {r: 0.6117647, g: 0.41960785, b: 0, a: 1}
+  defaultTitle: SYS://REMOTE_LINK
+  defaultStatus: CHANNEL OPEN
+  fallbackSystemFont: {fileID: 0}
+  fallbackCharacterFont: {fileID: 0}
+  fallbackSystemFontSize: 20
+  fallbackCharacterFontSize: 28
+  bootFontSize: 22
+  buttonFontSize: 42
+  fontTestBaseSize: 28
+  fontTestSample: ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 - The quick brown fox.
+  typewriterEffect: 1
+  defaultCharactersPerSecond: 35
+  defaultLineInterval: 1
+  automaticMode: 0
+  runBootOnStart: 1
+  keepBootLogAfterBoot: 0
+  hideCharacterImagesDuringBoot: 1
+  bootLines:
+  - ':: TERMINAL COLD START'
+  - POWER BUS............... OK
+  - MEMORY TEST............. OK
+  - I/O BUS................. OK
+  - CLOCK SYNC.............. OK
+  defaultBootCharactersPerSecond: 300
+  defaultConnectDuration: 1
+  defaultReadyHold: 0.45
+  defaultBlankLinesBeforeDialogue: 1
+  startEmpty: 1
+  autoScrollToNewest: 1
+  showDebugResetButton: 0
+  continueButtonText: CONTINUE
+  choiceAreaFraction: 0.5
+  showCloseButton: 1
+  closeButtonText: QUIT
+  bringToFrontOnOpen: 1
+  animateWindowOpen: 1
+  windowOpenDuration: 0.24
+  windowOpenStartScale: {x: 0.94, y: 0.06}
+  windowOpenOvershoot: 0.08
+  fadeWindowOnOpen: 1
+  fontLibrary:
+  - {fileID: 11400000, guid: af4a083dbd2302240a94fdf67e35698a, type: 2}
+  - {fileID: 11400000, guid: dea0626981f60334ea8a7f3e84bfef98, type: 2}
+  - {fileID: 11400000, guid: fe4223bdcc257e948a0665b01f76265d, type: 2}
+  - {fileID: 11400000, guid: c3a4b4c56139a9244b61a4710f20328a, type: 2}
+  - {fileID: 11400000, guid: d8f7be5fad727764f8249b72fa7e02b4, type: 2}
+  - {fileID: 11400000, guid: 3fd26c0b12b9578499f7b17a848333d6, type: 2}
+  - {fileID: 11400000, guid: 77d2ad80f0f0a3348b876d8435decb50, type: 2}
+  - {fileID: 11400000, guid: bf1ca97ababe8ec4999e1c0585065ff6, type: 2}
+  - {fileID: 11400000, guid: d4bcf7df232bebf42850c2eb1afeb319, type: 2}
+  - {fileID: 11400000, guid: 15402311864f3524a9dd9d0bf6626bf1, type: 2}
+  - {fileID: 11400000, guid: ef0d3e6352bff2c41a8b220721226d98, type: 2}
+  - {fileID: 11400000, guid: e1161f945c210de43a396f105d79c0f5, type: 2}
+  fontSizeModifiers:
+  - font: {fileID: 11400000, guid: af4a083dbd2302240a94fdf67e35698a, type: 2}
+    modifier: -3
+  - font: {fileID: 11400000, guid: dea0626981f60334ea8a7f3e84bfef98, type: 2}
+    modifier: 0
+  - font: {fileID: 11400000, guid: fe4223bdcc257e948a0665b01f76265d, type: 2}
+    modifier: 0
+  - font: {fileID: 11400000, guid: c3a4b4c56139a9244b61a4710f20328a, type: 2}
+    modifier: 6
+  - font: {fileID: 11400000, guid: d8f7be5fad727764f8249b72fa7e02b4, type: 2}
+    modifier: 6
+  - font: {fileID: 11400000, guid: 3fd26c0b12b9578499f7b17a848333d6, type: 2}
+    modifier: 0
+  - font: {fileID: 11400000, guid: 77d2ad80f0f0a3348b876d8435decb50, type: 2}
+    modifier: 0
+  - font: {fileID: 11400000, guid: bf1ca97ababe8ec4999e1c0585065ff6, type: 2}
+    modifier: 0
+  - font: {fileID: 11400000, guid: d4bcf7df232bebf42850c2eb1afeb319, type: 2}
+    modifier: 12
+  - font: {fileID: 11400000, guid: 15402311864f3524a9dd9d0bf6626bf1, type: 2}
+    modifier: -3
+  - font: {fileID: 11400000, guid: ef0d3e6352bff2c41a8b220721226d98, type: 2}
+    modifier: -3
+  - font: {fileID: 11400000, guid: e1161f945c210de43a396f105d79c0f5, type: 2}
+    modifier: -5
+  legacyNextButton: {fileID: 0}
+  legacyResetButton: {fileID: 0}
+  legacyBootButton: {fileID: 0}
+  legacyLeftCharacterImage: {fileID: 0}
+  legacyRightCharacterImage: {fileID: 0}
+  characterSprites: []
+--- !u!114 &2031162151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031162148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 5ea700773f52f334ca9c0f9abfc56ea0, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &2031162152
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2031162148}
+  m_CullTransparentMesh: 1
 --- !u!114 &2078833601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17382,3 +17719,4 @@ SceneRoots:
   - {fileID: 651697408}
   - {fileID: 824059745}
   - {fileID: 1330772290}
+  - {fileID: 347676561}

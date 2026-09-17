@@ -208,7 +208,8 @@ public class DialoguePanelController : MonoBehaviour
 
     [Header("Character Definitions")]
     [Tooltip("Character presentation lives here rather than in each dialogue JSON.")]
-    [SerializeField] private List<CharacterDefinition> characterDefinitions = new List<CharacterDefinition>
+    [SerializeField]
+    private List<CharacterDefinition> characterDefinitions = new List<CharacterDefinition>
     {
         new CharacterDefinition { characterId = "charlie", displayName = "CHARLIE", fontName = "Kenney Future", fontSize = 30f, overrideTextColour = true, textColour = new Color32(0x67, 0xD8, 0xFF, 0xFF) },
         new CharacterDefinition { characterId = "pilot", displayName = "PILOT", fontName = "Kenney Future Narrow", fontSize = 27f, overrideTextColour = true, textColour = new Color32(0xFF, 0xB0, 0x00, 0xFF) },
@@ -342,6 +343,32 @@ public class DialoguePanelController : MonoBehaviour
     [Tooltip("How much of the controls area is reserved for choice buttons above CONTINUE.")]
     [SerializeField] private float choiceAreaFraction = 0.58f;
 
+    [Header("Dialogue Window")]
+    [Tooltip("Shows a fixed QUIT/CLOSE button on the right side of the bottom control bar.")]
+    [SerializeField] private bool showCloseButton = true;
+
+    [SerializeField] private string closeButtonText = "QUIT";
+
+    [Tooltip("Moves the dialogue panel to the end of its Canvas sibling list whenever it is opened.")]
+    [SerializeField] private bool bringToFrontOnOpen = true;
+
+    [Header("Window Open Animation")]
+    [Tooltip("Animates the existing panel RectTransform when OpenDialogue is called.")]
+    [SerializeField] private bool animateWindowOpen = true;
+
+    [Min(0.05f)]
+    [SerializeField] private float windowOpenDuration = 0.24f;
+
+    [Tooltip("Starting scale relative to the panel's authored scale. A very small Y gives a terminal-style vertical reveal.")]
+    [SerializeField] private Vector2 windowOpenStartScale = new Vector2(0.94f, 0.06f);
+
+    [Range(0f, 0.35f)]
+    [Tooltip("Small amount of overshoot before the panel settles at its normal scale.")]
+    [SerializeField] private float windowOpenOvershoot = 0.08f;
+
+    [Tooltip("Fade the complete dialogue window in while it expands.")]
+    [SerializeField] private bool fadeWindowOnOpen = true;
+
     // Filled by the custom inspector so runtime builds can resolve a font by name.
     [HideInInspector][SerializeField] private List<TMP_FontAsset> fontLibrary = new List<TMP_FontAsset>();
 
@@ -402,9 +429,11 @@ public class DialoguePanelController : MonoBehaviour
     private Button generatedResetButton;
     private Button generatedNextButton;
     private Button generatedAutoButton;
+    private Button generatedCloseButton;
     private TextMeshProUGUI generatedResetLabel;
     private TextMeshProUGUI generatedNextLabel;
     private TextMeshProUGUI generatedAutoLabel;
+    private TextMeshProUGUI generatedCloseLabel;
     private readonly List<Button> generatedChoiceButtons = new List<Button>();
 
     private PortraitRuntime leftPortrait;
@@ -455,6 +484,17 @@ public class DialoguePanelController : MonoBehaviour
     private bool fontTestMode;
     private bool waitingForChoice;
     private ChoiceSetJson activeChoiceSet;
+    private bool dialogueOpen;
+    private bool windowOpening;
+
+    private CanvasGroup windowCanvasGroup;
+    private Vector3 authoredPanelScale = Vector3.one;
+    private Coroutine windowOpenCoroutine;
+
+    public event Action DialogueOpened;
+    public event Action DialogueClosed;
+
+    public bool IsDialogueOpen => dialogueOpen && gameObject.activeSelf;
 
     private Coroutine typingCoroutine;
     private bool isTyping;
@@ -468,6 +508,7 @@ public class DialoguePanelController : MonoBehaviour
 
     private void Awake()
     {
+        dialogueOpen = gameObject.activeSelf;
         panelRect = GetComponent<RectTransform>();
         if (panelRect == null)
         {
@@ -475,6 +516,18 @@ public class DialoguePanelController : MonoBehaviour
             enabled = false;
             return;
         }
+
+        authoredPanelScale = panelRect.localScale;
+
+        windowCanvasGroup = GetComponent<CanvasGroup>();
+        if (windowCanvasGroup == null)
+        {
+            windowCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        windowCanvasGroup.alpha = 1f;
+        windowCanvasGroup.interactable = true;
+        windowCanvasGroup.blocksRaycasts = true;
 
         DisableLegacyUi();
         BuildGeneratedUi();
@@ -580,6 +633,11 @@ public class DialoguePanelController : MonoBehaviour
         topInsetFraction = Mathf.Clamp(topInsetFraction, 0f, 0.10f);
         choiceAreaFraction = Mathf.Clamp(choiceAreaFraction, 0.35f, 0.75f);
 
+        windowOpenDuration = Mathf.Max(0.05f, windowOpenDuration);
+        windowOpenStartScale.x = Mathf.Clamp(windowOpenStartScale.x, 0.05f, 1f);
+        windowOpenStartScale.y = Mathf.Clamp(windowOpenStartScale.y, 0.01f, 1f);
+        windowOpenOvershoot = Mathf.Clamp(windowOpenOvershoot, 0f, 0.35f);
+
         scanlineThickness = Mathf.Max(0.25f, scanlineThickness);
         scanlineGap = Mathf.Max(0.25f, scanlineGap);
         scanlineOpacity = Mathf.Clamp01(scanlineOpacity);
@@ -612,8 +670,20 @@ public class DialoguePanelController : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        dialogueOpen = true;
+    }
+
+    private void OnDisable()
+    {
+        dialogueOpen = false;
+        StopWindowOpenAnimation(true);
+    }
+
     private void OnDestroy()
     {
+        StopWindowOpenAnimation(true);
         RemoveGeneratedButtonListeners();
         StopTyping();
         StopBootSequence();
@@ -623,6 +693,253 @@ public class DialoguePanelController : MonoBehaviour
         if (scanlineTexture != null)
         {
             Destroy(scanlineTexture);
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Window / callable dialogue API
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Activates this existing dialogue panel, loads the supplied TextAsset and starts it.
+    /// The panel can safely begin inactive in the scene as long as the caller holds a reference to it.
+    /// </summary>
+    public void OpenDialogue(TextAsset jsonFile, bool runBootSequence = false)
+    {
+        if (jsonFile == null)
+        {
+            Debug.LogWarning("Cannot open dialogue because no JSON TextAsset was supplied.", this);
+            return;
+        }
+
+        ActivateDialogueWindow();
+
+        if (runBootSequence)
+        {
+            LoadDialogueAndBoot(jsonFile);
+        }
+        else
+        {
+            LoadDialogue(jsonFile);
+        }
+    }
+
+    /// <summary>Same as OpenDialogue, but accepts raw JSON text.</summary>
+    public void OpenDialogueFromJson(string json, bool runBootSequence = false)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            Debug.LogWarning("Cannot open dialogue because the JSON string is empty.", this);
+            return;
+        }
+
+        ActivateDialogueWindow();
+
+        if (runBootSequence)
+        {
+            LoadDialogueFromJsonAndBoot(json);
+        }
+        else
+        {
+            LoadDialogueFromJson(json);
+        }
+    }
+
+    /// <summary>
+    /// Opens a dialogue and waits until CloseDialogue is called. Yield this from the caller.
+    /// </summary>
+    public IEnumerator OpenDialogueAndWait(TextAsset jsonFile, bool runBootSequence = false)
+    {
+        if (jsonFile == null)
+        {
+            yield break;
+        }
+
+        OpenDialogue(jsonFile, runBootSequence);
+        while (IsDialogueOpen)
+        {
+            yield return null;
+        }
+    }
+
+    public IEnumerator OpenDialogueFromJsonAndWait(string json, bool runBootSequence = false)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            yield break;
+        }
+
+        OpenDialogueFromJson(json, runBootSequence);
+        while (IsDialogueOpen)
+        {
+            yield return null;
+        }
+    }
+
+    /// <summary>
+    /// Stops the current presentation and hides this GameObject. Its RectTransform is preserved.
+    /// </summary>
+    public void CloseDialogue()
+    {
+        if (!gameObject.activeSelf && !dialogueOpen)
+        {
+            return;
+        }
+
+        StopTyping();
+        StopBootSequence();
+        StopWindowOpenAnimation(true);
+        HideChoices();
+        StopPortraitEffect(leftPortrait);
+        StopPortraitEffect(rightPortrait);
+        fontTestMode = false;
+        activeSpeakingSide = null;
+        dialogueOpen = false;
+        gameObject.SetActive(false);
+        DialogueClosed?.Invoke();
+    }
+
+    private void ActivateDialogueWindow()
+    {
+        bool wasOpen = IsDialogueOpen;
+
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
+        if (!enabled)
+        {
+            enabled = true;
+        }
+
+        dialogueOpen = true;
+
+        if (bringToFrontOnOpen && transform.parent != null)
+        {
+            transform.SetAsLastSibling();
+        }
+
+        if (!wasOpen)
+        {
+            PlayWindowOpenAnimation();
+            DialogueOpened?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Replays the configured opening effect without reloading the current dialogue.
+    /// Useful from the Inspector while tuning the animation.
+    /// </summary>
+    public void ReplayWindowOpenAnimation()
+    {
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
+        PlayWindowOpenAnimation();
+    }
+
+    private void PlayWindowOpenAnimation()
+    {
+        StopWindowOpenAnimation(true);
+
+        if (!animateWindowOpen || !isActiveAndEnabled || panelRect == null)
+        {
+            return;
+        }
+
+        windowOpenCoroutine = StartCoroutine(WindowOpenAnimation());
+    }
+
+    private IEnumerator WindowOpenAnimation()
+    {
+        windowOpening = true;
+
+        Vector3 startScale = new Vector3(
+            authoredPanelScale.x * windowOpenStartScale.x,
+            authoredPanelScale.y * windowOpenStartScale.y,
+            authoredPanelScale.z);
+
+        panelRect.localScale = startScale;
+
+        if (windowCanvasGroup != null)
+        {
+            windowCanvasGroup.alpha = fadeWindowOnOpen ? 0f : 1f;
+            windowCanvasGroup.interactable = false;
+            windowCanvasGroup.blocksRaycasts = false;
+        }
+
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.05f, windowOpenDuration);
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            // Ease-out-back. The overshoot gives the terminal a small pop
+            // before it settles without changing its authored RectTransform.
+            float c1 = 1.70158f * windowOpenOvershoot;
+            float c3 = c1 + 1f;
+            float p = t - 1f;
+            float eased = 1f + c3 * p * p * p + c1 * p * p;
+
+            panelRect.localScale = Vector3.LerpUnclamped(
+                startScale,
+                authoredPanelScale,
+                eased);
+
+            if (windowCanvasGroup != null && fadeWindowOnOpen)
+            {
+                windowCanvasGroup.alpha = Mathf.SmoothStep(
+                    0f,
+                    1f,
+                    Mathf.Clamp01(t / 0.72f));
+            }
+
+            yield return null;
+        }
+
+        panelRect.localScale = authoredPanelScale;
+
+        if (windowCanvasGroup != null)
+        {
+            windowCanvasGroup.alpha = 1f;
+            windowCanvasGroup.interactable = true;
+            windowCanvasGroup.blocksRaycasts = true;
+        }
+
+        windowOpening = false;
+        windowOpenCoroutine = null;
+    }
+
+    private void StopWindowOpenAnimation(bool restorePresentation)
+    {
+        if (windowOpenCoroutine != null)
+        {
+            StopCoroutine(windowOpenCoroutine);
+            windowOpenCoroutine = null;
+        }
+
+        windowOpening = false;
+
+        if (!restorePresentation)
+        {
+            return;
+        }
+
+        if (panelRect != null)
+        {
+            panelRect.localScale = authoredPanelScale;
+        }
+
+        if (windowCanvasGroup != null)
+        {
+            windowCanvasGroup.alpha = 1f;
+            windowCanvasGroup.interactable = true;
+            windowCanvasGroup.blocksRaycasts = true;
         }
     }
 
@@ -1258,6 +1575,7 @@ public class DialoguePanelController : MonoBehaviour
         generatedResetButton = CreateGeneratedButton("ResetButton", bottomBarRect, "RESET", out generatedResetLabel);
         generatedNextButton = CreateGeneratedButton("NextButton", bottomBarRect, continueButtonText, out generatedNextLabel);
         generatedAutoButton = CreateGeneratedButton("AutoButton", bottomBarRect, "AUTO: OFF", out generatedAutoLabel);
+        generatedCloseButton = CreateGeneratedButton("CloseButton", bottomBarRect, closeButtonText, out generatedCloseLabel);
 
         RebuildScanlineTexture();
     }
@@ -1435,9 +1753,12 @@ public class DialoguePanelController : MonoBehaviour
         ConfigureButtonVisual(generatedResetButton, generatedResetLabel);
         ConfigureButtonVisual(generatedNextButton, generatedNextLabel);
         ConfigureButtonVisual(generatedAutoButton, generatedAutoLabel);
+        ConfigureButtonVisual(generatedCloseButton, generatedCloseLabel);
         UpdateAutoButtonLabel();
         UpdateContinueButtonLabel();
+        UpdateCloseButtonLabel();
         if (generatedResetButton != null) generatedResetButton.gameObject.SetActive(showDebugResetButton);
+        if (generatedCloseButton != null) generatedCloseButton.gameObject.SetActive(showCloseButton);
 
         foreach (GeneratedLine line in generatedLines)
         {
@@ -1725,15 +2046,26 @@ public class DialoguePanelController : MonoBehaviour
             }
         }
 
+        if (generatedCloseButton != null)
+        {
+            generatedCloseButton.gameObject.SetActive(showCloseButton);
+            if (showCloseButton)
+            {
+                PlaceBottomButton(generatedCloseButton, edgeInset, sideWidth, buttonHeight, true);
+            }
+        }
+
         if (generatedAutoButton != null)
         {
-            PlaceBottomButton(generatedAutoButton, edgeInset, sideWidth, buttonHeight, true);
+            float autoOffset = showCloseButton ? sideWidth + gap : 0f;
+            PlaceBottomButton(generatedAutoButton, edgeInset, sideWidth, buttonHeight, true, autoOffset);
         }
 
         if (generatedNextButton != null)
         {
             float left = edgeInset + (showDebugResetButton ? sideWidth + gap : 0f);
-            float right = edgeInset + sideWidth + gap;
+            float rightSlots = showCloseButton ? (sideWidth * 2f + gap) : sideWidth;
+            float right = edgeInset + rightSlots + gap;
             RectTransform rect = generatedNextButton.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 0.5f);
             rect.anchorMax = new Vector2(1f, 0.5f);
@@ -1743,14 +2075,22 @@ public class DialoguePanelController : MonoBehaviour
         }
     }
 
-    private void PlaceBottomButton(Button button, float edgeInset, float width, float height, bool right)
+    private void PlaceBottomButton(
+        Button button,
+        float edgeInset,
+        float width,
+        float height,
+        bool right,
+        float additionalOffset = 0f)
     {
         RectTransform rect = button.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(right ? 1f : 0f, 0.5f);
         rect.anchorMax = rect.anchorMin;
         rect.pivot = new Vector2(right ? 1f : 0f, 0.5f);
         rect.sizeDelta = new Vector2(width, height);
-        rect.anchoredPosition = new Vector2(right ? -edgeInset : edgeInset, 0f);
+        rect.anchoredPosition = new Vector2(
+            right ? -(edgeInset + additionalOffset) : edgeInset + additionalOffset,
+            0f);
     }
 
     private void LayoutChoiceButtons()
@@ -2032,6 +2372,7 @@ public class DialoguePanelController : MonoBehaviour
         if (generatedNextButton != null) generatedNextButton.onClick.AddListener(NextTick);
         if (generatedResetButton != null) generatedResetButton.onClick.AddListener(ResetDialogue);
         if (generatedAutoButton != null) generatedAutoButton.onClick.AddListener(ToggleAutomaticMode);
+        if (generatedCloseButton != null) generatedCloseButton.onClick.AddListener(CloseDialogue);
     }
 
     private void RemoveGeneratedButtonListeners()
@@ -2039,6 +2380,7 @@ public class DialoguePanelController : MonoBehaviour
         if (generatedNextButton != null) generatedNextButton.onClick.RemoveListener(NextTick);
         if (generatedResetButton != null) generatedResetButton.onClick.RemoveListener(ResetDialogue);
         if (generatedAutoButton != null) generatedAutoButton.onClick.RemoveListener(ToggleAutomaticMode);
+        if (generatedCloseButton != null) generatedCloseButton.onClick.RemoveListener(CloseDialogue);
     }
 
     public void NextTick()
@@ -2187,6 +2529,7 @@ public class DialoguePanelController : MonoBehaviour
         if (generatedNextButton != null) generatedNextButton.interactable = interactable && !waitingForChoice;
         if (generatedResetButton != null) generatedResetButton.interactable = interactable;
         if (generatedAutoButton != null) generatedAutoButton.interactable = interactable;
+        if (generatedCloseButton != null) generatedCloseButton.interactable = true;
 
         foreach (Button button in generatedChoiceButtons)
         {
@@ -3043,6 +3386,14 @@ public class DialoguePanelController : MonoBehaviour
         if (generatedNextLabel != null)
         {
             generatedNextLabel.text = string.IsNullOrWhiteSpace(continueButtonText) ? "CONTINUE" : continueButtonText;
+        }
+    }
+
+    private void UpdateCloseButtonLabel()
+    {
+        if (generatedCloseLabel != null)
+        {
+            generatedCloseLabel.text = string.IsNullOrWhiteSpace(closeButtonText) ? "QUIT" : closeButtonText;
         }
     }
 

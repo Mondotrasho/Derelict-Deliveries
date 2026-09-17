@@ -69,6 +69,15 @@ public class DialoguePanelControllerEditor : Editor
     private SerializedProperty showDebugResetButton;
     private SerializedProperty continueButtonText;
     private SerializedProperty choiceAreaFraction;
+    private SerializedProperty showCloseButton;
+    private SerializedProperty closeButtonText;
+    private SerializedProperty bringToFrontOnOpen;
+
+    private SerializedProperty animateWindowOpen;
+    private SerializedProperty windowOpenDuration;
+    private SerializedProperty windowOpenStartScale;
+    private SerializedProperty windowOpenOvershoot;
+    private SerializedProperty fadeWindowOnOpen;
 
     private SerializedProperty runBootOnStart;
     private SerializedProperty keepBootLogAfterBoot;
@@ -142,6 +151,15 @@ public class DialoguePanelControllerEditor : Editor
         showDebugResetButton = Find("showDebugResetButton");
         continueButtonText = Find("continueButtonText");
         choiceAreaFraction = Find("choiceAreaFraction");
+        showCloseButton = Find("showCloseButton");
+        closeButtonText = Find("closeButtonText");
+        bringToFrontOnOpen = Find("bringToFrontOnOpen");
+
+        animateWindowOpen = Find("animateWindowOpen");
+        windowOpenDuration = Find("windowOpenDuration");
+        windowOpenStartScale = Find("windowOpenStartScale");
+        windowOpenOvershoot = Find("windowOpenOvershoot");
+        fadeWindowOnOpen = Find("fadeWindowOnOpen");
 
         runBootOnStart = Find("runBootOnStart");
         keepBootLogAfterBoot = Find("keepBootLogAfterBoot");
@@ -271,8 +289,33 @@ public class DialoguePanelControllerEditor : Editor
         EditorGUILayout.PropertyField(showDebugResetButton, new GUIContent("Debug Reset Button", "Shows RESET in the fixed left slot. Leave this off for normal player-facing dialogue."));
         EditorGUILayout.PropertyField(continueButtonText, new GUIContent("Continue Button Text"));
         EditorGUILayout.PropertyField(choiceAreaFraction, new GUIContent("Choice Area Height", "Fraction of the bottom controls area reserved for generated choice buttons above CONTINUE."));
+        EditorGUILayout.PropertyField(showCloseButton, new GUIContent("Show Quit Button", "Shows the fixed QUIT/CLOSE button. Useful while testing gameplay behind the dialogue panel."));
+        if (showCloseButton.boolValue)
+        {
+            EditorGUILayout.PropertyField(closeButtonText, new GUIContent("Quit Button Text"));
+        }
+        EditorGUILayout.PropertyField(bringToFrontOnOpen, new GUIContent("Bring To Front On Open", "Moves the existing panel to the end of its Canvas sibling list without changing its RectTransform position."));
         EditorGUILayout.HelpBox(
-            "AUTO stays in the fixed right slot. CONTINUE fills the middle/bottom bar and also responds to Space. When a choice is waiting, Continue and Space are blocked until the player deliberately picks an option.",
+            "RESET is optional on the left. CONTINUE fills the centre and responds to Space. AUTO and QUIT stay in fixed slots on the right. Choices still occupy the area above the bottom bar.",
+            MessageType.None);
+
+        Header("Window Open Animation");
+        EditorGUILayout.PropertyField(animateWindowOpen, new GUIContent("Animate Window Open"));
+        if (animateWindowOpen.boolValue)
+        {
+            EditorGUILayout.PropertyField(windowOpenDuration, new GUIContent("Open Duration"));
+            EditorGUILayout.PropertyField(
+                windowOpenStartScale,
+                new GUIContent(
+                    "Start Scale",
+                    "Relative to the panel's normal authored scale. Default 0.94 x 0.06 gives a CRT/terminal-style vertical reveal."));
+            EditorGUILayout.PropertyField(
+                windowOpenOvershoot,
+                new GUIContent("Open Overshoot", "Small terminal-style pop before settling."));
+            EditorGUILayout.PropertyField(fadeWindowOnOpen, new GUIContent("Fade While Opening"));
+        }
+        EditorGUILayout.HelpBox(
+            "The animation only changes localScale and CanvasGroup alpha. It does not change the panel's anchors, anchored position or configured size.",
             MessageType.None);
 
         Header("Boot");
@@ -289,7 +332,7 @@ public class DialoguePanelControllerEditor : Editor
         EditorGUILayout.PropertyField(startEmpty);
         EditorGUILayout.PropertyField(autoScrollToNewest);
         EditorGUILayout.HelpBox(
-            "Choice JSON is optional. Existing dialogue JSON without a choices array continues to use the normal sequential tick flow.",
+            "Choice JSON is optional. Existing dialogue JSON without a choices array continues to use the normal sequential tick flow. The whole dialogue GameObject may start inactive; another active script can call OpenDialogue(json) to activate and reuse it at its existing position.",
             MessageType.Info);
 
         EditorGUILayout.Space(10f);
@@ -310,7 +353,19 @@ public class DialoguePanelControllerEditor : Editor
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Next")) controller.NextTick();
             if (GUILayout.Button("Reset")) controller.ResetDialogue();
+            if (GUILayout.Button("Close")) controller.CloseDialogue();
             EditorGUILayout.EndHorizontal();
+
+            TextAsset selectedDialogue = dialogueJson.objectReferenceValue as TextAsset;
+            if (selectedDialogue != null && GUILayout.Button("Open Selected Dialogue"))
+            {
+                controller.OpenDialogue(selectedDialogue);
+            }
+
+            if (GUILayout.Button("Replay Window Open Animation"))
+            {
+                controller.ReplayWindowOpenAnimation();
+            }
 
             if (GUILayout.Button("Test All Fonts In Terminal")) controller.ShowFontTest();
             if (GUILayout.Button("Run Boot Sequence")) controller.RunBootSequence();
