@@ -153,7 +153,28 @@ public class GridPathfinder : MonoBehaviour
             startCell,
             destinationCell,
             GetBaseStepCost,
-            true
+            true,
+            null
+        );
+    }
+
+
+    /// <summary>
+    /// Finds a base-cost path while treating caller-supplied cells as
+    /// temporarily blocked. This is intended for dynamic occupancy such as
+    /// ships; static terrain remains owned by GridMap.
+    /// </summary>
+    public List<Vector3Int> FindPath(
+        Vector3Int startCell,
+        Vector3Int destinationCell,
+        ISet<Vector3Int> blockedCells)
+    {
+        return FindPathInternal(
+            startCell,
+            destinationCell,
+            GetBaseStepCost,
+            true,
+            blockedCells
         );
     }
 
@@ -187,7 +208,8 @@ public class GridPathfinder : MonoBehaviour
             startCell,
             destinationCell,
             stepCostFunction,
-            false
+            false,
+            null
         );
     }
 
@@ -196,7 +218,8 @@ public class GridPathfinder : MonoBehaviour
         Vector3Int startCell,
         Vector3Int destinationCell,
         System.Func<Vector3Int, Vector3Int, int> stepCostFunction,
-        bool useBaseHeuristic)
+        bool useBaseHeuristic,
+        ISet<Vector3Int> blockedCells)
     {
         List<Vector3Int> emptyPath = new List<Vector3Int>();
 
@@ -217,6 +240,11 @@ public class GridPathfinder : MonoBehaviour
                 $"Destination cell {destinationCell} is not walkable."
             );
 
+            return emptyPath;
+        }
+
+        if (blockedCells != null && blockedCells.Contains(destinationCell))
+        {
             return emptyPath;
         }
 
@@ -269,6 +297,12 @@ public class GridPathfinder : MonoBehaviour
 
 
                 if (closedCells.Contains(neighbourCell))
+                {
+                    continue;
+                }
+
+                if (blockedCells != null &&
+                    blockedCells.Contains(neighbourCell))
                 {
                     continue;
                 }
@@ -391,7 +425,25 @@ public class GridPathfinder : MonoBehaviour
         return GetReachableCells(
             startCell,
             maxBudget,
-            GetBaseStepCost
+            GetBaseStepCost,
+            null
+        );
+    }
+
+
+    /// <summary>
+    /// Base-cost reachable cells excluding caller-supplied dynamic blockers.
+    /// </summary>
+    public Dictionary<Vector3Int, int> GetReachableCells(
+        Vector3Int startCell,
+        int maxBudget,
+        ISet<Vector3Int> blockedCells)
+    {
+        return GetReachableCells(
+            startCell,
+            maxBudget,
+            GetBaseStepCost,
+            blockedCells
         );
     }
 
@@ -419,6 +471,21 @@ public class GridPathfinder : MonoBehaviour
         Vector3Int startCell,
         int maxBudget,
         System.Func<Vector3Int, Vector3Int, int> stepCostFunction)
+    {
+        return GetReachableCells(
+            startCell,
+            maxBudget,
+            stepCostFunction,
+            null
+        );
+    }
+
+
+    private Dictionary<Vector3Int, int> GetReachableCells(
+        Vector3Int startCell,
+        int maxBudget,
+        System.Func<Vector3Int, Vector3Int, int> stepCostFunction,
+        ISet<Vector3Int> blockedCells)
     {
         Dictionary<Vector3Int, int> reachable =
             new Dictionary<Vector3Int, int>();
@@ -484,6 +551,12 @@ public class GridPathfinder : MonoBehaviour
             foreach (Vector3Int direction in directions)
             {
                 Vector3Int neighbourCell = currentCell + direction;
+
+                if (blockedCells != null &&
+                    blockedCells.Contains(neighbourCell))
+                {
+                    continue;
+                }
 
                 if (!CanStepBetween(currentCell, neighbourCell))
                 {
