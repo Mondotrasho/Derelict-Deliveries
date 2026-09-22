@@ -123,7 +123,7 @@ public class MovementAllowance : MonoBehaviour
     {
         if (turnManager != null)
         {
-            turnManager.TurnEnded += HandleTurnEnded;
+            turnManager.PlayerPhaseStarted += HandlePlayerPhaseStarted;
         }
     }
 
@@ -132,12 +132,12 @@ public class MovementAllowance : MonoBehaviour
     {
         if (turnManager != null)
         {
-            turnManager.TurnEnded -= HandleTurnEnded;
+            turnManager.PlayerPhaseStarted -= HandlePlayerPhaseStarted;
         }
     }
 
 
-    private void HandleTurnEnded(int turnNumber)
+    private void HandlePlayerPhaseStarted(int turnNumber)
     {
         RefillToMax();
     }

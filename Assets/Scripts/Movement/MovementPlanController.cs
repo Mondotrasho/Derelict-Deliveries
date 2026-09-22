@@ -20,10 +20,9 @@ using UnityEngine;
 /// Whatever is left after a segment executes is held here as
 /// queuedRemainder, not in RoutePlanner - RoutePlanner's own plan is
 /// cleared the moment anything is committed, since it is a *proposal*,
-/// not an in-progress journey. If turnManager is assigned, a queued
-/// remainder is automatically committed as its own segment the next time
-/// a turn ends - "the next leg is ready next turn" needs no further
-/// action from anything else. Planning a fresh destination via
+/// not an in-progress journey. A queued remainder stays visible and waits
+/// for a fresh Commit on a later player turn; advancing time never moves
+/// the ship without another confirmation. Planning a fresh destination via
 /// RoutePlanner always takes priority over a queued remainder and
 /// discards it, the same way MoveAlongPath discards a paused movement.
 ///
@@ -59,17 +58,18 @@ public class MovementPlanController : MonoBehaviour
     [SerializeField]
     private MovementAllowance movementAllowance;
 
-    [Tooltip("Optional. When assigned, a queued remainder is automatically committed as the next segment once a turn ends.")]
+    [Tooltip("Optional. Used to end the current player phase when no movement remains.")]
     [SerializeField]
     private TurnManager turnManager;
 
 
     private List<Vector3Int> queuedRemainder = new List<Vector3Int>();
 
-    // Guards CommitSegment against being re-entered while it's already
-    // mid-execution - see HandleTurnEnded and the "auto-advance" branch
-    // of CommitSegment itself for why that can happen.
+    // Guards CommitSegment against being re-entered while it is already
+    // handing a segment to the physical movement layer.
     private bool isCommittingSegment;
+    private bool isChargingActiveMovement;
+    private Vector3Int lastChargedCell;
 
 
     /// <summary>
@@ -140,53 +140,23 @@ public class MovementPlanController : MonoBehaviour
 
     private void OnEnable()
     {
-        if (turnManager != null)
+        if (playerController != null)
         {
-            turnManager.TurnEnded += HandleTurnEnded;
+            playerController.CellEntered += HandlePlayerCellEntered;
+            playerController.RouteCompleted += HandleRouteCompleted;
         }
     }
 
 
     private void OnDisable()
     {
-        if (turnManager != null)
+        if (playerController != null)
         {
-            turnManager.TurnEnded -= HandleTurnEnded;
-        }
-    }
-
-
-    /// <summary>
-    /// Automatically continues a queued remainder once a turn ends - "the
-    /// next leg is ready next turn" needs no further action from anything
-    /// else. Skips silently if nothing is queued, if the player is
-    /// already moving, or if movement is currently paused (e.g.
-    /// mid-combat) - starting a fresh segment on top of a paused one is
-    /// never appropriate here. Also skips if this turn end was itself
-    /// triggered by CommitSegment's own auto-advance below - that call is
-    /// already handling everything this handler would otherwise do.
-    /// </summary>
-    private void HandleTurnEnded(int turnNumber)
-    {
-        if (isCommittingSegment)
-        {
-            return;
+            playerController.CellEntered -= HandlePlayerCellEntered;
+            playerController.RouteCompleted -= HandleRouteCompleted;
         }
 
-        if (!HasQueuedRemainder)
-        {
-            return;
-        }
-
-        if (playerController == null ||
-            playerController.IsMoving ||
-            playerController.HasPausedMovement ||
-            playerController.IsMovementInterrupted)
-        {
-            return;
-        }
-
-        CommitSegment();
+        isChargingActiveMovement = false;
     }
 
 
@@ -205,21 +175,32 @@ public class MovementPlanController : MonoBehaviour
     }
 
 
+    public bool CanAcceptPlayerInput
+    {
+        get
+        {
+            return (turnManager == null || turnManager.IsPlayerPhase) &&
+                   !IsMovementInterrupted;
+        }
+    }
+
+
     /// <summary>
     /// True when there is something committable right now and the player
     /// is free to start it - either a freshly planned route, or a queued
     /// remainder if nothing new has been planned since. MovementAllowance
     /// is optional - if none is assigned, cost is not checked at all.
     ///
-    /// A current budget of exactly 0 does NOT make this false - that
-    /// situation is exactly when CommitSegment's auto-advance kicks in,
-    /// so committing is still expected to work, just via a fresh turn.
+    /// A current budget of exactly 0 does NOT make this false: Commit can
+    /// still request the end of the current player phase. The retained route
+    /// then waits for another explicit Commit in the fresh player phase.
     /// </summary>
     public bool CanCommit
     {
         get
         {
             if (playerController == null ||
+                (turnManager != null && !turnManager.IsPlayerPhase) ||
                 playerController.IsMoving ||
                 playerController.HasPausedMovement ||
                 playerController.IsMovementInterrupted)
@@ -260,8 +241,7 @@ public class MovementPlanController : MonoBehaviour
     /// one exists (which always supersedes any old queued remainder),
     /// otherwise the queued remainder itself. Spends that segment's cost,
     /// hands it to PlayerGridController, and stores anything left over as
-    /// the new queued remainder for a future call - manual, or automatic
-    /// via TurnEnded - to pick up.
+    /// the new queued remainder for a future explicit Commit call to pick up.
     ///
     /// If there is nothing left to spend this turn at all
     /// (MovementAllowance.CurrentMovementPoints == 0) when this is
@@ -272,10 +252,8 @@ public class MovementPlanController : MonoBehaviour
     /// is a queued remainder or a freshly re-planned route after
     /// cancelling one.
     ///
-    /// Safe to call re-entrantly - HandleTurnEnded may call this in
-    /// response to the EndTurn() triggered by the paragraph above, and
-    /// that nested call is a no-op rather than committing the same
-    /// segment twice.
+    /// Safe to call re-entrantly; a nested call is ignored rather than
+    /// committing the same segment twice.
     /// </summary>
     public void CommitSegment()
     {
@@ -300,6 +278,7 @@ public class MovementPlanController : MonoBehaviour
     private void CommitSegmentCore()
     {
         if (playerController == null ||
+            (turnManager != null && !turnManager.IsPlayerPhase) ||
             playerController.IsMoving ||
             playerController.HasPausedMovement ||
             playerController.IsMovementInterrupted)
@@ -318,21 +297,17 @@ public class MovementPlanController : MonoBehaviour
         }
 
 
-        // Nothing left to spend this turn at all - advance to a fresh
-        // turn as part of this same commit. Calling RefillToMax()
-        // directly (rather than relying only on MovementAllowance's own
-        // TurnEnded subscription) means the budget is guaranteed correct
-        // below regardless of subscriber ordering on the TurnEnded event
-        // that EndTurn() is about to raise.
+        // A queued route with no budget waits through the enemy phase and
+        // resumes when PlayerPhaseStarted supplies the next full budget.
         if (movementAllowance != null &&
             movementAllowance.CurrentMovementPoints == 0)
         {
-            movementAllowance.RefillToMax();
-
             if (turnManager != null)
             {
                 turnManager.EndTurn();
             }
+
+            return;
         }
 
 
@@ -369,27 +344,21 @@ public class MovementPlanController : MonoBehaviour
         }
 
 
-        int cost =
-            movementAllowance != null
-                ? movementAllowance.CalculatePathCost(segment)
-                : 0;
-
         // Ask the physical movement layer to accept the segment BEFORE we
         // spend budget or destroy planning state. This matters now that
         // outside systems can hold movement-interruption handles.
+        lastChargedCell = playerController.CurrentCell;
+        isChargingActiveMovement = true;
+
         if (!playerController.TryMoveAlongPath(segment))
         {
+            isChargingActiveMovement = false;
             return;
         }
 
         if (candidateIsFreshPlan)
         {
             routePlanner.ClearRoute();
-        }
-
-        if (movementAllowance != null)
-        {
-            movementAllowance.Spend(cost);
         }
 
         SetQueuedRemainder(remainder.Count > 0 ? remainder : null);
@@ -409,6 +378,9 @@ public class MovementPlanController : MonoBehaviour
     /// </summary>
     public void Cancel()
     {
+        ChargeThroughCurrentCell();
+        isChargingActiveMovement = false;
+
         bool hadAnything =
             (routePlanner != null && routePlanner.HasPlannedRoute) ||
             HasQueuedRemainder;
@@ -426,6 +398,50 @@ public class MovementPlanController : MonoBehaviour
         SetQueuedRemainder(null);
 
         RouteCancelled?.Invoke();
+    }
+
+
+    private void HandlePlayerCellEntered(Vector3Int cell)
+    {
+        if (!isChargingActiveMovement)
+        {
+            return;
+        }
+
+        ChargeThroughCell(cell);
+    }
+
+
+    private void HandleRouteCompleted()
+    {
+        isChargingActiveMovement = false;
+    }
+
+
+    private void ChargeThroughCurrentCell()
+    {
+        if (isChargingActiveMovement && playerController != null)
+        {
+            ChargeThroughCell(playerController.CurrentCell);
+        }
+    }
+
+
+    private void ChargeThroughCell(Vector3Int cell)
+    {
+        if (cell == lastChargedCell)
+        {
+            return;
+        }
+
+        if (movementAllowance != null)
+        {
+            movementAllowance.Spend(
+                movementAllowance.GetMovementCost(lastChargedCell, cell)
+            );
+        }
+
+        lastChargedCell = cell;
     }
 
 

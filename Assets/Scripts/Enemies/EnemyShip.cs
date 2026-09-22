@@ -11,6 +11,12 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnemyShip : MonoBehaviour
 {
+    [Header("Definition")]
+
+    [Tooltip("Optional data asset for this enemy type. Existing component values remain as fallbacks when unassigned.")]
+    [SerializeField]
+    private EnemyShipDefinition definition;
+
     [Header("References")]
 
     [SerializeField]
@@ -68,6 +74,8 @@ public class EnemyShip : MonoBehaviour
     private Vector3Int currentCell;
     private bool stopAfterCurrentCell;
     private string fogRevealId;
+    private int firstEligibleEnemyTurn = 1;
+    private int playerEncounterBlockedThroughTurn;
 
     /// <summary>Raised after this ship finishes its complete assigned path.</summary>
     public event Action<EnemyShip> MovementCompleted;
@@ -90,6 +98,49 @@ public class EnemyShip : MonoBehaviour
         get { return movementCoroutine != null; }
     }
 
+    public EnemyShipDefinition Definition => definition;
+
+    public bool CanActInEnemyPhase(int turnNumber)
+    {
+        return turnNumber >= firstEligibleEnemyTurn;
+    }
+
+    public bool CanStartPlayerEncounter(int turnNumber)
+    {
+        return turnNumber > playerEncounterBlockedThroughTurn;
+    }
+
+    public void ScheduleFirstEnemyPhase(int turnNumber)
+    {
+        firstEligibleEnemyTurn = Mathf.Max(firstEligibleEnemyTurn, turnNumber);
+    }
+
+    public void GrantFleeGrace(int resumeOnEnemyTurn)
+    {
+        firstEligibleEnemyTurn = Mathf.Max(
+            firstEligibleEnemyTurn,
+            resumeOnEnemyTurn
+        );
+        playerEncounterBlockedThroughTurn = Mathf.Max(
+            playerEncounterBlockedThroughTurn,
+            resumeOnEnemyTurn
+        );
+    }
+
+    public void SetFacingDirection(Vector2Int direction)
+    {
+        ResolveReferences();
+
+        if (shipVisual == null || direction == Vector2Int.zero)
+        {
+            return;
+        }
+
+        float angle = Mathf.Atan2(direction.y, direction.x) *
+                      Mathf.Rad2Deg + spriteForwardAngleOffset;
+        shipVisual.rotation = Quaternion.Euler(0.0f, 0.0f, angle);
+    }
+
     private void Reset()
     {
         ResolveReferences();
@@ -98,11 +149,38 @@ public class EnemyShip : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        ApplyDefinition();
 
         if (gridMap != null)
         {
             currentCell = gridMap.GetCellForTransform(transform);
         }
+    }
+
+    public void ApplyDefinition()
+    {
+        if (definition == null)
+        {
+            return;
+        }
+
+        movementBudget = definition.MovementBudget;
+        movementSpeed = definition.MovementSpeed;
+        fogRevealTier = definition.FogRevealTier;
+
+        if (definition.Sprite != null)
+        {
+            SpriteRenderer spriteRenderer =
+                GetComponentInChildren<SpriteRenderer>(true);
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = definition.Sprite;
+            }
+        }
+
+        EnemyCombatState combatState = GetComponent<EnemyCombatState>();
+        combatState?.ApplyDefinition(definition);
     }
 
     private void OnEnable()

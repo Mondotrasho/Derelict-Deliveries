@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6086991059398284556}
   - component: {fileID: 1319549892543920448}
   - component: {fileID: 5632680383886799243}
+  - component: {fileID: 7219348051942760311}
   m_Layer: 0
   m_Name: EnemyShip
   m_TagString: Untagged
@@ -104,8 +105,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7882a7be8bd344048786a88a0cff8125, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyShip
+  definition: {fileID: 11400000, guid: 0cb28969942a4c53b03f78422b76706e, type: 2}
   gridMap: {fileID: 0}
   pathfinder: {fileID: 0}
   registry: {fileID: 0}
   movementBudget: 3
   movementSpeed: 4
+--- !u!114 &7219348051942760311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8041015195310092554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e45993f7aa14e9597ac1808757085f0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatState
+  displayName: Pursuit Ship
+  maxHull: 45
+  capabilities:
+    weaponDamage: 15
+    weaponAccuracy: 42
+    armour: 10
+    maxShields: 25
+    shieldRecharge: 5
+    maneuverability: 42
+  fireWeight: 60
+  defendWeight: 25
+  evadeWeight: 15
+  rewardValue: 10

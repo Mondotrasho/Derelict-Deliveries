@@ -2,79 +2,38 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum TurnPhase
+{
+    Player,
+    WaitingForPlayerMovement,
+    Enemy,
+    Combat,
+    Defeat
+}
+
 /// <summary>
-/// Shared world-time clock for the grid game. Nothing more than counters
-/// and events - TurnManager knows nothing about movement, budgets, or
-/// any other system, and never references PlayerGridController,
-/// MovementAllowance, or anything else in Movement/. Everything that
-/// cares about time passing reaches out to this clock; this script never
-/// reaches into anything else. That one-directional dependency is what
-/// keeps it reusable for enemy ships, resource upkeep, and anything
-/// added later without editing this file again.
-///
-/// Two granularities, kept deliberately distinct:
-/// - Tick: the smallest unit of world-time. Reported via AdvanceTick(),
-///   called by whatever is moving (see PlayerGridController's
-///   cellsPerTick) - normally once per cell crossed, less often than
-///   that for a faster mover. Anything reactive (fog decay, later enemy
-///   stepping, resource drain) should subscribe to Ticked rather than to
-///   raw movement events directly.
-/// - Turn: the player-facing bookkeeping window - whose go it is, how
-///   much budget is left. Contains some number of ticks. Ends only via
-///   EndTurn() - called from the optional waitTurnButton, or from
-///   elsewhere in code (MovementAllowance calls this itself once a
-///   turn's movement budget runs out, if it is configured to do that).
-///
-/// ResetClock() zeroes the clock outright - entering a new system, a
-/// narrative time-skip - without this script needing to know why.
-/// TurnsSince/TicksSince exist so things like a timed quest can record a
-/// start value and later ask "how long has it been" without every
-/// caller re-deriving the same subtraction.
+/// Owns the overworld phase sequence. A turn number describes one complete
+/// player/enemy cycle and advances only after the enemy phase is resolved.
 /// </summary>
 public class TurnManager : MonoBehaviour
 {
-    [Tooltip("Which turn number the game starts on.")]
-    [SerializeField]
-    private int currentTurn = 1;
+    [SerializeField] private int currentTurn = 1;
+    [SerializeField] private Button waitTurnButton;
 
-    [Tooltip("Optional. Clicking this button ends the current turn - for waiting/passing without moving.")]
-    [SerializeField]
-    private Button waitTurnButton;
-
-
-    /// <summary>Raised whenever AdvanceTick() is called, after the tick counters have been updated. Passes the new CurrentTick value.</summary>
     public event Action<int> Ticked;
-
-    /// <summary>Raised after the turn number has been incremented, however that happened. Passes the new CurrentTurn value.</summary>
     public event Action<int> TurnEnded;
-
-    /// <summary>Raised after ResetClock() zeroes the turn and tick counters.</summary>
     public event Action ClockReset;
+    public event Action<TurnPhase> PhaseChanged;
+    public event Action<int> PlayerPhaseStarted;
+    public event Action<int> PlayerPhaseEnding;
+    public event Action<int> EnemyPhaseStarted;
 
-
-    /// <summary>The turn number currently in progress.</summary>
-    public int CurrentTurn
-    {
-        get
-        {
-            return currentTurn;
-        }
-    }
-
-
-    /// <summary>
-    /// Total ticks elapsed since the clock was last reset. Monotonic -
-    /// never decreases except via ResetClock().
-    /// </summary>
+    public int CurrentTurn => currentTurn;
     public int CurrentTick { get; private set; }
-
-
-    /// <summary>
-    /// Ticks elapsed since the current turn began. Resets to 0 every
-    /// EndTurn().
-    /// </summary>
     public int TicksThisTurn { get; private set; }
-
+    public TurnPhase CurrentPhase { get; private set; } = TurnPhase.Player;
+    public TurnPhase CombatOriginPhase { get; private set; } = TurnPhase.Player;
+    public bool IsPlayerPhase => CurrentPhase == TurnPhase.Player;
 
     private void OnEnable()
     {
@@ -84,7 +43,6 @@ public class TurnManager : MonoBehaviour
         }
     }
 
-
     private void OnDisable()
     {
         if (waitTurnButton != null)
@@ -93,14 +51,6 @@ public class TurnManager : MonoBehaviour
         }
     }
 
-
-    /// <summary>
-    /// Reports that count tick(s) of world-time have elapsed. Called by
-    /// whatever is moving (see PlayerGridController.cellsPerTick) - this
-    /// script has no opinion on what counts as a tick, only on tracking
-    /// and broadcasting that one happened. Safe to call with count > 1
-    /// if something ever needs to report several ticks at once.
-    /// </summary>
     public void AdvanceTick(int count = 1)
     {
         if (count <= 0)
@@ -110,82 +60,123 @@ public class TurnManager : MonoBehaviour
 
         CurrentTick += count;
         TicksThisTurn += count;
-
         Ticked?.Invoke(CurrentTick);
     }
 
-
-    private bool isEndingTurn;
-
-
-    /// <summary>
-    /// Advances the turn counter and notifies anything listening for a
-    /// turn to have ended. Wired automatically to waitTurnButton's click
-    /// if one is assigned. Also fine to call directly from other code -
-    /// MovementAllowance calls this itself when a turn's movement budget
-    /// runs out, if it is configured to do that.
-    ///
-    /// Safe to call re-entrantly - if something calls EndTurn() again
-    /// from within a TurnEnded subscriber triggered by an EndTurn() call
-    /// already in progress, the nested call is a no-op rather than
-    /// double-incrementing the turn or firing TurnEnded twice. This
-    /// matters for MovementPlanController, which may call EndTurn() from
-    /// its own TurnEnded handler to make committing a queued segment and
-    /// ending the turn behave as one action regardless of which one was
-    /// actually pressed.
-    /// </summary>
+    /// <summary>Requests the end of player input. Physical movement may finish first.</summary>
     public void EndTurn()
     {
-        if (isEndingTurn)
+        if (CurrentPhase != TurnPhase.Player)
         {
             return;
         }
 
-        isEndingTurn = true;
+        SetPhase(TurnPhase.WaitingForPlayerMovement);
+        PlayerPhaseEnding?.Invoke(currentTurn);
+    }
 
-        try
+    public bool BeginEnemyPhase()
+    {
+        if (CurrentPhase != TurnPhase.WaitingForPlayerMovement)
         {
-            currentTurn++;
-            TicksThisTurn = 0;
-
-            TurnEnded?.Invoke(currentTurn);
+            return false;
         }
-        finally
+
+        SetPhase(TurnPhase.Enemy);
+        EnemyPhaseStarted?.Invoke(currentTurn);
+        return true;
+    }
+
+    public bool BeginCombat()
+    {
+        if (CurrentPhase != TurnPhase.Player &&
+            CurrentPhase != TurnPhase.WaitingForPlayerMovement &&
+            CurrentPhase != TurnPhase.Enemy)
         {
-            isEndingTurn = false;
+            return false;
+        }
+
+        CombatOriginPhase = CurrentPhase == TurnPhase.Enemy
+            ? TurnPhase.Enemy
+            : TurnPhase.Player;
+        SetPhase(TurnPhase.Combat);
+        return true;
+    }
+
+    /// <summary>
+    /// Returns player-started combat to the same player phase. Enemy-started
+    /// combat completes the enemy phase and starts a fresh player turn.
+    /// </summary>
+    public void CompleteCombat(
+        bool playerDefeated = false,
+        bool endPlayerPhase = false)
+    {
+        if (CurrentPhase != TurnPhase.Combat)
+        {
+            return;
+        }
+
+        if (playerDefeated)
+        {
+            SetPhase(TurnPhase.Defeat);
+            return;
+        }
+
+        if (CombatOriginPhase == TurnPhase.Enemy)
+        {
+            CompleteEnemyPhaseInternal();
+        }
+        else if (endPlayerPhase)
+        {
+            SetPhase(TurnPhase.WaitingForPlayerMovement);
+            PlayerPhaseEnding?.Invoke(currentTurn);
+        }
+        else
+        {
+            SetPhase(TurnPhase.Player);
         }
     }
 
+    public void CompleteEnemyPhase()
+    {
+        if (CurrentPhase == TurnPhase.Enemy)
+        {
+            CompleteEnemyPhaseInternal();
+        }
+    }
 
-    /// <summary>
-    /// Zeroes the turn and tick counters outright - for entering a new
-    /// system, a narrative time-skip, or anything else that needs a
-    /// clean slate rather than an ordinary turn ending.
-    /// </summary>
+    private void CompleteEnemyPhaseInternal()
+    {
+        int completedTurn = currentTurn;
+        TurnEnded?.Invoke(completedTurn);
+        currentTurn++;
+        TicksThisTurn = 0;
+        SetPhase(TurnPhase.Player);
+        PlayerPhaseStarted?.Invoke(currentTurn);
+    }
+
     public void ResetClock()
     {
         currentTurn = 1;
         CurrentTick = 0;
         TicksThisTurn = 0;
-
+        CombatOriginPhase = TurnPhase.Player;
+        SetPhase(TurnPhase.Player);
         ClockReset?.Invoke();
+        PlayerPhaseStarted?.Invoke(currentTurn);
     }
 
+    public int TurnsSince(int startTurn) => currentTurn - startTurn;
+    public int TicksSince(int startTick) => CurrentTick - startTick;
 
-    /// <summary>
-    /// Turns elapsed since startTurn - typically a value the caller read
-    /// from CurrentTurn earlier and stored itself (e.g. a timed quest
-    /// recording when it began, to compare against a deadline later).
-    /// </summary>
-    public int TurnsSince(int startTurn)
+    private void SetPhase(TurnPhase phase)
     {
-        return currentTurn - startTurn;
-    }
+        if (CurrentPhase == phase)
+        {
+            return;
+        }
 
-
-    /// <summary>Ticks elapsed since startTick - the finer-grained equivalent of TurnsSince.</summary>
-    public int TicksSince(int startTick)
-    {
-        return CurrentTick - startTick;
+        CurrentPhase = phase;
+        PhaseChanged?.Invoke(phase);
     }
 }

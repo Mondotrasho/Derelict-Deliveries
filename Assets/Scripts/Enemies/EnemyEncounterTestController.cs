@@ -1,97 +1,76 @@
-using System;
 using UnityEngine;
 
 /// <summary>
-/// Temporary encounter harness for validating the overworld-to-combat handoff.
-/// Replace this component when the real combat scene/controller is ready.
+/// Temporary IMGUI presentation for exercising CombatEncounterController.
+/// It contains no combat rules and can be removed when the final UI exists.
 /// </summary>
-[AddComponentMenu("Derelict Deliveries/Enemies/Enemy Encounter Test Controller")]
+[AddComponentMenu("Derelict Deliveries/Combat/Combat Debug Panel")]
 [DisallowMultipleComponent]
 public class EnemyEncounterTestController : MonoBehaviour
 {
-    public enum TestOutcome
-    {
-        Victory,
-        Fled,
-        Defeat
-    }
-
-    [Header("References")]
+    [Header("Reference")]
 
     [SerializeField]
-    private EnemyTurnController enemyTurnController;
+    private CombatEncounterController combatController;
+
+    [Header("Debug Panel")]
 
     [SerializeField]
-    private PlayerShipState playerShip;
-
-    [Header("Test Panel")]
+    private bool showDebugPanel = true;
 
     [SerializeField]
-    private string encounterTitle = "ENEMY ENCOUNTER";
+    private string encounterTitle = "COMBAT DEBUG UI";
 
     [SerializeField]
-    [Min(280.0f)]
-    private float panelWidth = 420.0f;
+    [Min(360.0f)]
+    private float panelWidth = 480.0f;
 
     [SerializeField]
-    [Min(180.0f)]
-    private float panelHeight = 245.0f;
+    [Min(420.0f)]
+    private float panelHeight = 560.0f;
 
-    private EnemyShip encounteredEnemy;
-    private Vector3Int encounterCell;
     private Rect panelRect;
-    private bool isShowingEncounter;
-
-    /// <summary>
-    /// Lets a future integration test or UI observe the selected test result.
-    /// </summary>
-    public event Action<EnemyShip, TestOutcome> EncounterResolved;
-
-    public bool IsShowingEncounter
-    {
-        get { return isShowingEncounter; }
-    }
+    private string resolutionMessage;
 
     private void Reset()
     {
-        ResolveReferences();
+        combatController = GetComponent<CombatEncounterController>();
     }
 
     private void Awake()
     {
-        ResolveReferences();
+        ResolveController();
     }
 
     private void OnEnable()
     {
-        ResolveReferences();
+        ResolveController();
 
-        if (enemyTurnController != null)
+        if (combatController == null)
         {
-            enemyTurnController.PlayerContactedEnemy += HandleEnemyContact;
+            return;
         }
+
+        combatController.EncounterStarted += HandleEncounterStarted;
+        combatController.EncounterEnded += HandleEncounterEnded;
     }
 
     private void OnDisable()
     {
-        if (enemyTurnController != null)
+        if (combatController == null)
         {
-            enemyTurnController.PlayerContactedEnemy -= HandleEnemyContact;
+            return;
         }
 
-        // Never leave movement locked if this temporary harness is removed
-        // or disabled while its panel is open.
-        if (isShowingEncounter && enemyTurnController != null)
-        {
-            enemyTurnController.ReleaseEncounter();
-        }
-
-        ClearEncounter();
+        combatController.EncounterStarted -= HandleEncounterStarted;
+        combatController.EncounterEnded -= HandleEncounterEnded;
     }
 
     private void OnGUI()
     {
-        if (!isShowingEncounter)
+        if (!showDebugPanel || combatController == null ||
+            (!combatController.IsEncounterActive &&
+             string.IsNullOrEmpty(resolutionMessage)))
         {
             return;
         }
@@ -106,131 +85,228 @@ public class EnemyEncounterTestController : MonoBehaviour
         panelRect = GUI.ModalWindow(
             GetInstanceID(),
             panelRect,
-            DrawEncounterWindow,
+            DrawWindow,
             encounterTitle
         );
     }
 
-    private void DrawEncounterWindow(int windowId)
+    private void DrawWindow(int windowId)
     {
+        GUILayout.Space(8.0f);
+        GUILayout.Label(
+            "Temporary tester display - final combat UI is not implemented."
+        );
+        GUILayout.Space(8.0f);
+
+        if (!combatController.IsEncounterActive)
+        {
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(resolutionMessage);
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Continue", GUILayout.Height(36.0f)))
+            {
+                resolutionMessage = string.Empty;
+            }
+
+            GUILayout.Space(8.0f);
+            return;
+        }
+
+        DrawCombatState();
         GUILayout.Space(10.0f);
-        GUILayout.Label(
-            encounteredEnemy != null
-                ? $"Contact with {encounteredEnemy.name} at {encounterCell}."
-                : $"Enemy contact at {encounterCell}."
-        );
-        GUILayout.Space(6.0f);
-        GUILayout.Label(
-            "Temporary combat test: choose an outcome to verify that the " +
-            "overworld pauses and resumes correctly."
-        );
+        DrawLastRound();
         GUILayout.FlexibleSpace();
-
-        if (GUILayout.Button("Victory — remove enemy", GUILayout.Height(32.0f)))
-        {
-            ResolveVictory();
-        }
-
-        if (GUILayout.Button("Flee — leave enemy nearby", GUILayout.Height(32.0f)))
-        {
-            ResolveFlee();
-        }
-
-        if (GUILayout.Button("Defeat — set hull to zero", GUILayout.Height(32.0f)))
-        {
-            ResolveDefeat();
-        }
-
+        DrawActionButtons();
         GUILayout.Space(8.0f);
     }
 
-    private void HandleEnemyContact(EnemyShip enemy, Vector3Int cell)
+    private void DrawCombatState()
     {
-        encounteredEnemy = enemy;
-        encounterCell = cell;
-        isShowingEncounter = true;
-    }
+        EnemyCombatState enemy = combatController.CurrentEnemyState;
 
-    private void ResolveVictory()
-    {
-        EnemyShip resolvedEnemy = encounteredEnemy;
+        GUILayout.Label(
+            $"PLAYER HULL: {combatController.PlayerHull:0.#} / " +
+            $"{combatController.PlayerMaxHull:0.#}"
+        );
+        GUILayout.Label(
+            $"PLAYER SHIELDS: {combatController.PlayerCurrentShields:0.#} / " +
+            $"{combatController.PlayerMaxShields:0.#}"
+        );
 
-        CancelOldPlayerJourney();
-
-        if (resolvedEnemy != null)
+        if (enemy == null)
         {
-            // Disabling first immediately unregisters the ship and removes its
-            // fog reveal; Destroy completes safely at the end of the frame.
-            resolvedEnemy.gameObject.SetActive(false);
-            Destroy(resolvedEnemy.gameObject);
+            GUILayout.Label("ENEMY: unavailable");
+            return;
         }
 
-        FinishEncounter(resolvedEnemy, TestOutcome.Victory);
+        GUILayout.Label($"ENEMY: {enemy.DisplayName}");
+        GUILayout.Label(
+            $"ENEMY HULL: {enemy.CurrentHull:0.#} / {enemy.MaxHull:0.#}"
+        );
+        GUILayout.Label(
+            $"ENEMY SHIELDS: {enemy.CurrentShields:0.#} / " +
+            $"{enemy.MaxShields:0.#}"
+        );
+
+        CombatCapabilities player = combatController.PlayerCapabilities;
+        GUILayout.Label(
+            $"Player - Damage {player.WeaponDamage:0.#}, " +
+            $"Accuracy {player.WeaponAccuracy:0.#}, " +
+            $"Armour {player.Armour:0.#}, " +
+            $"Maneuverability {player.Maneuverability:0.#}"
+        );
+
+        GUILayout.Label(
+            $"Enemy - Damage {enemy.Capabilities.WeaponDamage:0.#}, " +
+            $"Accuracy {enemy.Capabilities.WeaponAccuracy:0.#}, " +
+            $"Armour {enemy.Capabilities.Armour:0.#}, " +
+            $"Maneuverability {enemy.Capabilities.Maneuverability:0.#}"
+        );
     }
 
-    private void ResolveFlee()
+    private void DrawLastRound()
     {
-        EnemyShip resolvedEnemy = encounteredEnemy;
+        CombatRoundResult result = combatController.LastRoundResult;
 
-        CancelOldPlayerJourney();
-        FinishEncounter(resolvedEnemy, TestOutcome.Fled);
-    }
-
-    private void ResolveDefeat()
-    {
-        EnemyShip resolvedEnemy = encounteredEnemy;
-
-        CancelOldPlayerJourney();
-
-        if (playerShip != null && playerShip.Resources != null)
+        if (result == null)
         {
-            playerShip.Resources.SetHullIntegrity(0.0f);
+            GUILayout.Label(
+                "Enemy action is hidden. Fire deals damage, Defend reliably " +
+                "reduces damage, and Evade contests accuracy with maneuverability."
+            );
+            return;
         }
 
-        FinishEncounter(resolvedEnemy, TestOutcome.Defeat);
-    }
+        GUILayout.Label(
+            $"Last choices - Player: {result.PlayerAction}, " +
+            $"Enemy: {result.EnemyAction}"
+        );
+        GUILayout.Label(result.Summary);
 
-    private void FinishEncounter(EnemyShip enemy, TestOutcome outcome)
-    {
-        ClearEncounter();
-
-        if (enemyTurnController != null)
+        if (result.PlayerAttackAttempted)
         {
-            enemyTurnController.ReleaseEncounter();
+            GUILayout.Label(
+                $"Player hit roll: {result.PlayerHitRoll:P0} / " +
+                $"{result.PlayerHitChance:P0} chance"
+            );
         }
 
-        EncounterResolved?.Invoke(enemy, outcome);
-    }
-
-    private void CancelOldPlayerJourney()
-    {
-        if (playerShip != null)
+        if (result.EnemyAttackAttempted)
         {
-            playerShip.CancelCurrentJourney();
+            GUILayout.Label(
+                $"Enemy hit roll: {result.EnemyHitRoll:P0} / " +
+                $"{result.EnemyHitChance:P0} chance"
+            );
+        }
+
+        if (result.EscapeAttempted)
+        {
+            GUILayout.Label(
+                $"Escape roll: {result.EscapeRoll:P0} / " +
+                $"{result.EscapeChance:P0} chance"
+            );
+        }
+
+        if (result.PlayerShieldRecharge > 0.0f ||
+            result.EnemyShieldRecharge > 0.0f)
+        {
+            GUILayout.Label(
+                $"Shield recharge - Player {result.PlayerShieldRecharge:0.#}, " +
+                $"Enemy {result.EnemyShieldRecharge:0.#}"
+            );
         }
     }
 
-    private void ClearEncounter()
+    private void DrawActionButtons()
     {
-        encounteredEnemy = null;
-        isShowingEncounter = false;
+        GUILayout.Label("SELECT ACTION");
+
+        GUILayout.BeginHorizontal();
+
+        if (GUILayout.Button(
+                $"Fire ({combatController.PlayerFireHitChance:P0} hit)",
+                GUILayout.Height(38.0f)))
+        {
+            combatController.SubmitPlayerAction(CombatAction.Fire);
+        }
+
+        if (GUILayout.Button(
+                $"Defend ({combatController.PlayerDefendReduction:P0} reduction)",
+                GUILayout.Height(38.0f)))
+        {
+            combatController.SubmitPlayerAction(CombatAction.Defend);
+        }
+
+        if (GUILayout.Button(
+                $"Evade ({combatController.PlayerEvadeChance:P0})",
+                GUILayout.Height(38.0f)))
+        {
+            combatController.SubmitPlayerAction(CombatAction.Evade);
+        }
+
+        GUILayout.EndHorizontal();
+
+        if (GUILayout.Button(
+                $"Flee ({combatController.PlayerEscapeChance:P0} chance)",
+                GUILayout.Height(38.0f)))
+        {
+            combatController.SubmitPlayerAction(CombatAction.Flee);
+        }
+
+        bool oldEnabled = GUI.enabled;
+        GUI.enabled = false;
+        GUILayout.Button(
+            "Special - requires an equipped Officer ability",
+            GUILayout.Height(32.0f)
+        );
+        GUI.enabled = oldEnabled;
     }
 
-    private void ResolveReferences()
+    private void HandleEncounterStarted(EnemyShip enemy)
     {
-        if (enemyTurnController == null)
+        resolutionMessage = string.Empty;
+    }
+
+    private void HandleEncounterEnded(
+        EnemyShip enemy,
+        CombatEncounterOutcome outcome,
+        int rewardValue)
+    {
+        switch (outcome)
         {
-            enemyTurnController = GetComponent<EnemyTurnController>();
+            case CombatEncounterOutcome.Victory:
+                resolutionMessage =
+                    $"VICTORY\nEnemy destroyed. Reward value {rewardValue} " +
+                    "was reported, but rewards are not granted yet.";
+                break;
+            case CombatEncounterOutcome.Fled:
+                resolutionMessage =
+                    "ESCAPED\nThe enemy remains nearby on the system map.";
+                break;
+            case CombatEncounterOutcome.Defeat:
+                resolutionMessage =
+                    "DEFEAT\nPlayer hull reached zero. Crew loss and game-over " +
+                    "handling are not implemented yet.";
+                break;
+            default:
+                resolutionMessage = "Combat was interrupted.";
+                break;
+        }
+    }
+
+    private void ResolveController()
+    {
+        if (combatController == null)
+        {
+            combatController = GetComponent<CombatEncounterController>();
         }
 
-        if (enemyTurnController == null)
+        // Keeps existing authored scenes functional without requiring a scene
+        // YAML migration. Add the component explicitly later for tuning.
+        if (combatController == null && Application.isPlaying)
         {
-            enemyTurnController = FindFirstObjectByType<EnemyTurnController>();
-        }
-
-        if (playerShip == null)
-        {
-            playerShip = FindFirstObjectByType<PlayerShipState>();
+            combatController = gameObject.AddComponent<CombatEncounterController>();
         }
     }
 }
