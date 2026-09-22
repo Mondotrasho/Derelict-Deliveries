@@ -54,7 +54,8 @@ public class TurnStatusDisplay : MonoBehaviour
     {
         if (turnManager != null)
         {
-            turnManager.TurnEnded += HandleChanged;
+            turnManager.PlayerPhaseStarted += HandleChanged;
+            turnManager.PhaseChanged += HandlePhaseChanged;
         }
 
         if (movementAllowance != null)
@@ -84,7 +85,8 @@ public class TurnStatusDisplay : MonoBehaviour
     {
         if (turnManager != null)
         {
-            turnManager.TurnEnded -= HandleChanged;
+            turnManager.PlayerPhaseStarted -= HandleChanged;
+            turnManager.PhaseChanged -= HandlePhaseChanged;
         }
 
         if (movementAllowance != null)
@@ -115,6 +117,12 @@ public class TurnStatusDisplay : MonoBehaviour
 
 
     private void HandleChanged()
+    {
+        RefreshDisplay();
+    }
+
+
+    private void HandlePhaseChanged(TurnPhase _)
     {
         RefreshDisplay();
     }
@@ -182,6 +190,21 @@ public class TurnStatusDisplay : MonoBehaviour
     /// </summary>
     private string BuildNextActionMessage()
     {
+        if (turnManager != null && !turnManager.IsPlayerPhase)
+        {
+            switch (turnManager.CurrentPhase)
+            {
+                case TurnPhase.WaitingForPlayerMovement:
+                    return "Finishing player movement...";
+                case TurnPhase.Enemy:
+                    return "Enemy ships are moving...";
+                case TurnPhase.Combat:
+                    return "Combat in progress.";
+                case TurnPhase.Defeat:
+                    return "Ship disabled.";
+            }
+        }
+
         if (tooExpensiveMessageUntil >= 0f)
         {
             return "Too far to reach this turn - wait or plan a shorter route.";
@@ -189,7 +212,14 @@ public class TurnStatusDisplay : MonoBehaviour
 
         if (movementPlanController != null && movementPlanController.HasQueuedRemainder)
         {
-            return "Route continues next turn - press Commit or End Turn.";
+            bool canMoveNextCell = movementAllowance == null ||
+                movementAllowance.GetAffordableCellCount(
+                    movementPlanController.QueuedRemainder
+                ) > 0;
+
+            return canMoveNextCell
+                ? "Route ready - press Commit to fly the next segment, or Cancel to replan."
+                : "Next route segment needs a fresh turn - End Turn to continue later.";
         }
 
         if (routePlanner != null && routePlanner.HasPlannedRoute)

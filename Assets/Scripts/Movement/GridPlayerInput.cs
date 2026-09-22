@@ -195,7 +195,7 @@ public class GridPlayerInput : MonoBehaviour
     private bool IsRouteInputBlocked()
     {
         return movementPlanController != null &&
-               movementPlanController.IsMovementInterrupted;
+               !movementPlanController.CanAcceptPlayerInput;
     }
 
 

@@ -16789,7 +16789,7 @@ MonoBehaviour:
   showTurnLabels: 1
   placeLabelOnTarget: 1
   turnLabelPrefix: '#'
-  useCurrentTurnNumbering: 0
+  useCurrentTurnNumbering: 1
   labelFont: {fileID: 12800000, guid: f72e92865f6c09f47b262c247e6dd405, type: 3}
   labelFontSize: 20
   labelWorldSize: 0.28
@@ -17192,6 +17192,7 @@ GameObject:
   - component: {fileID: 1878988783}
   - component: {fileID: 1878988782}
   - component: {fileID: 1878988785}
+  - component: {fileID: 1878988786}
   m_Layer: 0
   m_Name: EnemySystems
   m_TagString: Untagged
@@ -17232,16 +17233,19 @@ MonoBehaviour:
   enemyRegistry: {fileID: 1878988784}
   enemyPrefab: {fileID: 5632680383886799243, guid: ce3f72c080983a448bfff4e1cf8963b5, type: 3}
   spawnedEnemyParent: {fileID: 0}
-  detectionDelayTurns: 2
+  detectionDelayTurns: 6
   initialWaveSize: 1
-  turnsBetweenWaves: 2
+  turnsBetweenWaves: 6
   reinforcementWaveSize: 1
   reinforcementGrowthPerWave: 0
-  maxActiveEnemies: 3
-  spawnCells:
-  - {x: 16, y: 8, z: 0}
-  - {x: -18, y: 8, z: 0}
-  - {x: 16, y: -10, z: 0}
+  maxActiveEnemies: 2
+  spawnEntries:
+  - cell: {x: 16, y: 8, z: 0}
+    facingDirection: {x: -1, y: 0}
+  - cell: {x: -18, y: 8, z: 0}
+    facingDirection: {x: 1, y: 0}
+  - cell: {x: 16, y: -10, z: 0}
+    facingDirection: {x: 0, y: 1}
 --- !u!114 &1878988783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17283,11 +17287,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 423b188af33f46079ddd178ae95cf05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEncounterTestController
+  combatController: {fileID: 1878988786}
+  showDebugPanel: 1
+  encounterTitle: COMBAT DEBUG UI
+  panelWidth: 480
+  panelHeight: 560
+--- !u!114 &1878988786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1878988780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f565b38be5d4b97b523790c0807f484, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CombatEncounterController
   enemyTurnController: {fileID: 1878988783}
   playerShip: {fileID: 2078833601}
-  encounterTitle: ENEMY ENCOUNTER
-  panelWidth: 420
-  panelHeight: 245
+  playerCapabilities:
+    weaponDamage: 20
+    weaponAccuracy: 50
+    armour: 20
+    maxShields: 40
+    shieldRecharge: 10
+    maneuverability: 50
+  minimumContestChance: 0.1
+  maximumContestChance: 0.9
+  evadeManeuverabilityMultiplier: 1.5
+  successfulEvadeInitiativeBonus: 20
+  baseDefendReduction: 0.25
+  defendArmourScale: 50
+  maximumDefendArmourBonus: 0.35
+  maximumDefendReduction: 0.7
+  passiveArmourScale: 100
+  defendRechargeMultiplier: 2
 --- !u!1 &1963077829
 GameObject:
   m_ObjectHideFlags: 0

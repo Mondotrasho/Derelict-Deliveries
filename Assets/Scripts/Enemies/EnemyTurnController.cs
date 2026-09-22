@@ -70,7 +70,8 @@ public class EnemyTurnController : MonoBehaviour
 
         if (turnManager != null)
         {
-            turnManager.TurnEnded += HandleTurnEnded;
+            turnManager.PlayerPhaseEnding += HandlePlayerPhaseEnding;
+            turnManager.ClockReset += HandleClockReset;
         }
 
         if (playerShip != null)
@@ -88,7 +89,8 @@ public class EnemyTurnController : MonoBehaviour
     {
         if (turnManager != null)
         {
-            turnManager.TurnEnded -= HandleTurnEnded;
+            turnManager.PlayerPhaseEnding -= HandlePlayerPhaseEnding;
+            turnManager.ClockReset -= HandleClockReset;
         }
 
         if (playerShip != null)
@@ -113,7 +115,7 @@ public class EnemyTurnController : MonoBehaviour
         CurrentEncounterEnemy = null;
     }
 
-    private void HandleTurnEnded(int turnNumber)
+    private void HandlePlayerPhaseEnding(int turnNumber)
     {
         if (enemyPhaseCoroutine == null &&
             playerShip != null &&
@@ -142,6 +144,17 @@ public class EnemyTurnController : MonoBehaviour
             yield break;
         }
 
+        if (turnManager == null || !turnManager.BeginEnemyPhase())
+        {
+            enemyPhaseCoroutine = null;
+            yield break;
+        }
+
+        // Spawn and other enemy-phase listeners run synchronously from the
+        // phase event. One frame lets their registration settle before the
+        // shared planning snapshot is built.
+        yield return null;
+
         enemyPhaseInterruption =
             playerShip.AcquireMovementInterruption("Enemy phase");
 
@@ -159,7 +172,8 @@ public class EnemyTurnController : MonoBehaviour
 
         foreach (PlannedEnemyMove plan in plans)
         {
-            if (IsEncounterActive)
+            if (IsEncounterActive ||
+                turnManager.CurrentPhase != TurnPhase.Enemy)
             {
                 break;
             }
@@ -184,6 +198,12 @@ public class EnemyTurnController : MonoBehaviour
 
         ReleaseHandle(ref enemyPhaseInterruption);
         enemyPhaseCoroutine = null;
+
+        if (!IsEncounterActive &&
+            turnManager.CurrentPhase == TurnPhase.Enemy)
+        {
+            turnManager.CompleteEnemyPhase();
+        }
     }
 
     private List<PlannedEnemyMove> PlanEnemyMoves(
@@ -206,6 +226,7 @@ public class EnemyTurnController : MonoBehaviour
         {
             if (enemy == null ||
                 !enemy.isActiveAndEnabled ||
+                !enemy.CanActInEnemyPhase(turnManager.CurrentTurn) ||
                 !plannedEnemies.Add(enemy))
             {
                 continue;
@@ -273,12 +294,20 @@ public class EnemyTurnController : MonoBehaviour
 
     private void HandlePlayerEnteredCell(Vector3Int cell)
     {
-        if (enemyRegistry != null &&
-            enemyRegistry.TryGetEnemyAtOrAdjacentToCell(
-                cell,
-                out EnemyShip enemy))
+        if (enemyRegistry == null)
         {
-            BeginEncounter(enemy, enemy.CurrentCell);
+            return;
+        }
+
+        foreach (EnemyShip enemy in enemyRegistry.Enemies)
+        {
+            if (enemy != null &&
+                AreAdjacentOrEqual(cell, enemy.CurrentCell) &&
+                IsEnemyEligibleForEncounter(enemy))
+            {
+                BeginEncounter(enemy, enemy.CurrentCell);
+                return;
+            }
         }
     }
 
@@ -295,7 +324,9 @@ public class EnemyTurnController : MonoBehaviour
 
     private void BeginEncounter(EnemyShip enemy, Vector3Int cell)
     {
-        if (IsEncounterActive || enemy == null || playerShip == null)
+        if (IsEncounterActive || enemy == null || playerShip == null ||
+            !IsEnemyEligibleForEncounter(enemy) ||
+            turnManager == null || !turnManager.BeginCombat())
         {
             return;
         }
@@ -311,16 +342,23 @@ public class EnemyTurnController : MonoBehaviour
 
     private bool TryBeginAdjacentEncounter(Vector3Int playerCell)
     {
-        if (enemyRegistry == null ||
-            !enemyRegistry.TryGetEnemyAtOrAdjacentToCell(
-                playerCell,
-                out EnemyShip enemy))
+        if (enemyRegistry == null)
         {
             return false;
         }
 
-        BeginEncounter(enemy, enemy.CurrentCell);
-        return IsEncounterActive;
+        foreach (EnemyShip enemy in enemyRegistry.Enemies)
+        {
+            if (enemy != null &&
+                AreAdjacentOrEqual(playerCell, enemy.CurrentCell) &&
+                IsEnemyEligibleForEncounter(enemy))
+            {
+                BeginEncounter(enemy, enemy.CurrentCell);
+                return IsEncounterActive;
+            }
+        }
+
+        return false;
     }
 
     private static bool AreAdjacentOrEqual(
@@ -339,11 +377,64 @@ public class EnemyTurnController : MonoBehaviour
     /// has removed or repositioned one of the ships. It does not resolve any
     /// combat state itself.
     /// </summary>
-    public void ReleaseEncounter()
+    public void ReleaseEncounter(
+        bool playerDefeated = false,
+        bool endPlayerPhase = false)
     {
         ReleaseHandle(ref encounterInterruption);
         IsEncounterActive = false;
         CurrentEncounterEnemy = null;
+        turnManager?.CompleteCombat(playerDefeated, endPlayerPhase);
+    }
+
+    /// <summary>
+    /// Keeps one enemy stationary and unable to initiate contact through the
+    /// player's next complete phase after a successful flee.
+    /// </summary>
+    public void GrantFleeGrace(EnemyShip enemy)
+    {
+        if (enemy == null || turnManager == null)
+        {
+            return;
+        }
+
+        enemy.GrantFleeGrace(turnManager.CurrentTurn + 1);
+    }
+
+    public bool IsEncounterSuppressed(EnemyShip enemy)
+    {
+        if (enemy == null || turnManager == null)
+        {
+            return false;
+        }
+
+        return !IsEnemyEligibleForEncounter(enemy);
+    }
+
+    private bool IsEnemyEligibleForEncounter(EnemyShip enemy)
+    {
+        if (enemy == null || turnManager == null)
+        {
+            return false;
+        }
+
+        if (turnManager.CurrentPhase == TurnPhase.Enemy)
+        {
+            return enemy.CanActInEnemyPhase(turnManager.CurrentTurn);
+        }
+
+        return enemy.CanStartPlayerEncounter(turnManager.CurrentTurn);
+    }
+
+    private void HandleClockReset()
+    {
+        if (enemyPhaseCoroutine != null)
+        {
+            StopCoroutine(enemyPhaseCoroutine);
+            enemyPhaseCoroutine = null;
+        }
+
+        ReleaseHandle(ref enemyPhaseInterruption);
     }
 
     private static void ReleaseHandle(

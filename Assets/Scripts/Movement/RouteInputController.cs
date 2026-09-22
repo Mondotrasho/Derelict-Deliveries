@@ -212,7 +212,7 @@ public class RouteInputController : MonoBehaviour
     private bool IsRouteInputBlocked()
     {
         return movementPlanController != null &&
-               movementPlanController.IsMovementInterrupted;
+               !movementPlanController.CanAcceptPlayerInput;
     }
 
 

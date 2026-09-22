@@ -139,7 +139,7 @@ public class RoutePathRenderer : MonoBehaviour
 
     [Tooltip("Off (default): labels keep route-relative segment numbers, so Segment 2 stays 2 after Segment 1 is completed. On: labels are based on the live TurnManager turn number and shift as game turns advance.")]
     [SerializeField]
-    private bool useCurrentTurnNumbering = false;
+    private bool useCurrentTurnNumbering = true;
 
     [Tooltip("Left null to use TextMesh's built-in default font - a bitmap Font asset here gives crisp pixel-art text matching the rest of the project instead.")]
     [SerializeField]

@@ -10,6 +10,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EnemySpawnController : MonoBehaviour
 {
+    [Serializable]
+    private sealed class SpawnEntry
+    {
+        public Vector3Int cell = Vector3Int.zero;
+        public Vector2Int facingDirection = Vector2Int.up;
+    }
+
     [Header("References")]
 
     [SerializeField]
@@ -36,7 +43,7 @@ public class EnemySpawnController : MonoBehaviour
     [Min(0)]
     [Tooltip("Completed player turns before the first enemy wave arrives.")]
     [SerializeField]
-    private int detectionDelayTurns = 5;
+    private int detectionDelayTurns = 6;
 
     [Min(0)]
     [Tooltip("Enemies requested when detection first reaches zero.")]
@@ -48,7 +55,7 @@ public class EnemySpawnController : MonoBehaviour
     [Min(1)]
     [Tooltip("Completed turns between reinforcement waves after detection.")]
     [SerializeField]
-    private int turnsBetweenWaves = 3;
+    private int turnsBetweenWaves = 6;
 
     [Min(0)]
     [Tooltip("Enemies requested by the first reinforcement wave.")]
@@ -58,18 +65,18 @@ public class EnemySpawnController : MonoBehaviour
     [Min(0)]
     [Tooltip("Additional enemies requested by each successive wave.")]
     [SerializeField]
-    private int reinforcementGrowthPerWave = 1;
+    private int reinforcementGrowthPerWave = 0;
 
     [Min(0)]
     [Tooltip("Maximum active enemies. Zero means no configured cap.")]
     [SerializeField]
-    private int maxActiveEnemies = 0;
+    private int maxActiveEnemies = 2;
 
     [Header("Entry Cells")]
 
     [Tooltip("Walkable edge/entry cells used in rotating order.")]
     [SerializeField]
-    private List<Vector3Int> spawnCells = new List<Vector3Int>();
+    private List<SpawnEntry> spawnEntries = new List<SpawnEntry>();
 
     private int nextSpawnCellIndex;
 
@@ -101,7 +108,7 @@ public class EnemySpawnController : MonoBehaviour
 
         if (turnManager != null)
         {
-            turnManager.TurnEnded += HandleTurnEnded;
+            turnManager.EnemyPhaseStarted += HandleEnemyPhaseStarted;
             turnManager.ClockReset += ResetSchedule;
         }
     }
@@ -110,12 +117,12 @@ public class EnemySpawnController : MonoBehaviour
     {
         if (turnManager != null)
         {
-            turnManager.TurnEnded -= HandleTurnEnded;
+            turnManager.EnemyPhaseStarted -= HandleEnemyPhaseStarted;
             turnManager.ClockReset -= ResetSchedule;
         }
     }
 
-    private void HandleTurnEnded(int turnNumber)
+    private void HandleEnemyPhaseStarted(int turnNumber)
     {
         if (!IsDetectionActive)
         {
@@ -186,7 +193,7 @@ public class EnemySpawnController : MonoBehaviour
     /// </summary>
     public int SpawnWave(int requestedCount)
     {
-        if (requestedCount <= 0 || spawnCells.Count == 0)
+        if (requestedCount <= 0 || spawnEntries.Count == 0)
         {
             return 0;
         }
@@ -206,15 +213,19 @@ public class EnemySpawnController : MonoBehaviour
         int cellsChecked = 0;
 
         while (spawnedCount < allowedCount &&
-               cellsChecked < spawnCells.Count)
+               cellsChecked < spawnEntries.Count)
         {
-            int index = nextSpawnCellIndex % spawnCells.Count;
-            Vector3Int cell = spawnCells[index];
+            int index = nextSpawnCellIndex % spawnEntries.Count;
+            SpawnEntry entry = spawnEntries[index];
 
-            nextSpawnCellIndex = (index + 1) % spawnCells.Count;
+            nextSpawnCellIndex = (index + 1) % spawnEntries.Count;
             cellsChecked++;
 
-            if (TrySpawnEnemyAtCell(cell, out _))
+            if (entry != null &&
+                TrySpawnEnemyAtCell(
+                    entry.cell,
+                    entry.facingDirection,
+                    out _))
             {
                 spawnedCount++;
             }
@@ -225,6 +236,14 @@ public class EnemySpawnController : MonoBehaviour
 
     public bool TrySpawnEnemyAtCell(
         Vector3Int cell,
+        out EnemyShip spawnedEnemy)
+    {
+        return TrySpawnEnemyAtCell(cell, Vector2Int.up, out spawnedEnemy);
+    }
+
+    private bool TrySpawnEnemyAtCell(
+        Vector3Int cell,
+        Vector2Int facingDirection,
         out EnemyShip spawnedEnemy)
     {
         spawnedEnemy = null;
@@ -248,6 +267,13 @@ public class EnemySpawnController : MonoBehaviour
         );
 
         spawnedEnemy.name = $"{enemyPrefab.name} ({cell.x}, {cell.y})";
+        spawnedEnemy.SetFacingDirection(facingDirection);
+
+        if (turnManager != null &&
+            turnManager.CurrentPhase == TurnPhase.Enemy)
+        {
+            spawnedEnemy.ScheduleFirstEnemyPhase(turnManager.CurrentTurn + 1);
+        }
 
         if (!enemyRegistry.TryGetEnemyAtCell(cell, out EnemyShip occupant) ||
             occupant != spawnedEnemy)
