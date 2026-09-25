@@ -9,8 +9,8 @@ using UnityEngine.UI;
 /// re-previewing to whatever cell the cursor is over for as long as the
 /// button stays held - so dragging live-updates the destination rather
 /// than needing repeated clicks. Enter commits the previewed route (or
-/// an optional assigned commitButton), Escape cancels it (or an optional
-/// assigned cancelButton).
+/// an optional assigned commitButton), while the optional cancelButton
+/// cancels it. Escape is reserved for the prototype pause menu.
 ///
 /// RouteInputController offers the fuller click-chaining/drag-drawing
 /// model. Both are kept in the project rather than one being retired,
@@ -46,7 +46,7 @@ public class GridPlayerInput : MonoBehaviour
     [SerializeField]
     private Button commitButton;
 
-    [Tooltip("Optional Canvas Button. Clicking it calls the same Cancel() that pressing Escape does.")]
+    [Tooltip("Optional Canvas Button that cancels the current route plan.")]
     [SerializeField]
     private Button cancelButton;
 
@@ -194,8 +194,9 @@ public class GridPlayerInput : MonoBehaviour
     /// </summary>
     private bool IsRouteInputBlocked()
     {
-        return movementPlanController != null &&
-               !movementPlanController.CanAcceptPlayerInput;
+        return PrototypePauseMenuController.BlocksGameplayInput ||
+               (movementPlanController != null &&
+                !movementPlanController.CanAcceptPlayerInput);
     }
 
 

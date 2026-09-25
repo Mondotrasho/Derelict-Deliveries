@@ -13,7 +13,8 @@ using UnityEngine.UI;
 /// dragging after a click manually appends/trims the route cell-by-cell
 /// via RoutePlanner.AppendDraggedCell instead, following the drag gesture
 /// directly rather than re-pathfinding from the player every frame.
-/// Right-click cancels the plan, same as Escape.
+/// Right-click or the optional Cancel button cancels the plan. Escape is
+/// reserved for the prototype pause menu.
 ///
 /// Offers a fuller model than GridPlayerInput, which only ever supports
 /// re-pathfind-to-cursor (no waypoint chaining, no manual drawing). Both
@@ -49,7 +50,7 @@ public class RouteInputController : MonoBehaviour
     [SerializeField]
     private Button commitButton;
 
-    [Tooltip("Optional Canvas Button. Clicking it calls the same Cancel() that pressing Escape does.")]
+    [Tooltip("Optional Canvas Button that cancels the current route plan.")]
     [SerializeField]
     private Button cancelButton;
 
@@ -211,8 +212,9 @@ public class RouteInputController : MonoBehaviour
     /// </summary>
     private bool IsRouteInputBlocked()
     {
-        return movementPlanController != null &&
-               !movementPlanController.CanAcceptPlayerInput;
+        return PrototypePauseMenuController.BlocksGameplayInput ||
+               (movementPlanController != null &&
+                !movementPlanController.CanAcceptPlayerInput);
     }
 
 
