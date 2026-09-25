@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
 
 /// <summary>
 /// Attach this to a GameObject childed to your Grid, with its own Tilemap
@@ -8,6 +12,7 @@ using UnityEngine.Tilemaps;
 /// Generates clustered asteroid fields, supports spawning debris around a
 /// point (e.g. something blew up), consuming/removing tiles, and querying
 /// whether any asteroid tiles exist inside a given square area.
+/// Can also preview/bake the field in edit mode via the custom inspector.
 /// </summary>
 [RequireComponent(typeof(Tilemap))]
 public class AsteroidFieldPainter : MonoBehaviour
@@ -48,28 +53,38 @@ public class AsteroidFieldPainter : MonoBehaviour
 
     [Header("Seeding")]
     public int seed = 54321;
-    [Tooltip("If true, randomises the seed on Awake instead of using the value above.")]
+    [Tooltip("If true, randomises the seed on Awake instead of using the value above. Note: the edit-mode preview can't match a seed that doesn't exist yet.")]
     public bool randomizeSeedOnAwake = false;
 
     [Header("Debug")]
     [Tooltip("If true, automatically calls GenerateField() when you press Play.")]
     public bool generateOnStart = false;
 
+    [Header("Editor Preview")]
+    [Tooltip("If true, the field regenerates in the Scene view whenever you change a setting in the Inspector (edit mode only).")]
+    public bool livePreview = true;
+    [Tooltip("Draws the field area outline in the Scene view when this object is selected.")]
+    public bool showAreaGizmo = true;
+
+    // Remembers what was last painted so moving/shrinking the area doesn't leave orphaned tiles behind.
+    [SerializeField, HideInInspector] private BoundsInt _lastGeneratedArea;
+    [SerializeField, HideInInspector] private bool _hasGeneratedArea;
+
     private System.Random _rng;
     private float _noiseOffsetX;
     private float _noiseOffsetY;
 
+    private BoundsInt CurrentArea =>
+        new BoundsInt(origin.x, origin.y, origin.z, Mathf.Max(0, size.x), Mathf.Max(0, size.y), 1);
+
     private void Awake()
     {
-        if (asteroidTilemap == null)
-            asteroidTilemap = GetComponent<Tilemap>();
+        ResolveTilemap();
 
         if (randomizeSeedOnAwake)
             seed = System.Guid.NewGuid().GetHashCode();
 
-        _rng = new System.Random(seed);
-        _noiseOffsetX = (float)_rng.NextDouble() * 10000f;
-        _noiseOffsetY = (float)_rng.NextDouble() * 10000f;
+        ResetRng();
     }
 
     private void Start()
@@ -82,27 +97,28 @@ public class AsteroidFieldPainter : MonoBehaviour
 
     /// <summary>
     /// Clears the target area and scatters a fresh clustered asteroid field
-    /// using the current seed/density/weights.
+    /// using the current seed/density/weights. Works in edit mode too.
     /// </summary>
     [ContextMenu("Generate Field")]
     public void GenerateField()
     {
-        if (asteroidTilemap == null)
+        if (!ResolveTilemap())
         {
             Debug.LogWarning($"{name}: no Tilemap assigned to AsteroidFieldPainter.", this);
             return;
         }
 
-        float totalWeight = 0f;
-        foreach (var option in asteroidTiles)
-            if (option != null && option.tile != null)
-                totalWeight += option.weight;
-
+        float totalWeight = TotalWeight();
         if (totalWeight <= 0f)
         {
             Debug.LogWarning($"{name}: no valid asteroid tiles with weight > 0.", this);
             return;
         }
+
+        // In edit mode, always start from the seed so the preview is exactly what Play will produce.
+        // In play mode, keep the existing behaviour (the RNG carries on from where it was).
+        if (!Application.isPlaying || _rng == null)
+            ResetRng();
 
         ClearArea();
 
@@ -130,16 +146,33 @@ public class AsteroidFieldPainter : MonoBehaviour
                 asteroidTilemap.SetTransformMatrix(cell, BuildRotationMatrix());
             }
         }
+
+        _lastGeneratedArea = CurrentArea;
+        _hasGeneratedArea = true;
     }
 
+    /// <summary>Clears the current field area, plus wherever the field was last generated if that's different.</summary>
     [ContextMenu("Clear Field")]
     public void ClearArea()
     {
-        if (asteroidTilemap == null) return;
+        if (!ResolveTilemap()) return;
 
-        for (int x = 0; x < size.x; x++)
-            for (int y = 0; y < size.y; y++)
-                asteroidTilemap.SetTile(origin + new Vector3Int(x, y, 0), null);
+        ClearRegion(CurrentArea);
+
+        if (_hasGeneratedArea)
+        {
+            ClearRegion(_lastGeneratedArea);
+            _hasGeneratedArea = false;
+        }
+    }
+
+    private void ClearRegion(BoundsInt area)
+    {
+        int count = area.size.x * area.size.y * area.size.z;
+        if (count <= 0) return;
+
+        // A block of nulls clears the whole region in one call rather than one SetTile per cell.
+        asteroidTilemap.SetTilesBlock(area, new TileBase[count]);
     }
 
     // ==================== Debris / Add ====================
@@ -152,13 +185,10 @@ public class AsteroidFieldPainter : MonoBehaviour
     /// </summary>
     public void AddAsteroidsAtPoint(Vector3 worldPosition, int count, float radiusInCells, bool overwriteExisting = false)
     {
-        if (asteroidTilemap == null) return;
+        if (!ResolveTilemap()) return;
+        EnsureRng();
 
-        float totalWeight = 0f;
-        foreach (var option in asteroidTiles)
-            if (option != null && option.tile != null)
-                totalWeight += option.weight;
-
+        float totalWeight = TotalWeight();
         if (totalWeight <= 0f) return;
 
         Vector3Int centerCell = asteroidTilemap.WorldToCell(worldPosition);
@@ -194,7 +224,7 @@ public class AsteroidFieldPainter : MonoBehaviour
     /// <summary>Same as AddAsteroidsAtPoint but takes a cell coordinate directly instead of a world position.</summary>
     public void AddAsteroidsAtCell(Vector3Int centerCell, int count, float radiusInCells, bool overwriteExisting = false)
     {
-        if (asteroidTilemap == null) return;
+        if (!ResolveTilemap()) return;
         AddAsteroidsAtPoint(asteroidTilemap.GetCellCenterWorld(centerCell), count, radiusInCells, overwriteExisting);
     }
 
@@ -210,7 +240,6 @@ public class AsteroidFieldPainter : MonoBehaviour
         return asteroidTilemap != null &&
                asteroidTilemap.GetTile(cell) != null;
     }
-
 
     /// <summary>
     /// Snapshot of every currently occupied asteroid cell in the Tilemap.
@@ -236,7 +265,6 @@ public class AsteroidFieldPainter : MonoBehaviour
 
         return result;
     }
-
 
     /// <summary>True if any asteroid tile exists anywhere inside the given cell-space square/rectangle.</summary>
     public bool HasTilesInArea(BoundsInt area)
@@ -280,7 +308,6 @@ public class AsteroidFieldPainter : MonoBehaviour
         ConsumeAreaAndCount(area);
     }
 
-
     /// <summary>
     /// Removes asteroid tiles inside area and returns the number actually
     /// removed. Useful for mining/reward code without requiring it to query
@@ -306,7 +333,6 @@ public class AsteroidFieldPainter : MonoBehaviour
         return consumed;
     }
 
-
     /// <summary>
     /// Removes ("consumes") the asteroid tile at a single cell, if any.
     /// Retained for existing callers that do not need a result.
@@ -315,7 +341,6 @@ public class AsteroidFieldPainter : MonoBehaviour
     {
         TryConsumeCell(cell);
     }
-
 
     /// <summary>
     /// Removes one asteroid cell and returns true only when a tile was actually
@@ -334,6 +359,38 @@ public class AsteroidFieldPainter : MonoBehaviour
     }
 
     // ==================== Internals ====================
+
+    private bool ResolveTilemap()
+    {
+        if (asteroidTilemap == null)
+            asteroidTilemap = GetComponent<Tilemap>();
+        return asteroidTilemap != null;
+    }
+
+    private void ResetRng()
+    {
+        _rng = new System.Random(seed);
+        _noiseOffsetX = (float)_rng.NextDouble() * 10000f;
+        _noiseOffsetY = (float)_rng.NextDouble() * 10000f;
+    }
+
+    private void EnsureRng()
+    {
+        if (_rng == null)
+            ResetRng();
+    }
+
+    private float TotalWeight()
+    {
+        float total = 0f;
+        if (asteroidTiles == null) return total;
+
+        foreach (var option in asteroidTiles)
+            if (option != null && option.tile != null)
+                total += option.weight;
+
+        return total;
+    }
 
     private Tile PickWeightedTile(float totalWeight)
     {
@@ -370,4 +427,107 @@ public class AsteroidFieldPainter : MonoBehaviour
         float sampleY = (cellY * clusterNoiseScale) + _noiseOffsetY;
         return Mathf.PerlinNoise(sampleX, sampleY);
     }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!showAreaGizmo || !ResolveTilemap()) return;
+
+        Vector3 min = asteroidTilemap.CellToWorld(origin);
+        Vector3 max = asteroidTilemap.CellToWorld(origin + new Vector3Int(size.x, size.y, 0));
+
+        Gizmos.color = new Color(1f, 0.6f, 0.1f, 0.8f);
+        Gizmos.DrawWireCube((min + max) * 0.5f, max - min);
+    }
 }
+
+#if UNITY_EDITOR
+/// <summary>
+/// Inspector for AsteroidFieldPainter: Generate/Clear/New Seed buttons plus
+/// live regeneration in edit mode when any value changes.
+/// </summary>
+[CustomEditor(typeof(AsteroidFieldPainter))]
+public class AsteroidFieldPainterEditor : Editor
+{
+    private void OnEnable()
+    {
+        Undo.undoRedoPerformed += OnUndoRedo;
+    }
+
+    private void OnDisable()
+    {
+        Undo.undoRedoPerformed -= OnUndoRedo;
+    }
+
+    // Undoing a slider change doesn't go through OnInspectorGUI's change check,
+    // so re-sync the preview here or the tiles drift out of step with the values.
+    private void OnUndoRedo()
+    {
+        var painter = target as AsteroidFieldPainter;
+        if (painter != null && painter.livePreview && !Application.isPlaying)
+            Regenerate(painter, recordUndo: false);
+    }
+
+    public override void OnInspectorGUI()
+    {
+        var painter = (AsteroidFieldPainter)target;
+
+        EditorGUI.BeginChangeCheck();
+        DrawDefaultInspector();
+        bool changed = EditorGUI.EndChangeCheck();
+
+        EditorGUILayout.Space();
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Generate Field"))
+                Regenerate(painter, recordUndo: true);
+
+            if (GUILayout.Button("Clear Field"))
+            {
+                RecordUndo(painter, "Clear Asteroid Field");
+                painter.ClearArea();
+                MarkDirty(painter);
+            }
+        }
+
+        if (GUILayout.Button("New Seed + Generate"))
+        {
+            Undo.RecordObject(painter, "Randomise Asteroid Seed");
+            painter.seed = System.Guid.NewGuid().GetHashCode();
+            Regenerate(painter, recordUndo: true);
+        }
+
+        // Skip undo recording on live tweaks - a full tilemap snapshot per slider tick gets heavy fast.
+        if (changed && painter.livePreview && !Application.isPlaying)
+            Regenerate(painter, recordUndo: false);
+    }
+
+    private static void Regenerate(AsteroidFieldPainter painter, bool recordUndo)
+    {
+        if (recordUndo)
+            RecordUndo(painter, "Generate Asteroid Field");
+
+        painter.GenerateField();
+        MarkDirty(painter);
+    }
+
+    private static void RecordUndo(AsteroidFieldPainter painter, string label)
+    {
+        if (Application.isPlaying) return;
+
+        var tilemap = painter.asteroidTilemap != null ? painter.asteroidTilemap : painter.GetComponent<Tilemap>();
+        if (tilemap != null)
+            Undo.RegisterCompleteObjectUndo(new Object[] { tilemap, painter }, label);
+    }
+
+    private static void MarkDirty(AsteroidFieldPainter painter)
+    {
+        if (Application.isPlaying) return;
+
+        if (painter.asteroidTilemap != null)
+            EditorUtility.SetDirty(painter.asteroidTilemap);
+        EditorUtility.SetDirty(painter);
+        EditorSceneManager.MarkSceneDirty(painter.gameObject.scene);
+    }
+}
+#endif

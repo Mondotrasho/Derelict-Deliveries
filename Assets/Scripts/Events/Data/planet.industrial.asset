@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: planet.industrial
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: planet.industrial
+  displayName: Industrial contract
+  category: 1
+  tags:
+  - planet
+  conditions:
+    tags:
+    - scope: 1
+      tag: Industrial
+      mustHave: 1
+    flags: []
+    counters: []
+  oncePerPlanet: 1
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.55, g: 1, b: 0.45, a: 1}
+  identifiedSprite: {fileID: 0}
+  lifetimeTurns: 0
+  debugText: Placeholder planet event. Only eligible on planets tagged Industrial, once per planet.
+  dialogueJson: {fileID: 0}

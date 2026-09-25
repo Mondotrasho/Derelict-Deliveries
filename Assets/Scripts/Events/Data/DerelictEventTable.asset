@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b976d6f2e1b8e29eb108142685bf5e8, type: 3}
+  m_Name: DerelictEventTable
+  m_EditorClassIdentifier: Assembly-CSharp::EventTable
+  entries:
+  - definition: {fileID: 11400000, guid: 9dadda0fe61b5c0f56c120889916b10f, type: 2}
+    weight: 1
