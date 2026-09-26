@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 
 /// <summary>
@@ -28,8 +29,8 @@ public class EventTriggerHandler : MonoBehaviour
 
     [Header("Pickups")]
     [SerializeField] private Color pickupTextColour = new Color(1f, 0.85f, 0.3f, 1f);
-    [Tooltip("Optional bitmap font for the float-up text. Empty = TextMesh's default.")]
-    [SerializeField] private Font pickupTextFont;
+    [Tooltip("TMP font asset for the float-up text (e.g. the same one as the UI). Empty = TextMeshPro's default.")]
+    [SerializeField] private TMP_FontAsset pickupTextFont;
     [Tooltip("Text height as a fraction of one grid tile.")]
     [SerializeField] private float pickupTextTileHeight = 0.6f;
     [SortingLayerName]

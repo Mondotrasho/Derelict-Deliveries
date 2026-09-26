@@ -29,6 +29,8 @@ public sealed class PlanetPicker : MonoBehaviour, IPoiPicker
     [TextArea(1, 3)] [SerializeField] private string prompt = "What do you want to do here?";
     [Tooltip("List each option's description under the prompt.")]
     [SerializeField] private bool listDescriptions = true;
+    [Tooltip("With more options than this, only the prompt is shown (the list would not fit).")]
+    [Min(0)] [SerializeField] private int maxDescriptionsListed = 3;
     [SerializeField] private string leaveLabel = "LEAVE";
 
     public bool IsOpen { get; private set; }
@@ -100,7 +102,7 @@ public sealed class PlanetPicker : MonoBehaviour, IPoiPicker
 
     private string Body(IReadOnlyList<PoiChoice> choices)
     {
-        if (!listDescriptions) return prompt;
+        if (!listDescriptions || choices.Count > maxDescriptionsListed) return prompt;
 
         var sb = new System.Text.StringBuilder(prompt);
         foreach (PoiChoice c in choices)

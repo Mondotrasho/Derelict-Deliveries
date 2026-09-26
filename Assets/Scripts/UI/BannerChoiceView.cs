@@ -51,6 +51,18 @@ public sealed class BannerChoiceView : MonoBehaviour
     [Min(1f)] [SerializeField] private float buttonHeightScale = 1.5f;
     [Min(0f)] [SerializeField] private float spacing = 10f;
 
+    [Header("Many Choices")]
+    [Tooltip("More buttons than this switch to two columns.")]
+    [Min(1)] [SerializeField] private int twoColumnsAbove = 4;
+    [Tooltip("Buttons shrink to fit, but never below this height (pixels).")]
+    [Min(8f)] [SerializeField] private float minButtonHeight = 30f;
+    [Tooltip("Button labels shrink to fit, down to this size.")]
+    [Min(6f)] [SerializeField] private float minButtonFontSize = 14f;
+    [Tooltip("The banner shrinks before the buttons do, down to this share of its normal height.")]
+    [Range(0f, 1f)] [SerializeField] private float minBannerFraction = 0.35f;
+    [Tooltip("Body text always keeps at least this many lines.")]
+    [Min(0)] [SerializeField] private int minBodyLines = 2;
+
     [Header("Open Animation (same feel as the dialogue panel)")]
     [SerializeField] private bool animateOpen = true;
     [Min(0.05f)] [SerializeField] private float openDuration = 0.24f;
@@ -69,7 +81,8 @@ public sealed class BannerChoiceView : MonoBehaviour
     private RectTransform headerRect;
     private TextMeshProUGUI titleText, statusText, bodyText, resultText;
     private Image bannerImage;
-    private LayoutElement bannerLayout, headerLayout, dividerLayout;
+    private LayoutElement bannerLayout, headerLayout, dividerLayout, bodyLayout;
+    private GridLayoutGroup choiceGrid;
     private RectTransform choiceArea;
 
     private readonly List<Button> buttons = new List<Button>();
@@ -152,6 +165,7 @@ public sealed class BannerChoiceView : MonoBehaviour
             button.gameObject.SetActive(true);
             if (style != null) style.ApplyButton(button, buttonLabels[i], palette, choices[i].enabled);
             else button.interactable = choices[i].enabled;
+            FitLabel(buttonLabels[i]);
         }
 
         choiceMade = false;
@@ -265,7 +279,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         bodyText.alignment = TextAlignmentOptions.TopLeft;
         bodyText.textWrappingMode = TextWrappingModes.Normal;
         bodyText.overflowMode = TextOverflowModes.Ellipsis;
-        LayoutElement bodyLayout = bodyText.gameObject.AddComponent<LayoutElement>();
+        bodyLayout = bodyText.gameObject.AddComponent<LayoutElement>();
         bodyLayout.flexibleHeight = 1f;          // body takes whatever is left, so the choices never get pushed off
         bodyLayout.minHeight = 20f;
         bodyLayout.preferredHeight = 0f;         // overrides TMP's own preferred height (long text ellipsises)
@@ -275,12 +289,13 @@ public sealed class BannerChoiceView : MonoBehaviour
         resultText.textWrappingMode = TextWrappingModes.Normal;
 
         choiceArea = CreateRect("Choices", contentRect);
-        VerticalLayoutGroup choiceColumn = choiceArea.gameObject.AddComponent<VerticalLayoutGroup>();
-        choiceColumn.childControlWidth = true;
-        choiceColumn.childControlHeight = true;
-        choiceColumn.childForceExpandWidth = true;
-        choiceColumn.childForceExpandHeight = false;
-        choiceColumn.spacing = spacing * 0.6f;   // the group reports its own preferred height to the column
+        // A grid, so many choices can go into two columns. Its preferred height
+        // is reported to the column; Relayout sizes the cells to fit.
+        choiceGrid = choiceArea.gameObject.AddComponent<GridLayoutGroup>();
+        choiceGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        choiceGrid.constraintCount = 1;
+        choiceGrid.childAlignment = TextAnchor.UpperCenter;
+        choiceGrid.spacing = new Vector2(spacing * 0.6f, spacing * 0.6f);
 
         topBorder = CreateImage("TopBorder", generatedRoot);
         bottomBorder = CreateImage("BottomBorder", generatedRoot);
@@ -323,7 +338,18 @@ public sealed class BannerChoiceView : MonoBehaviour
         {
             if (!buttons[i].gameObject.activeSelf) continue;
             if (style != null) style.ApplyButton(buttons[i], buttonLabels[i], palette, buttonEnabled[i]);
+            FitLabel(buttonLabels[i]);
         }
+    }
+
+
+    /// <summary>Labels shrink to fit smaller buttons, up to the style's button size.</summary>
+    private void FitLabel(TextMeshProUGUI label)
+    {
+        label.enableAutoSizing = true;
+        label.fontSizeMax = style != null ? style.ButtonFontSize : 42f;
+        label.fontSizeMin = Mathf.Min(minButtonFontSize, label.fontSizeMax);
+        label.margin = new Vector4(8f, 2f, 8f, 2f);
     }
 
 
@@ -375,17 +401,41 @@ public sealed class BannerChoiceView : MonoBehaviour
         dividerLayout.preferredHeight = border;
 
         float contentWidth = Mathf.Max(1f, size.x - inset * 2f);
-        float bannerHeight = Mathf.Min(contentWidth / Mathf.Max(0.5f, bannerAspect), size.y * maxBannerHeightFraction);
+
+        // --- fit: choices first, then the banner gives way, then buttons shrink ---
+        int count = 0;
+        foreach (Button b in buttons) if (b.gameObject.activeSelf) count++;
+        int columns = count > twoColumnsAbove ? 2 : 1;
+        int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)columns));
+        float gap = spacing * 0.6f;
+
+        float bodySize = style != null ? style.BodyFontSize : 28f;
+        float minBody = bodyText.gameObject.activeSelf ? bodySize * 1.25f * minBodyLines : 0f;
+        float resultHeight = resultText.gameObject.activeSelf ? resultText.preferredHeight : 0f;
+        int visibleChildren = 0;
+        foreach (Transform child in contentRect) if (child.gameObject.activeSelf) visibleChildren++;
+        float fixedHeight = column.padding.top + column.padding.bottom + headerHeight + border
+                            + spacing * Mathf.Max(0, visibleChildren - 1) + resultHeight + minBody;
+        float available = Mathf.Max(0f, size.y - fixedHeight);
+
+        float idealButton = buttonSize * buttonHeightScale;
+        float idealChoices = count > 0 ? rows * idealButton + (rows - 1) * gap : 0f;
+        float idealBanner = bannerImage.gameObject.activeSelf
+            ? Mathf.Min(contentWidth / Mathf.Max(0.5f, bannerAspect), size.y * maxBannerHeightFraction)
+            : 0f;
+
+        float bannerHeight = Mathf.Clamp(available - idealChoices, idealBanner * minBannerFraction, idealBanner);
+        float buttonHeight = count > 0
+            ? Mathf.Clamp((available - bannerHeight - (rows - 1) * gap) / rows, minButtonHeight, idealButton)
+            : idealButton;
+
         bannerLayout.minHeight = bannerHeight;
         bannerLayout.preferredHeight = bannerHeight;
+        bodyLayout.minHeight = Mathf.Max(20f, minBody);
 
-        float buttonHeight = buttonSize * buttonHeightScale;
-        foreach (Button button in buttons)
-        {
-            LayoutElement element = button.GetComponent<LayoutElement>();
-            element.minHeight = buttonHeight;
-            element.preferredHeight = buttonHeight;
-        }
+        choiceGrid.constraintCount = columns;
+        choiceGrid.spacing = new Vector2(gap, gap);
+        choiceGrid.cellSize = new Vector2(Mathf.Max(1f, (contentWidth - (columns - 1) * gap) / columns), buttonHeight);
 
         if (scanlineImage != null && style != null)
         {
