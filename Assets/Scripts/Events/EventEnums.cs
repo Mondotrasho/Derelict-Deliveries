@@ -8,7 +8,10 @@ public enum EventCategory
     Derelict,
 
     /// <summary>Unmarked mid-move events (e.g. asteroid strikes). Never shown before they fire.</summary>
-    Hazard
+    Hazard,
+
+    /// <summary>Collected instantly by flying over it (fuel). No window; the ship keeps going.</summary>
+    Pickup
 }
 
 

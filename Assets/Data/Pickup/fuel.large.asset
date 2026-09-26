@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: fuel.large
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: fuel.large
+  displayName: Fuel tank
+  category: 4
+  tags:
+  - pickup
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 1, g: 0.85, b: 0.3, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 0.9, b: 0.5, a: 1}
+  identifiedSpinDegreesPerSecond: 30
+  identifiedSizeInTiles: 0.8
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "A full fuel tank, still sealed."
+  allowLeave: 1
+  choices: []
+  pickupResources:
+  - kind: 0
+    amount: 20
+  debugText: Fuel pickup. Collected by flying over it.
+  dialogueJson: {fileID: 0}

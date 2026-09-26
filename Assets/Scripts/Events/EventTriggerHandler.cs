@@ -8,6 +8,10 @@ using UnityEngine;
 ///
 /// While the presenter is open this component holds a movement interruption;
 /// releasing it lets the paused route resume on its own.
+///
+/// Pickup sites (fuel) are the exception: they are collected on the spot with
+/// no window and no pause, show a small float-up text, and do not claim the
+/// arrival, so the ship simply keeps flying.
 /// </summary>
 [DisallowMultipleComponent]
 public class EventTriggerHandler : MonoBehaviour
@@ -21,6 +25,16 @@ public class EventTriggerHandler : MonoBehaviour
 
     [Tooltip("Assign explicitly (the panel starts inactive). If another system already has it open on arrival, the event is left for later.")]
     [SerializeField] private DialoguePanelController dialoguePanel;
+
+    [Header("Pickups")]
+    [SerializeField] private Color pickupTextColour = new Color(1f, 0.85f, 0.3f, 1f);
+    [Tooltip("Optional bitmap font for the float-up text. Empty = TextMesh's default.")]
+    [SerializeField] private Font pickupTextFont;
+    [Tooltip("Text height as a fraction of one grid tile.")]
+    [SerializeField] private float pickupTextTileHeight = 0.6f;
+    [SortingLayerName]
+    [SerializeField] private string pickupTextSortingLayer = "Default";
+    [SerializeField] private int pickupTextSortingOrder = 200;
 
     public bool IsBusy { get; private set; }
     public EventSite CurrentSite { get; private set; }
@@ -92,8 +106,35 @@ public class EventTriggerHandler : MonoBehaviour
             return false;
         }
 
+        if (site.Category == EventCategory.Pickup)
+        {
+            CollectPickup(site, ctx);
+            return false;   // not claimed: the ship keeps flying, the arrival carries on as normal
+        }
+
         StartCoroutine(Run(site, ctx));
         return true;
+    }
+
+
+    private void CollectPickup(EventSite site, EventContext ctx)
+    {
+        ApplyResolution(site, ctx);
+        string summary = site.Definition != null
+            ? EventChoiceResolver.ApplyResources(site.Definition.PickupResources, ctx, player)
+            : "";
+
+        GridMap grid = FindFirstObjectByType<GridMap>();
+        if (grid != null)
+        {
+            float tile = Vector3.Distance(grid.CellToWorld(Vector3Int.zero), grid.CellToWorld(Vector3Int.right));
+            string text = !string.IsNullOrEmpty(summary) ? summary : (site.Definition != null ? site.Definition.DisplayName : "");
+            FloatUpText.Spawn(grid.CellToWorld(site.Cell), text, pickupTextColour, tile * pickupTextTileHeight,
+                              pickupTextFont, pickupTextSortingLayer, pickupTextSortingOrder, tile);
+        }
+
+        registry.SetState(site, EventSiteState.Resolved);
+        registry.Remove(site);
     }
 
 

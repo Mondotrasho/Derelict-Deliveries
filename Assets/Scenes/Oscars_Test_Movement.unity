@@ -17596,6 +17596,7 @@ GameObject:
   - component: {fileID: 2100000013}
   - component: {fileID: 2100000014}
   - component: {fileID: 2100000015}
+  - component: {fileID: 2100000016}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -18340,6 +18341,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatEncounterController
   enemyTurnController: {fileID: 1878988783}
   playerShip: {fileID: 2078833601}
+  turnManager: {fileID: 0}
   playerCapabilities:
     weaponDamage: 20
     weaponAccuracy: 50
@@ -18357,6 +18359,7 @@ MonoBehaviour:
   maximumDefendReduction: 0.7
   passiveArmourScale: 100
   defendRechargeMultiplier: 2
+  outOfCombatRegenPerTurn: 10
 --- !u!1 &1963077829
 GameObject:
   m_ObjectHideFlags: 0
@@ -18907,6 +18910,8 @@ MonoBehaviour:
   hullIntegrity: 100
   maxFuel: 100
   fuel: 100
+  maxShields: 40
+  shields: 40
   maxCrew: 10
   crew: 1
 --- !u!114 &2088822714
@@ -19141,6 +19146,8 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      completeResources: []
+      completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: 412fc1db5764ab549a4d59c3ca7c6605, type: 3}
       runBootSequence: 0
@@ -19160,6 +19167,8 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      completeResources: []
+      completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: f7c4f7919b403624c95bead0137244ef, type: 3}
       runBootSequence: 0
@@ -19179,6 +19188,8 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      completeResources: []
+      completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: add037795f36b5443b8ea77129f12381, type: 3}
       runBootSequence: 0
@@ -19198,6 +19209,8 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      completeResources: []
+      completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: af0fe1383701e0f4f8de96c5fba928c3, type: 3}
       runBootSequence: 0
@@ -19217,6 +19230,8 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      completeResources: []
+      completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: a3703e4c4ed613046a492e8415da1920, type: 3}
       runBootSequence: 0
@@ -19235,6 +19250,8 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    completeResources: []
+    completeDetectionTurns: 0
     returnToPicker: 1
     dialogueJson: {fileID: 0}
     runBootSequence: 0
@@ -19252,6 +19269,8 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    completeResources: []
+    completeDetectionTurns: 0
     returnToPicker: 1
     dialogueJson: {fileID: 0}
     runBootSequence: 0
@@ -19269,6 +19288,8 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    completeResources: []
+    completeDetectionTurns: 0
     returnToPicker: 1
     dialogueJson: {fileID: 0}
     runBootSequence: 0
@@ -19292,10 +19313,37 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    completeResources: []
+    completeDetectionTurns: 0
     returnToPicker: 1
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: aff449803ee04d01b19e0f654d3c9eb9, type: 2}
+  - id: trade.fuel
+    title: Visit the fuel depot
+    description: Wanna buy some fuel?
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Red
+        mustHave: 1
+      flags:
+      - scope: 0
+        key: quest:shrine:defiled
+        expected: 0
+      counters: []
+    oncePerPlanet: 1
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: 97c04eb8928441ca88c2c30fc612b440, type: 2}
 --- !u!114 &2100000009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19339,6 +19387,7 @@ MonoBehaviour:
   - {fileID: 2100000013}
   - {fileID: 2100000014}
   - {fileID: 2100000015}
+  - {fileID: 2100000016}
   tuning:
     scanRadiusCap: 8
     triggerRadius: 0
@@ -19367,6 +19416,11 @@ MonoBehaviour:
   registry: {fileID: 1330772293}
   presenterBehaviour: {fileID: 7100000003}
   dialoguePanel: {fileID: 2031162150}
+  pickupTextColour: {r: 1, g: 0.85, b: 0.3, a: 1}
+  pickupTextFont: {fileID: 0}
+  pickupTextTileHeight: 0.6
+  pickupTextSortingLayer: Default
+  pickupTextSortingOrder: 200
 --- !u!114 &2100000013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19447,6 +19501,39 @@ MonoBehaviour:
   visionManager: {fileID: 1705402916}
   turnManager: {fileID: 651697407}
   rollWhenDiscovered: 1
+--- !u!114 &2100000016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 546e332ed93531447ad2f8744d8485c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FuelPickupSource
+  sourceId: pickup
+  sourceEnabled: 1
+  rollChance: 0.06
+  rerollCooldownTurns: 6
+  maxNewSitesPerScan: 1
+  eventTags:
+  - pickup
+  table: {fileID: 11400000, guid: ff4e824800314b619d27865068d49a0a, type: 2}
+  player: {fileID: 2078833601}
+  gridMap: {fileID: 28316566}
+  asteroidField: {fileID: 473045947}
+  planetManager: {fileID: 648462893}
+  enemyRegistry: {fileID: 1878988784}
+  visionManager: {fileID: 1705402916}
+  fogOfWar: {fileID: 1704211999}
+  spawnedObjectRoot: {fileID: 0}
+  identifiedSortingLayer: Default
+  identifiedSortingOrder: 9
+  randomSpinDirection: 1
+  randomStartAngle: 1
+  identifiedFogLockTier: 1
 --- !u!213 &2103917901
 Sprite:
   m_ObjectHideFlags: 0
@@ -19914,13 +20001,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ResourceReadout
   style: {fileID: 11400000, guid: e2fa03d164984edfa08c97362373abd6, type: 2}
   player: {fileID: 2078833601}
+  enemySpawner: {fileID: 0}
   fontSize: 22
   refreshSeconds: 0.25
   alignment: 260
   showHull: 1
+  showShields: 1
   showFuel: 1
   showCrew: 1
   showSupplies: 1
+  showHunt: 1
+  detectionLabel: DETECTION IN
+  waveLabel: NEXT WAVE IN
 --- !u!1 &7100000101
 GameObject:
   m_ObjectHideFlags: 0

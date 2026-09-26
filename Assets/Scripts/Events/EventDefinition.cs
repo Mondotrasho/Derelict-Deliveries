@@ -66,6 +66,10 @@ public sealed class EventDefinition : ScriptableObject
     [Tooltip("Buttons in the event UI. Empty = the placeholder Resolve / Leave buttons.")]
     [SerializeField] private List<EventChoice> choices = new List<EventChoice>();
 
+    [Header("Pickup (Pickup category only)")]
+    [Tooltip("Applied instantly when the player flies over the site, e.g. Fuel +10. No window opens.")]
+    [SerializeField] private List<ResourceDelta> pickupResources = new List<ResourceDelta>();
+
     [Header("Debug")]
     [TextArea(2, 6)]
     [SerializeField] private string debugText = "Placeholder event.";
@@ -92,6 +96,7 @@ public sealed class EventDefinition : ScriptableObject
     public Sprite Banner => banner;
     public string ShortDescription => shortDescription;
     public bool AllowLeave => allowLeave;
+    public IReadOnlyList<ResourceDelta> PickupResources => pickupResources;
     public IReadOnlyList<EventChoice> Choices => choices;
 
     /// <summary>Text for the event UI: the short description, else the debug text.</summary>

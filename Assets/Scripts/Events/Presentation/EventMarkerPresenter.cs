@@ -172,7 +172,7 @@ public class EventMarkerPresenter : MonoBehaviour
     private void HandleKnowledgeChanged(EventSite site, PlanetKnowledgeState knowledge)
     {
         Marker m = Ensure(site);
-        if (m != null && site.Category == EventCategory.Derelict && knowledge == PlanetKnowledgeState.Identified)
+        if (m != null && HasSpawnedSprite(site) && knowledge == PlanetKnowledgeState.Identified)
         {
             m.crossfadeStart = Time.time;
             SetSpawnedAlpha(site, 0f);
@@ -261,7 +261,7 @@ public class EventMarkerPresenter : MonoBehaviour
         if (site.Knowledge == PlanetKnowledgeState.Unknown) return 0f;
         if (!m.visibleByFog) return 0f;
 
-        if (site.Category == EventCategory.Derelict)
+        if (HasSpawnedSprite(site))
         {
             if (site.Knowledge != PlanetKnowledgeState.Identified) return 1f;
 
@@ -281,6 +281,13 @@ public class EventMarkerPresenter : MonoBehaviour
     }
 
 
+    /// <summary>Derelicts and pickups show a spawned sprite once identified instead of the "?".</summary>
+    private static bool HasSpawnedSprite(EventSite site)
+    {
+        return site.Category == EventCategory.Derelict || site.Category == EventCategory.Pickup;
+    }
+
+
     private static void SetSpawnedAlpha(EventSite site, float a)
     {
         if (site.SpawnedObject == null) return;
@@ -294,7 +301,7 @@ public class EventMarkerPresenter : MonoBehaviour
 
     private Color ColourFor(EventSite site)
     {
-        if (site.Category == EventCategory.Derelict && site.Knowledge != PlanetKnowledgeState.Identified)
+        if (HasSpawnedSprite(site) && site.Knowledge != PlanetKnowledgeState.Identified)
             return neutralColour;
 
         if (site.Definition != null && site.Definition.UseMarkerColour)
