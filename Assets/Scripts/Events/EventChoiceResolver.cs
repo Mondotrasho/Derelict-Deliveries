@@ -93,6 +93,15 @@ public static class EventChoiceResolver
                     Append(summary, $"SHIELDS {sign}{size:0.#}");
                     break;
 
+                case ResourceKind.Damage:
+                    if (resources == null) continue;
+                    float onShields = resources.ApplyShieldDamage(size);
+                    float onHull = resources.ApplyHullDamage(size - onShields);
+                    if (onShields > 0f) Append(summary, $"SHIELDS -{onShields:0.#}");
+                    if (onHull > 0f) Append(summary, $"HULL -{onHull:0.#}");
+                    if (onShields <= 0f && onHull <= 0f) Append(summary, "NO DAMAGE");
+                    break;
+
                 case ResourceKind.Crew:
                     if (resources == null) continue;
                     int crew = Mathf.RoundToInt(size);

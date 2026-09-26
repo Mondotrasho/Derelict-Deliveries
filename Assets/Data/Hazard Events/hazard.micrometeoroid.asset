@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: hazard.micrometeoroid
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: hazard.micrometeoroid
-  displayName: Micrometeoroid strike
+  displayName: Micrometeoroid swarm
   category: 3
   tags:
   - hazard
@@ -31,15 +31,113 @@ MonoBehaviour:
       compare: 0
       value: 1
   useMarkerColour: 1
-  markerColour: {r: 1, g: 0.45, b: 0.25, a: 1}
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 6
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 21300000, guid: 54f04cceb6f8d414ebea56d943abc3ac, type: 3}
-  shortDescription: 
-  allowLeave: 1
-  choices: []
-  debugText: 
+  banner: {fileID: 0}
+  shortDescription: "Proximity alarm! A cloud of pebble-sized rocks is doing about forty thousand kilometres an hour, and it's headed straight for you."
+  allowLeave: 0
+  choices:
+  - id: shields
+    text: "Shields up, eyes shut"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Shields"
+      weight: 1
+      resultText: "Rocks rattle off the shields like hail on a tin roof."
+      resources:
+      - kind: 5
+        amount: 12
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: evade
+    text: "Hard to port!"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Clean"
+      weight: 55
+      resultText: "You thread the needle. Somewhere, a flight instructor weeps with pride."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Clipped"
+      weight: 45
+      resultText: "You zig. The rocks zag. The rocks win."
+      resources:
+      - kind: 5
+        amount: 22
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: hull
+    text: "Take it on the armour"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Armour"
+      weight: 1
+      resultText: "You let the armour soak it and keep the shields fresh for company."
+      resources:
+      - kind: 1
+        amount: -8
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Hazard: shields (damage 12, shields first), evade (55% nothing, 45% damage 22), armour (hull -8, shields untouched)."
   dialogueJson: {fileID: 0}

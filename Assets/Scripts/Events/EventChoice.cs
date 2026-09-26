@@ -9,11 +9,14 @@ public enum ResourceKind
     Hull,
     Crew,
     Supplies,
-    Shields     // appended so existing assets keep their values
+    Shields,    // appended so existing assets keep their values
+
+    /// <summary>Incoming damage: shields absorb it first, the rest hits the hull. The sign is ignored.</summary>
+    Damage
 }
 
 
-/// <summary>One resource change. Positive adds, negative removes (hull: negative = damage).</summary>
+/// <summary>One resource change. Positive adds, negative removes (hull: negative = damage). Damage: shields first, then hull.</summary>
 [Serializable]
 public struct ResourceDelta
 {

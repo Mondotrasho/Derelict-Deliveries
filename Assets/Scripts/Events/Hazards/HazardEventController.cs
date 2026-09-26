@@ -12,6 +12,10 @@ using UnityEngine;
 ///
 /// There is no site and no marker: the player only sees which cells are risky
 /// (RouteHazardOverlay), never whether a hazard will actually fire.
+///
+/// Each cell rolls at most once per turn (resuming a paused move can report
+/// the same cell again), and a cell that has fired is spent: it never fires
+/// again and drops off the hazard overlay (Once Per Cell).
 /// EventDirector calls TryTrigger during its arrival handling so ordering with
 /// Points of Interest, marked sites and scanning stays in one place.
 /// </summary>
@@ -38,6 +42,9 @@ public class HazardEventController : MonoBehaviour
 
     [SerializeField] private EventTable table;
 
+    [Tooltip("A cell that has fired a hazard never fires again (and stops showing as risky).")]
+    [SerializeField] private bool oncePerCell = true;
+
     [Header("Randomness")]
     [SerializeField] private int randomSeed = 7340;
 
@@ -48,6 +55,10 @@ public class HazardEventController : MonoBehaviour
     private IEventPresenter presenter;
     private System.Random rng;
     private int hazardSerial;
+
+    private readonly HashSet<Vector3Int> spentCells = new HashSet<Vector3Int>();
+    private readonly HashSet<Vector3Int> rolledThisTurn = new HashSet<Vector3Int>();
+    private int rolledTurn = -1;
 
 
     private void Awake()
@@ -66,6 +77,7 @@ public class HazardEventController : MonoBehaviour
     /// <summary>True if crossing this cell can fire a hazard. Also used by RouteHazardOverlay.</summary>
     public bool IsHazardCell(Vector3Int cell)
     {
+        if (oncePerCell && spentCells.Contains(cell)) return false;
         return asteroidField != null && asteroidField.HasAsteroidAtCell(cell);
     }
 
@@ -78,13 +90,23 @@ public class HazardEventController : MonoBehaviour
     {
         if (!hazardsEnabled || IsBusy || presenter == null || table == null) return false;
         if (!IsHazardCell(cell)) return false;
+
+        // One roll per cell per turn: a paused-then-resumed move can enter the same cell twice.
+        int turn = turnManager != null ? turnManager.CurrentTurn : 0;
+        if (turn != rolledTurn)
+        {
+            rolledTurn = turn;
+            rolledThisTurn.Clear();
+        }
+        if (!rolledThisTurn.Add(cell)) return false;
+
         if (rng.NextDouble() >= chanceOnAsteroid) return false;
 
-        int turn = turnManager != null ? turnManager.CurrentTurn : 0;
         EventContext context = new EventContext(player != null ? player.EventState : null, null, null, cell, turn);
         EventDefinition definition = table.PickWeighted(eventTags, context, rng);
         if (definition == null) return false;
 
+        spentCells.Add(cell);
         StartCoroutine(Run(cell, definition, context));
         return true;
     }

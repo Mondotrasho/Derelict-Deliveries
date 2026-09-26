@@ -28,15 +28,170 @@ MonoBehaviour:
     counters: []
   useMarkerColour: 1
   markerColour: {r: 0.8, g: 0.85, b: 0.9, a: 1}
-  identifiedSprite: {fileID: -456373662, guid: 5ce6dd68a8ab8cd4e86beabf44cd8f82, type: 3}
+  identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 6
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 21300000, guid: b10a2ffa65344734c98837417265c50d, type: 3}
-  shortDescription: 
+  banner: {fileID: 0}
+  shortDescription: "A dead freighter tumbles past, lights off, doors open, vibes terrible. Something in there is probably worth taking."
   allowLeave: 1
-  choices: []
-  debugText: Placeholder derelict salvage event. No identified sprite assigned yet,
-    so the generated wreck placeholder is used.
+  choices:
+  - id: board
+    text: "Board it"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Cargo"
+      weight: 45
+      resultText: "The cargo hold is untouched. Someone's loss is your very well-organised gain."
+      resources:
+      - kind: 3
+        amount: 10
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Fuel"
+      weight: 25
+      resultText: "The fuel lines are still full. You siphon them with only a little light swearing."
+      resources:
+      - kind: 0
+        amount: 15
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Booby trap"
+      weight: 20
+      resultText: "The previous owners left a welcome mat. It explodes."
+      resources:
+      - kind: 5
+        amount: 15
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Stowaway"
+      weight: 10
+      resultText: "A stowaway waves from inside a locker and asks, very politely, for a lift."
+      resources:
+      - kind: 2
+        amount: 1
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: strip
+    text: "Strip the hull from outside"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Plating"
+      weight: 80
+      resultText: "You peel off the plating like a lobster shell. Crunchy, but useful."
+      resources:
+      - kind: 3
+        amount: 5
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Snap back"
+      weight: 20
+      resultText: "A panel snaps back and dents your nose. The wreck wins this round."
+      resources:
+      - kind: 1
+        amount: -5
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: recorder
+    text: "Pull the flight recorder"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Patrol routes"
+      weight: 70
+      resultText: "The logs show the patrol routes. You plot a quieter way home."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 2
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Loud recorder"
+      weight: 30
+      resultText: "The recorder helpfully announces your position to the whole sector. Oops."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: -1
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Drifting wreck: board (supplies / fuel / trap / stowaway), strip the hull (safe supplies), or pull the recorder (moves the hunt)."
   dialogueJson: {fileID: 0}
