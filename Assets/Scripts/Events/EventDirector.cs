@@ -43,10 +43,12 @@ public struct EventDiscoveryTuning
 /// <summary>
 /// Owns Event Discovery's arrival ordering. It is the ONLY event-system
 /// subscriber to PlayerShipState.CellEntered:
-///   1. not the player phase, or an event is already open -> stop;
-///   2. try to trigger a live site on the entered cell;
-///   3. if one claimed the arrival, do not scan;
-///   4. otherwise roll visible candidate cells around the new location.
+///   1. not the player phase, or an event/POI/hazard is already open -> stop;
+///   2. a planet with options opens the Point of Interest picker;
+///   3. else try to trigger a live marked site on the entered cell;
+///   4. else roll an unmarked hazard for the cell (asteroids);
+///   5. if any of those claimed the arrival, do not scan;
+///   6. otherwise roll visible candidate cells around the new location.
 ///
 /// It also raises site knowledge from live fog tiers on
 /// FogOfWar.PlayerVisionChanged, and sweeps expired/invalid sites on
@@ -64,6 +66,12 @@ public class EventDirector : MonoBehaviour
     [Header("Event Discovery")]
     [SerializeField] private EventSiteRegistry registry;
     [SerializeField] private EventTriggerHandler trigger;
+
+    [Tooltip("Optional. Planet arrivals open the Point of Interest picker first.")]
+    [SerializeField] private PointOfInterestController pointsOfInterest;
+
+    [Tooltip("Optional. Unmarked mid-move hazard events (asteroid strikes etc.).")]
+    [SerializeField] private HazardEventController hazards;
 
     [Tooltip("Sources in roll order.")]
     [SerializeField] private List<EventSiteSourceBase> sources = new List<EventSiteSourceBase>();
@@ -130,6 +138,8 @@ public class EventDirector : MonoBehaviour
         if (fogOfWar == null) fogOfWar = FindFirstObjectByType<FogOfWar>();
         if (registry == null) registry = FindFirstObjectByType<EventSiteRegistry>();
         if (trigger == null) trigger = GetComponent<EventTriggerHandler>();
+        if (pointsOfInterest == null) pointsOfInterest = FindFirstObjectByType<PointOfInterestController>();
+        if (hazards == null) hazards = FindFirstObjectByType<HazardEventController>();
 
         if (registry == null)
         {
@@ -198,8 +208,12 @@ public class EventDirector : MonoBehaviour
     {
         if (turnManager != null && !turnManager.IsPlayerPhase) return;
         if (trigger != null && trigger.IsBusy) return;
+        if (pointsOfInterest != null && pointsOfInterest.IsBusy) return;
+        if (hazards != null && hazards.IsBusy) return;
 
-        if (trigger != null && trigger.TryTrigger(cell, tuning.triggerRadius)) return;   // trigger first
+        if (pointsOfInterest != null && pointsOfInterest.TryOpen(cell)) return;           // planets
+        if (trigger != null && trigger.TryTrigger(cell, tuning.triggerRadius)) return;   // marked sites
+        if (hazards != null && hazards.TryTrigger(cell)) return;                          // unmarked hazards
 
         int created = scanner.Scan(sourceList, cell, tuning.scanRadiusCap, CurrentTurn, CanRollCell);
         if (logScans)

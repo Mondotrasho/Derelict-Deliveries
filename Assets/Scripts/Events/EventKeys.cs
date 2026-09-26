@@ -11,6 +11,9 @@ public static class EventKeys
     /// <summary>Planet tag: an event site is currently active on this planet.</summary>
     public const string Available = "event:available";
 
+    /// <summary>Player counter: supplies (a resource until it gets a real home on ShipResources).</summary>
+    public const string Supplies = "res.supplies";
+
     /// <summary>Planet flag: a once-per-planet event definition has been resolved here.</summary>
     public static string Done(string definitionId)
     {

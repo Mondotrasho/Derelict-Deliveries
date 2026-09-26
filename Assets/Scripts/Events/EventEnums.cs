@@ -5,7 +5,10 @@ public enum EventCategory
 {
     Asteroid,
     Planet,
-    Derelict
+    Derelict,
+
+    /// <summary>Unmarked mid-move events (e.g. asteroid strikes). Never shown before they fire.</summary>
+    Hazard
 }
 
 

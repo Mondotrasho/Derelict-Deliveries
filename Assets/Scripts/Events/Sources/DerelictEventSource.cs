@@ -8,6 +8,9 @@ using UnityEngine;
 /// vision (Partial = Detected "?", Full = Identified), driven by EventDirector.
 /// On Identified the object is shown and a named fog lock (the site id) keeps it
 /// visible on the map, exactly like EnemyShip's fog signature.
+///
+/// Look (set per event definition): the spawned sprite is scaled to fit its
+/// Identified Size In Tiles whatever its pixels-per-unit, tinted, and slowly spins.
 /// </summary>
 public class DerelictEventSource : EventSiteSourceBase
 {
@@ -27,12 +30,27 @@ public class DerelictEventSource : EventSiteSourceBase
     [SerializeField] private string identifiedSortingLayer = "Default";
     [SerializeField] private int identifiedSortingOrder = 9;
 
+    [Header("Spawned Sprite Look (size, tint and spin are on each EventDefinition)")]
+    [Tooltip("Each wreck spins clockwise or anticlockwise at random.")]
+    [SerializeField] private bool randomSpinDirection = true;
+
+    [Tooltip("Each wreck starts at a random angle so they don't all line up.")]
+    [SerializeField] private bool randomStartAngle = true;
+
     [Tooltip("Fog tier the named lock keeps around an identified derelict.")]
     [SerializeField] private FogOfWar.VisibilityTier identifiedFogLockTier = FogOfWar.VisibilityTier.Partial;
 
     public override EventCategory Category => EventCategory.Derelict;
 
     private EventSiteRegistry boundRegistry;
+
+    private struct Spinner
+    {
+        public Transform transform;
+        public float degreesPerSecond;   // signed: direction included
+    }
+
+    private readonly List<Spinner> spinners = new List<Spinner>();
 
 
     private void Reset()
@@ -65,6 +83,28 @@ public class DerelictEventSource : EventSiteSourceBase
     private void OnDestroy()
     {
         if (boundRegistry != null) boundRegistry.SiteKnowledgeChanged -= HandleKnowledgeChanged;
+    }
+
+
+    private void Update()
+    {
+        if (spinners.Count == 0) return;
+
+        float dt = Time.deltaTime;
+        for (int i = spinners.Count - 1; i >= 0; i--)
+        {
+            Transform t = spinners[i].transform;
+            if (t == null)
+            {
+                spinners.RemoveAt(i);   // site removed, object destroyed
+                continue;
+            }
+
+            if (spinners[i].degreesPerSecond != 0f && t.gameObject.activeInHierarchy)
+            {
+                t.Rotate(0f, 0f, spinners[i].degreesPerSecond * dt);
+            }
+        }
     }
 
 
@@ -120,8 +160,38 @@ public class DerelictEventSource : EventSiteSourceBase
         sr.sortingLayerName = identifiedSortingLayer;
         sr.sortingOrder = identifiedSortingOrder;
 
+        // Tint RGB only: EventMarkerPresenter drives alpha for the identify fade-in.
+        EventDefinition def = site.Definition;
+        Color tint = def.IdentifiedTint;
+        tint.a = 1f;
+        sr.color = tint;
+
+        // Fit one tile (times sizeInTiles) regardless of the sprite's pixels-per-unit.
+        if (sr.sprite != null)
+        {
+            Vector3 spriteSize = sr.sprite.bounds.size;
+            float largest = Mathf.Max(spriteSize.x, spriteSize.y);
+            if (largest > 0.0001f)
+            {
+                float scale = TileWorldSize() * def.IdentifiedSizeInTiles / largest;
+                go.transform.localScale = new Vector3(scale, scale, 1f);
+            }
+        }
+
+        if (randomStartAngle) go.transform.rotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
+        float direction = randomSpinDirection && Random.value < 0.5f ? -1f : 1f;
+        spinners.Add(new Spinner { transform = go.transform, degreesPerSecond = def.IdentifiedSpinDegreesPerSecond * direction });
+
         go.SetActive(false);   // hidden until identified
         return go;
+    }
+
+
+    private float TileWorldSize()
+    {
+        Vector3 a = gridMap.CellToWorld(Vector3Int.zero);
+        Vector3 b = gridMap.CellToWorld(Vector3Int.right);
+        return Mathf.Max(0.0001f, Vector3.Distance(a, b));
     }
 
 
