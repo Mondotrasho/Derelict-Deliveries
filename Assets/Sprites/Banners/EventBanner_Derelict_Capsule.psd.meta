@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ae9b01700bea73d4f89cd929277cea0d
+guid: d599b65b82cc06d4fa3c976437dea8e7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5452197190656180597
-    second: EventBanner_CultistsInCity_0
+      213: -1467768409659612881
+    second: Space(9)_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: EventBanner_CultistsInCity_0
+      name: Space(9)_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b8e3e85ca87e554b0800000000000000
-      internalID: -5452197190656180597
+      spriteID: f21e2b1786071abe0800000000000000
+      internalID: -1467768409659612881
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      EventBanner_CultistsInCity_0: -5452197190656180597
+      Space(9)_0: -1467768409659612881
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

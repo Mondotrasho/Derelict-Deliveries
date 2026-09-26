@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ae9b01700bea73d4f89cd929277cea0d
+guid: 54f04cceb6f8d414ebea56d943abc3ac
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5452197190656180597
-    second: EventBanner_CultistsInCity_0
+      213: -4522623475849589141
+    second: EventBanner_Hazard_Meteoroids_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: EventBanner_CultistsInCity_0
+      name: EventBanner_Hazard_Meteoroids_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b8e3e85ca87e554b0800000000000000
-      internalID: -5452197190656180597
+      spriteID: b6e842d19e96c31c0800000000000000
+      internalID: -4522623475849589141
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      EventBanner_CultistsInCity_0: -5452197190656180597
+      EventBanner_Hazard_Meteoroids_0: -4522623475849589141
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
