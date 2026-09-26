@@ -17510,7 +17510,7 @@ MonoBehaviour:
     innerEdgeThickness: 1
     outerEdgeThickness: 2
   fullVisibilityRadius: 1
-  outerFogOpacity: 0.636
+  outerFogOpacity: 1
   opacityStepTowardCenter: 0.315
   sortingLayerName: Foreground
   startingSortingOrder: 10
