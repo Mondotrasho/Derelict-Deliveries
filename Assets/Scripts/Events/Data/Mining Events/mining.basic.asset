@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: mining.basic
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: mining.basic
+  displayName: Ore signature
+  category: 0
+  tags:
+  - mining
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters:
+    - scope: 0
+      key: MiningJobsDone
+      compare: 0
+      value: 1
+  useMarkerColour: 1
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
+  identifiedSprite: {fileID: 0}
+  lifetimeTurns: 0
+  debugText: Placeholder mining event. Resolving adds 1 to the player counter MiningJobsDone.
+  dialogueJson: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 6
+  identifiedSizeInTiles: 1
+  shortDescription: "A seam of ore shows up on the scanner, close to the surface."
+  allowLeave: 1
+  choices:
+  - id: easy
+    text: "Take the easy ore"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: "Easy ore"
+      weight: 100
+      resultText: "You chip out the loose ore without any trouble."
+      resources:
+      - kind: 3
+        amount: 5
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 1
+      followUp: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: deep
+    text: "Push the drill deeper"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: "Rich seam"
+      weight: 50
+      resultText: "The drill breaks into a rich seam."
+      resources:
+      - kind: 3
+        amount: 12
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 1
+      followUp: {fileID: 0}
+    - label: "Dead rock"
+      weight: 50
+      resultText: "The drill grinds into dead rock. Nothing worth taking."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 1
+      followUp: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1

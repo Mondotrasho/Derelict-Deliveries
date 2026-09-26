@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b976d6f2e1b8e29eb108142685bf5e8, type: 3}
-  m_Name: DerelictEventTable
+  m_Name: HazardEventTable
   m_EditorClassIdentifier: Assembly-CSharp::EventTable
   entries:
-  - definition: {fileID: 11400000, guid: 9dadda0fe61b5c0f56c120889916b10f, type: 2}
-    weight: 1
-  - definition: {fileID: 11400000, guid: 7cb00a26d3dc411d853751096f484262, type: 2}
+  - definition: {fileID: 11400000, guid: c42b533f1b651f2959e3f89737e2d96b, type: 2}
     weight: 1

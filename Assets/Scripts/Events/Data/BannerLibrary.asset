@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08bde64e669540d6ba5c2750e83eb5d8, type: 3}
+  m_Name: BannerLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::BannerLibrary
+  asteroid: {fileID: 21300000, guid: 6187f04298f807d44a90943ae4c53d85, type: 3}
+  derelict: {fileID: 21300000, guid: b10a2ffa65344734c98837417265c50d, type: 3}
+  planetTags:
+  - tag: Green
+    banner: {fileID: 21300000, guid: 3c84d89f22f241445956e739992cf18d, type: 3}
+  - tag: Grey
+    banner: {fileID: 21300000, guid: 9709fa22a3f6e0f4aab006de5ae92c51, type: 3}
+  - tag: Yellow
+    banner: {fileID: 21300000, guid: f7ee6531500f40948a250266b790d4c0, type: 3}
+  - tag: Red
+    banner: {fileID: 21300000, guid: 6065ff95fbb59ac4693c77ac686240f3, type: 3}
+  planetFallback: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
+  definitionOverrides: []

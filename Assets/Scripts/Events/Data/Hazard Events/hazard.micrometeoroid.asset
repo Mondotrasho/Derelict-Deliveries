@@ -10,33 +10,36 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
-  m_Name: mining.rich
+  m_Name: hazard.micrometeoroid
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
-  id: mining.rich
-  displayName: Rich ore vein
-  category: 0
+  id: hazard.micrometeoroid
+  displayName: Micrometeoroid strike
+  category: 3
   tags:
-  - mining
+  - hazard
   conditions:
     tags: []
     flags: []
-    counters:
-    - scope: 0
-      key: MiningJobsDone
-      compare: 0
-      value: 2
+    counters: []
   oncePerPlanet: 0
   onResolve:
     tags: []
     flags: []
     counters:
     - scope: 0
-      key: MiningJobsDone
+      key: HazardsSurvived
       compare: 0
       value: 1
   useMarkerColour: 1
-  markerColour: {r: 0.35, g: 0.95, b: 1, a: 1}
+  markerColour: {r: 1, g: 0.45, b: 0.25, a: 1}
   identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 6
+  identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  debugText: Placeholder rich mining event. Only eligible once the player counter MiningJobsDone is at least 2.
+  banner: {fileID: 21300000, guid: 54f04cceb6f8d414ebea56d943abc3ac, type: 3}
+  shortDescription: 
+  allowLeave: 1
+  choices: []
+  debugText: 
   dialogueJson: {fileID: 0}

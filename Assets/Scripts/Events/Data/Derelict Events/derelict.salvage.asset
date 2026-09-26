@@ -28,7 +28,15 @@ MonoBehaviour:
     counters: []
   useMarkerColour: 1
   markerColour: {r: 0.8, g: 0.85, b: 0.9, a: 1}
-  identifiedSprite: {fileID: 0}
+  identifiedSprite: {fileID: -456373662, guid: 5ce6dd68a8ab8cd4e86beabf44cd8f82, type: 3}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 6
+  identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  debugText: Placeholder derelict salvage event. No identified sprite assigned yet, so the generated wreck placeholder is used.
+  banner: {fileID: 21300000, guid: b10a2ffa65344734c98837417265c50d, type: 3}
+  shortDescription: 
+  allowLeave: 1
+  choices: []
+  debugText: Placeholder derelict salvage event. No identified sprite assigned yet,
+    so the generated wreck placeholder is used.
   dialogueJson: {fileID: 0}
