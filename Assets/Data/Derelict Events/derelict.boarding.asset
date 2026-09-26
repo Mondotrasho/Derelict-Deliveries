@@ -1,0 +1,310 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: derelict.boarding
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: derelict.boarding
+  displayName: Boarding party
+  category: 2
+  tags:
+  - boarding
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.8, g: 0.85, b: 0.9, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "Your boarding party checks in: \"Three doors, one very ominous hum. Orders?\""
+  allowLeave: 0
+  choices:
+  - id: cargo
+    text: "Open the cargo bay"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 2
+        key: party
+        compare: 0
+        value: 1
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Crates"
+      weight: 55
+      resultText: "Crates! Real, honest crates, full of useful things."
+      resources:
+      - kind: 3
+        amount: 8
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Cat"
+      weight: 25
+      resultText: "Empty, apart from a very judgemental cat. The cat stays."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Tripwire"
+      weight: 20
+      resultText: "A tripwire. One of your crew isn't coming back."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters:
+        - scope: 2
+          key: party
+          compare: 0
+          value: -1
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: bridge
+    text: "Search the bridge"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 2
+        key: party
+        compare: 0
+        value: 1
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Charts"
+      weight: 45
+      resultText: "Star charts, with patrol routes scribbled in the margins. You plot a quieter course."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 2
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Tanks"
+      weight: 35
+      resultText: "The emergency tanks are still topped up. Glug glug."
+      resources:
+      - kind: 0
+        amount: 10
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Chair"
+      weight: 20
+      resultText: "The captain's chair is still occupied. It turns around. One of your crew doesn't."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters:
+        - scope: 2
+          key: party
+          compare: 0
+          value: -1
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: sealed
+    text: "Force the sealed door"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 2
+        key: party
+        compare: 0
+        value: 1
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Jackpot"
+      weight: 35
+      resultText: "The good stuff was behind the scary door. It usually is."
+      resources:
+      - kind: 3
+        amount: 15
+      - kind: 0
+        amount: 10
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Survivor"
+      weight: 30
+      resultText: "A survivor! They've been waiting a very long time and would like to leave now, please."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters:
+        - scope: 2
+          key: party
+          compare: 0
+          value: 1
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Darkness"
+      weight: 35
+      resultText: "The door opens. The lights go out. The radio goes very quiet."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters:
+        - scope: 2
+          key: party
+          compare: 0
+          value: -2
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: back
+    text: "Call them back"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 2
+        key: party
+        compare: 0
+        value: 1
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Return"
+      weight: 1
+      resultText: "The boarding party climbs back aboard, slightly shaken, carrying whatever they could."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: "party"
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: seal
+    text: "Seal the airlock"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 2
+        key: party
+        compare: 1
+        value: 0
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Silence"
+      weight: 1
+      resultText: "Nobody answers. You seal the airlock and fly on in silence."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Follow-up of derelict.salvage 'Board it'. Site counter 'party' = crew aboard the wreck; Call them back returns them. Not in any table."
+  dialogueJson: {fileID: 0}

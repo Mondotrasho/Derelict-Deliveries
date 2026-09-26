@@ -174,8 +174,8 @@ Transform:
   m_GameObject: {fileID: 28316565}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -12.31, y: -6, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalPosition: {x: -12.4, y: -5.95, z: 0}
+  m_LocalScale: {x: 0.498, y: 0.46, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 473045946}
@@ -18985,6 +18985,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7100000402}
   - {fileID: 2100000004}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -19080,6 +19081,7 @@ MonoBehaviour:
   eventTags:
   - hazard
   table: {fileID: 11400000, guid: 33f99951b9d45c3629b1a07318564530, type: 2}
+  oncePerCell: 1
   randomSeed: 7340
 --- !u!114 &2100000007
 MonoBehaviour:
@@ -19383,6 +19385,7 @@ MonoBehaviour:
   trigger: {fileID: 2100000012}
   pointsOfInterest: {fileID: 2100000008}
   hazards: {fileID: 2100000006}
+  warpExit: {fileID: 7100000403}
   sources:
   - {fileID: 2100000013}
   - {fileID: 2100000014}
@@ -22718,6 +22721,93 @@ MonoBehaviour:
   damageFlashSeconds: 0.25
   radarDegreesPerSecond: 90
   radarSweepWidth: 10
+--- !u!1 &7100000401
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7100000402}
+  - component: {fileID: 7100000403}
+  m_Layer: 0
+  m_Name: WarpExit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7100000402
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000401}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2100000002}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7100000403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea511e8fdf254a2087e0e91dd904466e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WarpExitController
+  player: {fileID: 2078833601}
+  gridMap: {fileID: 28316566}
+  turnManager: {fileID: 651697407}
+  view: {fileID: 7100000004}
+  combatScreen: {fileID: 7100000250}
+  fuelThreshold: 1
+  warpBanner: {fileID: 0}
+  defeatBanner: {fileID: 0}
+  promptText: The jump drive is spooled and humming. The edge of the system is right
+    there. Leave now, or keep poking around?
+  warpLabel: WARP
+  notYetLabel: NOT YET
+  restartLabel: RESTART
+  edgeColour: {r: 0.3773585, g: 0.25430235, b: 0.17265932, a: 0.07058824}
+  pulseSpeed: 2.5
+  pulseMinAlpha: 0.25
+  sortingLayerName: Foreground
+  sortingOrder: 118
+  summaryLines:
+  - label: Mining jobs
+    kind: 0
+    key: MiningJobsDone
+    showWhenZero: 0
+  - label: Hazards survived
+    kind: 0
+    key: HazardsSurvived
+    showWhenZero: 0
+  - label: Wrecks searched
+    kind: 0
+    key: events.resolved.derelict
+    showWhenZero: 0
+  - label: Fuel collected
+    kind: 0
+    key: events.resolved.pickup
+    showWhenZero: 0
+  - label: Defiled a shrine
+    kind: 1
+    key: quest:shrine:defiled
+    showWhenZero: 0
+  - label: Shot a life capsule
+    kind: 2
+    key: capsule:shot
+    showWhenZero: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

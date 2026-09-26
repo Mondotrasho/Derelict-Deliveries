@@ -130,6 +130,13 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             ChoiceOutcome outcome = index >= 0 ? choice.outcomes[index] : null;
             string summary = EventChoiceResolver.Apply(outcome, site, context, player, asteroidField);
             if (outcome != null) summary = EventChoiceResolver.Join(summary, EventChoiceResolver.ApplyDetection(outcome.detectionTurns, enemySpawner));
+            if (outcome != null && !string.IsNullOrWhiteSpace(outcome.returnCrewFromSiteCounter) && context.Site != null)
+            {
+                int back = Mathf.Max(0, context.Site.GetCounter(outcome.returnCrewFromSiteCounter));
+                context.Site.SetCounter(outcome.returnCrewFromSiteCounter, 0);
+                if (back > 0 && player != null && player.Resources != null) player.Resources.AddCrew(back);
+                summary = EventChoiceResolver.Join(summary, $"CREW +{back} BACK ABOARD ({(player != null && player.Resources != null ? player.Resources.Crew : 0)})");
+            }
             somethingHappened = true;
 
             if (outcome != null && outcome.spawnOnMapEdge != null)
@@ -250,7 +257,8 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             if (choice == null || string.IsNullOrEmpty(choice.id)) continue;
             if (usedChoices.Contains(choice.id)) continue;
 
-            bool met = choice.availability == null || choice.availability.IsMet(context);
+            bool crewOk = choice.minCrew <= 0 || (player != null && player.Resources != null && player.Resources.Crew >= choice.minCrew);
+            bool met = crewOk && (choice.availability == null || choice.availability.IsMet(context));
             if (!met && !choice.showWhenLocked) continue;
 
             string label = choice.text;
@@ -259,9 +267,12 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
                 int percent = Mathf.RoundToInt(EventChoiceResolver.FirstOutcomeChance(choice) * 100f);
                 label += $" ({percent}%)";
             }
-            if (!met && !string.IsNullOrWhiteSpace(choice.lockedReason))
+            if (!met)
             {
-                label += $" [{choice.lockedReason}]";
+                string reason = !crewOk && string.IsNullOrWhiteSpace(choice.lockedReason)
+                    ? $"needs {choice.minCrew} crew"
+                    : choice.lockedReason;
+                if (!string.IsNullOrWhiteSpace(reason)) label += $" [{reason}]";
             }
 
             buttons.Add(new BannerChoiceView.Choice(choice.id, label, met));

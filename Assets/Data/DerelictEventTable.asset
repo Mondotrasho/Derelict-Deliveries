@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EventTable
   entries:
   - definition: {fileID: 11400000, guid: 9dadda0fe61b5c0f56c120889916b10f, type: 2}
-    weight: 1
+    weight: 2
   - definition: {fileID: 11400000, guid: 7cb00a26d3dc411d853751096f484262, type: 2}
     weight: 1

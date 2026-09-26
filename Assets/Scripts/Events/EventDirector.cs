@@ -73,6 +73,9 @@ public class EventDirector : MonoBehaviour
     [Tooltip("Optional. Unmarked mid-move hazard events (asteroid strikes etc.).")]
     [SerializeField] private HazardEventController hazards;
 
+    [Tooltip("Optional. The warp exit on the map edge; checked first on every arrival.")]
+    [SerializeField] private WarpExitController warpExit;
+
     [Tooltip("Sources in roll order.")]
     [SerializeField] private List<EventSiteSourceBase> sources = new List<EventSiteSourceBase>();
 
@@ -210,7 +213,9 @@ public class EventDirector : MonoBehaviour
         if (trigger != null && trigger.IsBusy) return;
         if (pointsOfInterest != null && pointsOfInterest.IsBusy) return;
         if (hazards != null && hazards.IsBusy) return;
+        if (warpExit != null && (warpExit.IsBusy || warpExit.RunOver)) return;
 
+        if (warpExit != null && warpExit.TryOpen(cell)) return;                           // map edge, fuel full
         if (pointsOfInterest != null && pointsOfInterest.TryOpen(cell)) return;           // planets
         if (trigger != null && trigger.TryTrigger(cell, tuning.triggerRadius)) return;   // marked sites
         if (hazards != null && hazards.TryTrigger(cell)) return;                          // unmarked hazards

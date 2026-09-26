@@ -55,6 +55,9 @@ public sealed class ChoiceOutcome
     [Tooltip("Show this event next, in the same window (e.g. mining uncovers a life capsule). Its own On Resolve is not applied; its choices' outcomes are.")]
     public EventDefinition followUp;
 
+    [Tooltip("Adds this SITE counter's value back to the ship's crew and zeroes it - e.g. 'party' when a boarding party returns. Empty = none.")]
+    public string returnCrewFromSiteCounter = "";
+
     [Tooltip("End the event and start a fight with this enemy type, spawned next to the player (e.g. shooting the life capsule).")]
     public EnemyShipDefinition startCombatWith;
 
@@ -72,6 +75,9 @@ public sealed class EventChoice
 
     [Tooltip("Hidden (or greyed, see below) unless these are met.")]
     public EventConditions availability = new EventConditions();
+
+    [Tooltip("Needs at least this much crew aboard (e.g. boarding: 4). 0 = no requirement.")]
+    [Min(0)] public int minCrew;
 
     [Tooltip("Unmet: show greyed out with the reason instead of hiding it.")]
     public bool showWhenLocked;

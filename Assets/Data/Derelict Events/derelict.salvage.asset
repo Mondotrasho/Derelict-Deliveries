@@ -38,21 +38,20 @@ MonoBehaviour:
   allowLeave: 1
   choices:
   - id: board
-    text: "Board it"
+    text: "Board it (send 2 crew)"
     availability:
       tags: []
       flags: []
       counters: []
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
+    minCrew: 4
+    showWhenLocked: 1
+    lockedReason: "needs 4 crew"
+    showOdds: 0
     outcomes:
-    - label: "Cargo"
-      weight: 45
-      resultText: "The cargo hold is untouched. Someone's loss is your very well-organised gain."
-      resources:
-      - kind: 3
-        amount: 10
+    - label: "Stripped"
+      weight: 30
+      resultText: "Your crew poke around and come back empty-handed. Someone got here first."
+      resources: []
       writes:
         tags: []
         flags: []
@@ -60,51 +59,27 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-    - label: "Fuel"
-      weight: 25
-      resultText: "The fuel lines are still full. You siphon them with only a little light swearing."
-      resources:
-      - kind: 0
-        amount: 15
-      writes:
-        tags: []
-        flags: []
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-    - label: "Booby trap"
-      weight: 20
-      resultText: "The previous owners left a welcome mat. It explodes."
-      resources:
-      - kind: 5
-        amount: 15
-      writes:
-        tags: []
-        flags: []
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-    - label: "Stowaway"
-      weight: 10
-      resultText: "A stowaway waves from inside a locker and asks, very politely, for a lift."
+    - label: "Rooms"
+      weight: 70
+      resultText: "Two of your crew suit up and cross over. The airlock hisses shut behind them."
       resources:
       - kind: 2
-        amount: 1
+        amount: -2
       writes:
         tags: []
         flags: []
-        counters: []
+        counters:
+        - scope: 2
+          key: party
+          compare: 0
+          value: 2
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
+      followUp: {fileID: 11400000, guid: 3233e412bff244588619518b6df62429, type: 2}
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
     dialogue: {fileID: 0}
@@ -116,6 +91,7 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
     showWhenLocked: 0
     lockedReason: ""
     showOdds: 1
@@ -133,6 +109,7 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
     - label: "Snap back"
@@ -148,6 +125,7 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
     dialogue: {fileID: 0}
@@ -159,6 +137,7 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
     showWhenLocked: 0
     lockedReason: ""
     showOdds: 1
@@ -174,6 +153,7 @@ MonoBehaviour:
       detectionTurns: 2
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
     - label: "Loud recorder"
@@ -187,11 +167,12 @@ MonoBehaviour:
       detectionTurns: -1
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Drifting wreck: board (supplies / fuel / trap / stowaway), strip the hull (safe supplies), or pull the recorder (moves the hunt)."
+  debugText: "Drifting wreck. Board it needs 4 crew and sends 2 across (30% nothing there, 70% the boarding party event with rooms)."
   dialogueJson: {fileID: 0}
