@@ -38,6 +38,17 @@ public class EnemySpawnController : MonoBehaviour
     [SerializeField]
     private Transform spawnedEnemyParent;
 
+    [Serializable]
+    private sealed class SpawnType
+    {
+        public EnemyShipDefinition definition;
+        [Min(0f)] public float weight = 1f;
+    }
+
+    [Tooltip("Enemy types for waves, picked by weight (e.g. the regular ship and the eldritch monster). Empty = always the prefab's own definition.")]
+    [SerializeField]
+    private List<SpawnType> spawnTypes = new List<SpawnType>();
+
     [Header("Detection")]
 
     [Min(0)]
@@ -241,10 +252,39 @@ public class EnemySpawnController : MonoBehaviour
         return TrySpawnEnemyAtCell(cell, Vector2Int.up, out spawnedEnemy);
     }
 
+    /// <summary>
+    /// Spawns one enemy of a given type at the next free map-edge entry cell
+    /// (the same cells waves use), ignoring the active-enemy cap. For quests,
+    /// e.g. defiling the red planet shrine brings the eldritch monster.
+    /// </summary>
+    public bool TrySpawnAtMapEdge(EnemyShipDefinition type, out EnemyShip spawnedEnemy)
+    {
+        spawnedEnemy = null;
+        if (spawnEntries.Count == 0) return false;
+
+        for (int checkedCells = 0; checkedCells < spawnEntries.Count; checkedCells++)
+        {
+            int index = nextSpawnCellIndex % spawnEntries.Count;
+            nextSpawnCellIndex = (index + 1) % spawnEntries.Count;
+            SpawnEntry entry = spawnEntries[index];
+
+            if (entry != null &&
+                TrySpawnEnemyAtCell(entry.cell, entry.facingDirection, out spawnedEnemy, type, true))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     private bool TrySpawnEnemyAtCell(
         Vector3Int cell,
         Vector2Int facingDirection,
-        out EnemyShip spawnedEnemy)
+        out EnemyShip spawnedEnemy,
+        EnemyShipDefinition forcedType = null,
+        bool ignoreCap = false)
     {
         spawnedEnemy = null;
 
@@ -254,7 +294,7 @@ public class EnemySpawnController : MonoBehaviour
             !gridMap.IsWalkable(cell) ||
             enemyRegistry.IsOccupied(cell) ||
             (playerShip != null && playerShip.CurrentCell == cell) ||
-            ApplyActiveEnemyCap(1) == 0)
+            (!ignoreCap && ApplyActiveEnemyCap(1) == 0))
         {
             return false;
         }
@@ -266,7 +306,10 @@ public class EnemySpawnController : MonoBehaviour
             spawnedEnemyParent
         );
 
-        spawnedEnemy.name = $"{enemyPrefab.name} ({cell.x}, {cell.y})";
+        EnemyShipDefinition spawnType = forcedType != null ? forcedType : PickSpawnType();
+        if (spawnType != null) spawnedEnemy.SetDefinition(spawnType);
+
+        spawnedEnemy.name = $"{(spawnType != null ? spawnType.DisplayName : enemyPrefab.name)} ({cell.x}, {cell.y})";
         spawnedEnemy.SetFacingDirection(facingDirection);
 
         if (turnManager != null &&
@@ -292,6 +335,26 @@ public class EnemySpawnController : MonoBehaviour
         EnemySpawned?.Invoke(spawnedEnemy);
         return true;
     }
+
+    private EnemyShipDefinition PickSpawnType()
+    {
+        float total = 0f;
+        foreach (SpawnType t in spawnTypes)
+        {
+            if (t != null && t.definition != null) total += Mathf.Max(0f, t.weight);
+        }
+        if (total <= 0f) return null;
+
+        float roll = UnityEngine.Random.value * total;
+        foreach (SpawnType t in spawnTypes)
+        {
+            if (t == null || t.definition == null) continue;
+            roll -= Mathf.Max(0f, t.weight);
+            if (roll <= 0f) return t.definition;
+        }
+        return null;
+    }
+
 
     private int ApplyActiveEnemyCap(int requestedCount)
     {

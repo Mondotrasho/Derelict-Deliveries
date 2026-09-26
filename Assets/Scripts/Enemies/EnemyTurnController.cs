@@ -340,6 +340,23 @@ public class EnemyTurnController : MonoBehaviour
         PlayerContactedEnemy?.Invoke(enemy, cell);
     }
 
+    /// <summary>
+    /// Starts an encounter with a specific enemy outside normal contact, for
+    /// scripted fights (e.g. a Point of Interest "Combat" option). Uses the same
+    /// path as contact: BeginCombat, contact interruption, PlayerContactedEnemy.
+    /// Returns true if the encounter is now active with that enemy.
+    /// </summary>
+    public bool TryStartEncounter(EnemyShip enemy)
+    {
+        if (enemy == null)
+        {
+            return false;
+        }
+
+        BeginEncounter(enemy, enemy.CurrentCell);
+        return IsEncounterActive && CurrentEncounterEnemy == enemy;
+    }
+
     private bool TryBeginAdjacentEncounter(Vector3Int playerCell)
     {
         if (enemyRegistry == null)

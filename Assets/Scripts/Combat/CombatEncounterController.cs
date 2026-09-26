@@ -553,6 +553,12 @@ public class CombatEncounterController : MonoBehaviour
 
         RestoreShieldsAfterCombat();
 
+        // Combat-only types (the life capsule) never stay on the map, even after fleeing.
+        if (resolvedEnemy != null && resolvedEnemy.Definition != null && resolvedEnemy.Definition.CombatOnly)
+        {
+            removeEnemy = true;
+        }
+
         if (removeEnemy && resolvedEnemy != null)
         {
             resolvedEnemy.gameObject.SetActive(false);

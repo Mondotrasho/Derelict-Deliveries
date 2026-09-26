@@ -17,6 +17,9 @@ public class EnemyShip : MonoBehaviour
     [SerializeField]
     private EnemyShipDefinition definition;
 
+    private Vector3 prefabSpriteScale = Vector3.one;
+    private bool spriteScaleCaptured;
+
     [Header("References")]
 
     [SerializeField]
@@ -136,6 +139,11 @@ public class EnemyShip : MonoBehaviour
             return;
         }
 
+        if (ApplyFixedRotation())
+        {
+            return;
+        }
+
         float angle = Mathf.Atan2(direction.y, direction.x) *
                       Mathf.Rad2Deg + spriteForwardAngleOffset;
         shipVisual.rotation = Quaternion.Euler(0.0f, 0.0f, angle);
@@ -157,6 +165,28 @@ public class EnemyShip : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Types with Rotate To Heading off (the eldritch monster) always keep
+    /// their Fixed Map Rotation. Returns true when that applied.
+    /// </summary>
+    private bool ApplyFixedRotation()
+    {
+        if (definition == null || definition.RotateToHeading) return false;
+        ResolveReferences();
+        if (shipVisual != null) shipVisual.rotation = Quaternion.Euler(0.0f, 0.0f, definition.FixedMapRotation);
+        return true;
+    }
+
+
+    /// <summary>Swap this ship's type at runtime (e.g. a spawned life capsule) and apply it.</summary>
+    public void SetDefinition(EnemyShipDefinition newDefinition)
+    {
+        if (newDefinition == null) return;
+        definition = newDefinition;
+        ApplyDefinition();
+    }
+
+
     public void ApplyDefinition()
     {
         if (definition == null)
@@ -168,15 +198,31 @@ public class EnemyShip : MonoBehaviour
         movementSpeed = definition.MovementSpeed;
         fogRevealTier = definition.FogRevealTier;
 
-        if (definition.Sprite != null)
-        {
-            SpriteRenderer spriteRenderer =
-                GetComponentInChildren<SpriteRenderer>(true);
+        SpriteRenderer spriteRenderer =
+            GetComponentInChildren<SpriteRenderer>(true);
 
-            if (spriteRenderer != null)
+        if (spriteRenderer != null)
+        {
+            if (definition.Sprite != null)
             {
                 spriteRenderer.sprite = definition.Sprite;
             }
+
+            // Map size per type (e.g. a larger monster), relative to the prefab's own scale.
+            if (!spriteScaleCaptured)
+            {
+                prefabSpriteScale = spriteRenderer.transform.localScale;
+                spriteScaleCaptured = true;
+            }
+            spriteRenderer.transform.localScale = prefabSpriteScale * definition.MapScale;
+        }
+
+        ApplyFixedRotation();
+
+        // Combat-only types (the life capsule) are never drawn on the map.
+        foreach (Renderer mapRenderer in GetComponentsInChildren<Renderer>(true))
+        {
+            mapRenderer.enabled = !definition.CombatOnly;
         }
 
         EnemyCombatState combatState = GetComponent<EnemyCombatState>();
@@ -413,6 +459,11 @@ public class EnemyShip : MonoBehaviour
     private void UpdateHeading(Vector3 direction)
     {
         if (shipVisual == null || direction.sqrMagnitude <= 0.000001f)
+        {
+            return;
+        }
+
+        if (ApplyFixedRotation())
         {
             return;
         }
