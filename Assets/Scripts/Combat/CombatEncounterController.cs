@@ -6,6 +6,10 @@ using UnityEngine;
 /// Owns one map-triggered combat encounter. Enemy actions are committed and
 /// hidden before player input. Presentation only submits actions and observes
 /// state/events; all rolls, damage, shields and outcomes live here.
+///
+/// Player shields persist between fights: they live on ShipResources (next to
+/// hull), a fight starts with whatever is left, and outside combat they regain
+/// Out Of Combat Regen Per Turn at the start of each player turn.
 /// </summary>
 [AddComponentMenu("Derelict Deliveries/Combat/Combat Encounter Controller")]
 [DisallowMultipleComponent]
@@ -18,6 +22,10 @@ public class CombatEncounterController : MonoBehaviour
 
     [SerializeField]
     private PlayerShipState playerShip;
+
+    [Tooltip("For out-of-combat shield regeneration. Found automatically if empty.")]
+    [SerializeField]
+    private TurnManager turnManager;
 
     [Header("Player Combat Statistics")]
 
@@ -74,6 +82,11 @@ public class CombatEncounterController : MonoBehaviour
     [SerializeField]
     private float defendRechargeMultiplier = 2.0f;
 
+    [Min(0.0f)]
+    [Tooltip("Shields regained at the start of each player turn while not in combat.")]
+    [SerializeField]
+    private float outOfCombatRegenPerTurn = 10.0f;
+
     public event Action<EnemyShip> EncounterStarted;
     public event Action<CombatRoundResult> RoundResolved;
     public event Action<EnemyShip, CombatEncounterOutcome, int> EncounterEnded;
@@ -83,7 +96,7 @@ public class CombatEncounterController : MonoBehaviour
     public EnemyCombatState CurrentEnemyState { get; private set; }
     public CombatRoundResult LastRoundResult { get; private set; }
     public CombatCapabilities PlayerCapabilities => playerCapabilities;
-    public float PlayerCurrentShields { get; private set; }
+    public float PlayerCurrentShields => PlayerResources != null ? PlayerResources.Shields : 0.0f;
     public float PlayerMaxShields => playerCapabilities?.MaxShields ?? 0.0f;
 
     public float PlayerHull => PlayerResources != null
@@ -146,6 +159,12 @@ public class CombatEncounterController : MonoBehaviour
         ResolveReferences();
     }
 
+    private void Start()
+    {
+        // ShipResources holds the current value; the combat stats define the maximum.
+        PlayerResources?.SetMaxShields(playerCapabilities.MaxShields);
+    }
+
     private void OnEnable()
     {
         ResolveReferences();
@@ -154,6 +173,16 @@ public class CombatEncounterController : MonoBehaviour
         {
             enemyTurnController.PlayerContactedEnemy += HandleEnemyContact;
         }
+
+        if (turnManager == null)
+        {
+            turnManager = FindFirstObjectByType<TurnManager>();
+        }
+
+        if (turnManager != null)
+        {
+            turnManager.PlayerPhaseStarted += HandlePlayerPhaseStarted;
+        }
     }
 
     private void OnDisable()
@@ -161,6 +190,11 @@ public class CombatEncounterController : MonoBehaviour
         if (enemyTurnController != null)
         {
             enemyTurnController.PlayerContactedEnemy -= HandleEnemyContact;
+        }
+
+        if (turnManager != null)
+        {
+            turnManager.PlayerPhaseStarted -= HandlePlayerPhaseStarted;
         }
 
         if (IsEncounterActive)
@@ -189,6 +223,16 @@ public class CombatEncounterController : MonoBehaviour
         defendArmourScale = Mathf.Max(0.01f, defendArmourScale);
         passiveArmourScale = Mathf.Max(0.01f, passiveArmourScale);
         defendRechargeMultiplier = Mathf.Max(1.0f, defendRechargeMultiplier);
+    }
+
+    private void HandlePlayerPhaseStarted(int turnNumber)
+    {
+        if (IsEncounterActive || PlayerResources == null)
+        {
+            return;
+        }
+
+        PlayerResources.AddShields(outOfCombatRegenPerTurn);
     }
 
     public bool SubmitPlayerAction(CombatAction playerAction)
@@ -528,7 +572,8 @@ public class CombatEncounterController : MonoBehaviour
         LastRoundResult = null;
         playerInitiativeBonus = 0.0f;
         enemyInitiativeBonus = 0.0f;
-        PlayerCurrentShields = playerCapabilities.MaxShields;
+        // Player shields carry over from the last fight; only the enemy starts full.
+        PlayerResources.SetMaxShields(playerCapabilities.MaxShields);
         CurrentEnemyState.RestoreShieldsToFull();
         IsEncounterActive = true;
 
@@ -590,26 +635,19 @@ public class CombatEncounterController : MonoBehaviour
 
     private float ApplyPlayerShieldDamage(float amount)
     {
-        float oldValue = PlayerCurrentShields;
-        PlayerCurrentShields = Mathf.Max(0.0f, PlayerCurrentShields - amount);
-        return oldValue - PlayerCurrentShields;
+        return PlayerResources != null ? PlayerResources.ApplyShieldDamage(amount) : 0.0f;
     }
 
     private float RechargePlayerShields(float multiplier)
     {
-        float oldValue = PlayerCurrentShields;
-        PlayerCurrentShields = Mathf.Clamp(
-            PlayerCurrentShields +
-            playerCapabilities.ShieldRecharge * Mathf.Max(0.0f, multiplier),
-            0.0f,
-            playerCapabilities.MaxShields
-        );
-        return PlayerCurrentShields - oldValue;
+        return PlayerResources != null
+            ? PlayerResources.AddShields(playerCapabilities.ShieldRecharge * Mathf.Max(0.0f, multiplier))
+            : 0.0f;
     }
 
     private void RestoreShieldsAfterCombat()
     {
-        PlayerCurrentShields = playerCapabilities?.MaxShields ?? 0.0f;
+        // Player shields persist (regenerate per turn instead); the enemy resets.
         CurrentEnemyState?.RestoreShieldsToFull();
     }
 

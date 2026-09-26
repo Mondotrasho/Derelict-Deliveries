@@ -180,6 +180,8 @@ public class PointOfInterestController : MonoBehaviour
                 if (completed)
                 {
                     picked.Option.onComplete?.Apply(context);
+                    EventChoiceResolver.ApplyResources(picked.Option.completeResources, context, player);
+                    EventChoiceResolver.ApplyDetection(picked.Option.completeDetectionTurns, enemySpawner);
                     if (picked.Option.oncePerPlanet) planet.eventState.SetFlag(picked.Option.DoneFlag, true);
                 }
             }

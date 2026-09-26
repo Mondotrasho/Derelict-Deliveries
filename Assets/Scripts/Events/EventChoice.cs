@@ -8,7 +8,8 @@ public enum ResourceKind
     Fuel,
     Hull,
     Crew,
-    Supplies
+    Supplies,
+    Shields     // appended so existing assets keep their values
 }
 
 
@@ -41,6 +42,9 @@ public sealed class ChoiceOutcome
 
     [Tooltip("State written when this outcome happens (tags, flags, counters on player / planet / site).")]
     public EventStateWrites writes = new EventStateWrites();
+
+    [Tooltip("Turns added to the hunt: before detection it delays detection, after it delays the next wave. Negative = sooner.")]
+    public int detectionTurns;
 
     [Tooltip("Remove the asteroid on the event's cell (mining).")]
     public bool consumeAsteroid;

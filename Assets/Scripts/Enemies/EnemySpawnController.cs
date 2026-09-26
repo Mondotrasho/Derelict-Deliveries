@@ -253,6 +253,31 @@ public class EnemySpawnController : MonoBehaviour
     }
 
     /// <summary>
+    /// Moves the hunt: before detection, adds (or with a negative value removes)
+    /// turns until detection; after detection, the same for the next wave.
+    /// Reaching 0 triggers on the next enemy phase through the normal path.
+    /// </summary>
+    public void AddDetectionTurns(int delta)
+    {
+        if (delta == 0)
+        {
+            return;
+        }
+
+        if (!IsDetectionActive)
+        {
+            TurnsUntilDetection = Mathf.Max(0, TurnsUntilDetection + delta);
+            DetectionCountdownChanged?.Invoke(TurnsUntilDetection);
+        }
+        else
+        {
+            TurnsUntilNextWave = Mathf.Max(1, TurnsUntilNextWave + delta);
+            ReinforcementCountdownChanged?.Invoke(TurnsUntilNextWave);
+        }
+    }
+
+
+    /// <summary>
     /// Spawns one enemy of a given type at the next free map-edge entry cell
     /// (the same cells waves use), ignoring the active-enemy cap. For quests,
     /// e.g. defiling the red planet shrine brings the eldritch monster.

@@ -41,6 +41,12 @@ public sealed class PoiOption
     [Tooltip("Written through IEventState when the option completes (dialogue closed, combat won, event resolved).")]
     public EventStateWrites onComplete = new EventStateWrites();
 
+    [Tooltip("Resource changes when the option completes, e.g. trade: Supplies -5, Fuel +20. Gate costs with a Player counter condition on res.supplies.")]
+    public List<ResourceDelta> completeResources = new List<ResourceDelta>();
+
+    [Tooltip("Turns added to the hunt when the option completes (negative = sooner).")]
+    public int completeDetectionTurns;
+
     [Tooltip("Come back to the planet's option list afterwards. Combat options always end the visit.")]
     public bool returnToPicker = true;
 

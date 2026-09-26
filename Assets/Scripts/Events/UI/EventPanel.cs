@@ -129,6 +129,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             int index = EventChoiceResolver.RollOutcome(choice, rng);
             ChoiceOutcome outcome = index >= 0 ? choice.outcomes[index] : null;
             string summary = EventChoiceResolver.Apply(outcome, site, context, player, asteroidField);
+            if (outcome != null) summary = EventChoiceResolver.Join(summary, EventChoiceResolver.ApplyDetection(outcome.detectionTurns, enemySpawner));
             somethingHappened = true;
 
             if (outcome != null && outcome.spawnOnMapEdge != null)

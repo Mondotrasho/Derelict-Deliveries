@@ -87,6 +87,12 @@ public static class EventChoiceResolver
                     Append(summary, $"HULL {sign}{size:0.#}");
                     break;
 
+                case ResourceKind.Shields:
+                    if (resources == null) continue;
+                    if (d.amount > 0f) resources.AddShields(size); else resources.ApplyShieldDamage(size);
+                    Append(summary, $"SHIELDS {sign}{size:0.#}");
+                    break;
+
                 case ResourceKind.Crew:
                     if (resources == null) continue;
                     int crew = Mathf.RoundToInt(size);
@@ -116,6 +122,23 @@ public static class EventChoiceResolver
             if (o != null) total += Mathf.Max(0f, o.weight);
         }
         return total;
+    }
+
+
+    /// <summary>Applies a detection shift and returns its summary part ("" if none).</summary>
+    public static string ApplyDetection(int turns, EnemySpawnController spawner)
+    {
+        if (turns == 0 || spawner == null) return "";
+        spawner.AddDetectionTurns(turns);
+        return turns > 0 ? $"HUNT DELAYED +{turns} TURNS" : $"HUNT SOONER {turns} TURNS";
+    }
+
+
+    public static string Join(string a, string b)
+    {
+        if (string.IsNullOrEmpty(a)) return b ?? "";
+        if (string.IsNullOrEmpty(b)) return a;
+        return a + "   " + b;
     }
 
 
