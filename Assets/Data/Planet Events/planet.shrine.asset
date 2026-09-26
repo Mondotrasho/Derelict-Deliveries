@@ -1,0 +1,135 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: planet.shrine
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: planet.shrine
+  displayName: Forgotten shrine
+  category: 1
+  tags:
+  - shrine
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.9, g: 0.2, b: 0.25, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "A crumbling shrine to something with too many eyes. Offerings are piled at its base, untouched for centuries."
+  allowLeave: 0
+  choices:
+  - id: defile
+    text: "Defile the shrine"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Defiled"
+      weight: 1
+      resultText: "You smash the idol and pry the offerings loose. Far out in the dark, something turns towards you."
+      resources:
+      - kind: 3
+        amount: 12
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: quest:shrine:defiled
+          expected: 1
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: pray
+    text: "Kneel and pray"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Silence"
+      weight: 70
+      resultText: "Nothing happens. You feel watched."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    - label: "Blessing"
+      weight: 30
+      resultText: "A strange warmth passes through the ship. Hairline cracks in the hull seal themselves."
+      resources:
+      - kind: 1
+        amount: 10
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: leave
+    text: "Back away"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Leave"
+      weight: 1
+      resultText: "Some things are best left alone."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  debugText: Red planet quest. Defile spawns the eldritch monster at a map-edge entry cell and sets player flag quest:shrine:defiled.
+  dialogueJson: {fileID: 0}

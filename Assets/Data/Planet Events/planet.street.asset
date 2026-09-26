@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: planet.street
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: planet.street
+  displayName: Market stall
+  category: 1
+  tags:
+  - street
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
+  shortDescription: Two people lean against a stall in the market, watching the docks.
+    One of them nods at you.
+  allowLeave: 0
+  choices:
+  - id: talk
+    text: Talk to them
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: Talk
+      weight: 1
+      resultText: They wave you over.
+      resources: []
+      writes:
+        tags: []
+        flags:
+        - scope: 2
+          key: street:talked
+          expected: 1
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+    dialogue: {fileID: 4900000, guid: 412fc1db5764ab549a4d59c3ca7c6605, type: 3}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: work
+    text: Ask about work
+    availability:
+      tags: []
+      flags:
+      - scope: 2
+        key: street:talked
+        expected: 1
+      counters: []
+    showWhenLocked: 1
+    lockedReason: talk to them first
+    showOdds: 1
+    outcomes:
+    - label: Courier job
+      weight: 70
+      resultText: They slip you a small courier job. Easy money.
+      resources:
+      - kind: 3
+        amount: 6
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+    - label: Setup
+      weight: 30
+      resultText: It was a setup. You lose a few supplies getting out of there.
+      resources:
+      - kind: 3
+        amount: -2
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: walk
+    text: Walk past
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: Walk past
+      weight: 1
+      resultText: You keep your head down and move on.
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  debugText: Test event for the dialogue hand-off. Talk opens a dialogue and returns;
+    Ask about work unlocks after talking (site flag).
+  dialogueJson: {fileID: 0}

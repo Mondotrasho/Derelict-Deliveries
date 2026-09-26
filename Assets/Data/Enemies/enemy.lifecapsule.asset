@@ -10,30 +10,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cda26313315b465f8b042807dccddb06, type: 3}
-  m_Name: FirstAreaRaider
+  m_Name: enemy.lifecapsule
   m_EditorClassIdentifier: Assembly-CSharp::EnemyShipDefinition
-  displayName: Raider Scout
-  sprite: {fileID: -1982066863, guid: ea02cd62e58956a48a10aa81df7b94aa, type: 3}
+  displayName: Life capsule
+  sprite: {fileID: 21300000, guid: c2b8e920119b4e446aa51c78cf571f9f, type: 3}
   mapScale: 1
-  combatOnly: 0
+  combatOnly: 1
   rotateToHeading: 1
   fixedMapRotation: 0
-  combatSprite: {fileID: 6674755326810370317, guid: 4b03fe60768973e46b6db2f8f85ce916, type: 3}
+  combatSprite: {fileID: 21300000, guid: c2b8e920119b4e446aa51c78cf571f9f, type: 3}
   combatShieldSprite: {fileID: 0}
   combatOffset: {x: 0, y: 0}
   combatScale: 1
-  fogRevealTier: 1
-  movementBudget: 3
+  fogRevealTier: 0
+  movementBudget: 0
   movementSpeed: 4
-  maxHull: 45
+  maxHull: 1
   capabilities:
-    weaponDamage: 15
-    weaponAccuracy: 42
-    armour: 10
-    maxShields: 25
-    shieldRecharge: 5
-    maneuverability: 42
-  fireWeight: 60
-  defendWeight: 25
-  evadeWeight: 15
-  rewardValue: 10
+    weaponDamage: 0
+    weaponAccuracy: 0
+    armour: 0
+    maxShields: 0
+    shieldRecharge: 0
+    maneuverability: 0
+  fireWeight: 0
+  defendWeight: 100
+  evadeWeight: 0
+  rewardValue: 0

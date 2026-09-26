@@ -60,6 +60,8 @@ MonoBehaviour:
         counters: []
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
     - label: Explosion
       weight: 15
       resultText: A ruptured cell ignites as you cut. The blast scorches your hull.
@@ -72,6 +74,8 @@ MonoBehaviour:
         counters: []
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
@@ -85,20 +89,18 @@ MonoBehaviour:
     lockedReason: 
     showOdds: 1
     outcomes:
-    - label: Destroyed
-      weight: 100
-      resultText: One burst and the capsule is gone. Whatever was inside stays a
-        mystery.
+    - label: 
+      weight: 0
+      resultText: Its war then!
       resources: []
       writes:
-        tags:
-        - scope: 0
-          tag: capsule:shot
-          mustHave: 1
+        tags: []
         flags: []
         counters: []
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      startCombatWith: {fileID: 11400000, guid: 18b2fdb4feee49cfbba85e4a7c085fe5, type: 2}
+      spawnOnMapEdge: {fileID: 0}
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
@@ -124,6 +126,8 @@ MonoBehaviour:
         counters: []
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
     - label: Dead crew
       weight: 30
       resultText: Only a body inside. You take what little it carried.
@@ -136,6 +140,8 @@ MonoBehaviour:
         counters: []
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
     - label: Parasite
       weight: 10
       resultText: Something bursts from the body and takes one of your crew before
@@ -149,6 +155,8 @@ MonoBehaviour:
         counters: []
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1

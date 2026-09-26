@@ -32,6 +32,14 @@ MonoBehaviour:
   useMarkerColour: 1
   markerColour: {r: 0.55, g: 1, b: 0.45, a: 1}
   identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 6
+  identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  debugText: Placeholder planet event. Only eligible on planets tagged Industrial, once per planet.
+  banner: {fileID: 0}
+  shortDescription: 
+  allowLeave: 1
+  choices: []
+  debugText: Placeholder planet event. Only eligible on planets tagged Industrial,
+    once per planet.
   dialogueJson: {fileID: 0}
