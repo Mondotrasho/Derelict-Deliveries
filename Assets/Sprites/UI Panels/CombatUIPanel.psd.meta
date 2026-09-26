@@ -1,0 +1,1243 @@
+fileFormatVersion: 2
+guid: b422ee6e88db05c47b0244b26b387b14
+importerOverride:
+  nativeImporterType: 2089858483
+  scriptedImporterType:
+    serializedVersion: 2
+    Hash: b10b55a1aa6a1aa32521bc0cab59632e
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: b2a9591990af98743ba3ff7cf1000886, type: 3}
+  textureImporterSettings:
+    alphaSource: 1
+    mipMapMode: 0
+    enableMipMap: 1
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+    convertToNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+    swizzle: 50462976
+    isReadable: 0
+    streamingMipmaps: 0
+    streamingMipmapsPriority: 0
+    vTOnly: 0
+    ignoreMipmapLimit: 0
+    nPOTScale: 1
+    sRGBTexture: 1
+    spriteMode: 2
+    spriteExtrude: 1
+    spriteMeshType: 1
+    alignment: 0
+    spritePivot: {x: 0.5, y: 0.5}
+    spritePixelsToUnits: 100
+    spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+    spriteGenerateFallbackPhysicsShape: 0
+    generateCubemap: 6
+    cubemapConvolution: 0
+    seamlessCubemap: 0
+    alphaIsTransparency: 1
+    spriteTessellationDetail: -1
+    textureType: 8
+    textureShape: 1
+    singleChannelComponent: 0
+    flipbookRows: 0
+    flipbookColumns: 0
+    ignorePngGamma: 0
+    cookieMode: 0
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 0
+    wrapV: 0
+    wrapW: 0
+    normalMap: 0
+    textureFormat: 0
+    maxTextureSize: 0
+    lightmap: 0
+    compressionQuality: 0
+    linearTexture: 0
+    grayScaleToAlpha: 0
+    rGBM: 0
+    cubemapConvolutionSteps: 0
+    cubemapConvolutionExponent: 0
+    maxTextureSizeSet: 0
+    compressionQualitySet: 0
+    textureFormatSet: 0
+    applyGammaDecoding: 0
+  singleSpriteImportData:
+  - name: 
+    originalName: 
+    pivot: {x: 0, y: 0}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 0
+      height: 0
+    spriteID: 8ae0afb3bfb283a4889cb2982d9c076f
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 0, y: 0}
+    spritePosition: {x: 0, y: 0}
+  multiSpriteImportData: []
+  layeredSpriteImportData:
+  - name: Enemy_Bar_2_Fill
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 287
+      y: 221
+      width: 5
+      height: 31
+    spriteID: aee69bc19eafd2f45bf77e5117d20f74
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 160, y: 168}
+    spritePosition: {x: 127, y: 53}
+  - name: Enemy_Bar_2_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 496
+      y: 98
+      width: 5
+      height: 31
+    spriteID: c3b947cb975e12a42a9ebba85dee02db
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 369, y: 45}
+    spritePosition: {x: 127, y: 53}
+  - name: Enemy_Bar_1_Fill
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 484
+      y: 4
+      width: 4
+      height: 39
+    spriteID: 41557f0ce655fc648a371fa94bc6dedd
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 351, y: -44}
+    spritePosition: {x: 133, y: 48}
+  - name: Enemy_Bar_1_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 484
+      y: 51
+      width: 4
+      height: 39
+    spriteID: 8cd52bc8d9760b84da01305c345d5140
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 351, y: 3}
+    spritePosition: {x: 133, y: 48}
+  - name: Player_Bar_2_Fill
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 407
+      y: 216
+      width: 5
+      height: 31
+    spriteID: 020a565931e4b794085f109700cbd1c3
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 344, y: 145}
+    spritePosition: {x: 63, y: 71}
+  - name: Player_Bar_2_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 420
+      y: 216
+      width: 5
+      height: 31
+    spriteID: fb8a533607d9a5a41ae1ffde1e821af2
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 357, y: 145}
+    spritePosition: {x: 63, y: 71}
+  - name: Player_Bar_1_Fill
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 496
+      y: 4
+      width: 4
+      height: 39
+    spriteID: 64d183a90c8f81349a02051fab65bf40
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 438, y: -62}
+    spritePosition: {x: 58, y: 66}
+  - name: Player_Bar_1_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 496
+      y: 51
+      width: 4
+      height: 39
+    spriteID: 581b9a3eff0e61d4c98ec13700279fc5
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 438, y: -15}
+    spritePosition: {x: 58, y: 66}
+  - name: Layer 10
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: -2490
+      y: 2016
+      width: 4
+      height: 39
+    spriteID: 56fdce4b980046d4ba3ccfc3982338ce
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 125, y: 140}
+    spritePosition: {x: 58, y: 34}
+  - name: Layer 10
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: -2490
+      y: 2016
+      width: 4
+      height: 39
+    spriteID: 56fdce4b980046d4ba3ccfc3982338ce
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 125, y: 140}
+    spritePosition: {x: 58, y: 34}
+  - name: From selection
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: -985
+      y: 1776
+      width: 72
+      height: 79
+    spriteID: 5b3029d50b0b58d4484bba0fe4f65270
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 395, y: 135}
+    spritePosition: {x: 62, y: 39}
+  - name: From selection
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: -985
+      y: 1776
+      width: 72
+      height: 79
+    spriteID: 5b3029d50b0b58d4484bba0fe4f65270
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 395, y: 135}
+    spritePosition: {x: 62, y: 39}
+  - name: Combat_Main_Split
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 393
+      y: 4
+      width: 83
+      height: 88
+    spriteID: fc565941997f7ca44ba6d0aad8f46f2d
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 337, y: -29}
+    spritePosition: {x: 56, y: 33}
+  - name: Layer 7
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 138
+      width: 61
+      height: 86
+    spriteID: a3b94daa78741ac44aa814043e9af182
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: -59, y: 104}
+    spritePosition: {x: 63, y: 34}
+  - name: Combat_Main_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 198
+      y: 4
+      width: 96
+      height: 99
+    spriteID: 5c9041dc3d5d07f49a5434472b164c16
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 149, y: -23}
+    spritePosition: {x: 49, y: 27}
+  - name: Combat_Main_Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 302
+      y: 4
+      width: 83
+      height: 92
+    spriteID: a5e4fccccf28dd343bd01640b3fd8900
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 246, y: -27}
+    spritePosition: {x: 56, y: 31}
+  - name: Combat_Stats_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 73
+      y: 174
+      width: 51
+      height: 75
+    spriteID: b88a456c837e2a340a9c218d3448a7a4
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 73, y: 147}
+    spritePosition: {x: 0, y: 27}
+  - name: Combat_Stats_Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 132
+      y: 174
+      width: 43
+      height: 60
+    spriteID: 1b1f1b09852115b40a8de0cad5d5a742
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 129, y: 135}
+    spritePosition: {x: 3, y: 39}
+  - name: Combat_Decoration_Reticule
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 245
+      y: 221
+      width: 34
+      height: 30
+    spriteID: 6f04b4405b0dd8b49a5562ad13e0a30e
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 96, y: 152}
+    spritePosition: {x: 149, y: 69}
+  - name: Combat_Decoration_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 356
+      y: 174
+      width: 43
+      height: 37
+    spriteID: f81c61bab93181846a81c69a2d38c652
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 213, y: 109}
+    spritePosition: {x: 143, y: 65}
+  - name: Combat_Decoration_Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 306
+      y: 220
+      width: 36
+      height: 32
+    spriteID: fa51565602a0f6547b625c43f68d9f22
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 158, y: 152}
+    spritePosition: {x: 148, y: 68}
+  - name: Combat_Face_NervousMouth
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 302
+      y: 104
+      width: 36
+      height: 16
+    spriteID: 72b70921540782d4c80e397fc73d6313
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 154, y: 65}
+    spritePosition: {x: 148, y: 39}
+  - name: Combat_Face_AngryMouth
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 183
+      y: 222
+      width: 36
+      height: 19
+    spriteID: 075dc17f524b35a49901612bbbca0d1c
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 35, y: 184}
+    spritePosition: {x: 148, y: 38}
+  - name: Combat_Face_HearbeatMouth
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 232
+      width: 36
+      height: 19
+    spriteID: 83a5c1c0d5e351c4b8dfeb4d83aa33f3
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: -144, y: 195}
+    spritePosition: {x: 148, y: 37}
+  - name: Combat_Face_Frame
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 306
+      y: 174
+      width: 42
+      height: 38
+    spriteID: 0807293f800157245820dd64b0e2ff9d
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 162, y: 146}
+    spritePosition: {x: 144, y: 28}
+  - name: Combat_Face_Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 356
+      y: 219
+      width: 36
+      height: 33
+    spriteID: 3474f3c3e004a864d929e30bdcf87299
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 208, y: 188}
+    spritePosition: {x: 148, y: 31}
+  - name: Combat_Button_Panel
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 73
+      y: 138
+      width: 186
+      height: 28
+    spriteID: aef839c573e5d6346ba92be52572e980
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 73, y: 138}
+    spritePosition: {x: 0, y: 0}
+  - name: Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 4
+      width: 186
+      height: 126
+    spriteID: 9e5faa7a0369e5d45b0e8066a2936b03
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 4}
+    spritePosition: {x: 0, y: 0}
+  spriteImportData: []
+  rigSpriteImportData: []
+  sharedRigSpriteImportData: []
+  mosaicSpriteImportData: []
+  sharedRigCharacterData:
+    bones: []
+    parts: []
+    dimension: {x: 0, y: 0}
+    characterGroups: []
+    pivot: {x: 0, y: 0}
+    boneReadOnly: 0
+  characterData:
+    bones: []
+    parts: []
+    dimension: {x: 0, y: 0}
+    characterGroups: []
+    pivot: {x: 0, y: 0}
+    boneReadOnly: 0
+  platformSettings:
+  - name: DefaultTexturePlatform
+    overridden: 0
+    ignorePlatformSupport: 0
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
+  - name: Standalone
+    overridden: 0
+    ignorePlatformSupport: 0
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
+  - name: WebGL
+    overridden: 0
+    ignorePlatformSupport: 0
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    androidETC2FallbackOverride: 0
+  mosaicLayers: 1
+  characterMode: 1
+  documentPivot: {x: 0, y: 0}
+  documentAlignment: 7
+  importHiddenLayers: 1
+  layerMappingOption: 0
+  generatePhysicsShape: 0
+  paperDollMode: 0
+  keepDupilcateSpriteName: 1
+  generateTileAssets: 0
+  tilePaletteCellLayout: 0
+  tilePaletteHexagonLayout: 0
+  tilePaletteCellSize: {x: 1, y: 1, z: 0}
+  tilePaletteCellSizing: 0
+  transparencySortMode: 0
+  transparencySortAxis: {x: 0, y: 0, z: 1}
+  tileTemplate: {instanceID: 0}
+  padding: 4
+  spriteSizeExpand: 0
+  skeletonAssetReferenceID: 
+  pipeline: {instanceID: 0}
+  pipelineVersion: 
+  spriteCategoryList:
+    categories: []
+  spritePackingTag: 
+  resliceFromLayer: 0
+  pSDLayerImportSetting:
+  - spriteId: 767185296e2ec4544a4a1e693c0ca61b
+    name: Layer 16
+    layerId: 6
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: b1a8b634bd351d94c8164c5b3a3124af
+    name: Layer 15
+    layerId: 5
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: 5b3029d50b0b58d4484bba0fe4f65270
+    name: From selection
+    layerId: 4
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: cb4042f8fd967be45b97eb7e0ef9d342
+    name: New group
+    layerId: 14
+    flatten: 0
+    isGroup: 1
+    importLayer: 1
+  - spriteId: dba93d5c69ded3342ae4d09f4d199a0f
+    name: Layer 21
+    layerId: 13
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: cc9ee728c54b13749823b792297455bb
+    name: From selection
+    layerId: 12
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: fefef1b806e5b674ebebd3da084e8ebb
+    name: Layer 22
+    layerId: 11
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: 5b270585253ecb948a48c15bf8a6f6eb
+    name: New group
+    layerId: 32
+    flatten: 0
+    isGroup: 1
+    importLayer: 1
+  - spriteId: 63b905f4444fc8347aee8a093708a29c
+    name: Layer 26
+    layerId: 31
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: ade8498efb2845840a280b262ee4ca58
+    name: Layer 26
+    layerId: 30
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: 56fdce4b980046d4ba3ccfc3982338ce
+    name: Layer 10
+    layerId: 29
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: bbdd59f0fbf069547b7c3a7462fcb9bb
+    name: Layer 10
+    layerId: 28
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: 0010cdd321697434a9dad74a0c5b0641
+    name: Layer 17
+    layerId: 7
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: a26e4d6a90b17174e814d7757d842ae5
+    name: Layer 18
+    layerId: 8
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  - spriteId: 9e5faa7a0369e5d45b0e8066a2936b03
+    name: Background
+    layerId: 1
+    flatten: 0
+    isGroup: 0
+    importLayer: 1
+  psdLayers:
+  - name: Combat Panel
+    spriteName: 
+    isGroup: 1
+    parentIndex: -1
+    spriteID: af8454429ba4f724a918952ecf5c71eb
+    layerID: 40
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Enemy Health
+    spriteName: 
+    isGroup: 1
+    parentIndex: 0
+    spriteID: 0a25ae29e4e66cf4da02035a68daf8ec
+    layerID: 39
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Enemy_Bar_2_Fill
+    spriteName: Enemy_Bar_2_Fill
+    isGroup: 0
+    parentIndex: 1
+    spriteID: aee69bc19eafd2f45bf77e5117d20f74
+    layerID: 38
+    mosaicPosition: {x: 287, y: 221}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Enemy_Bar_2_Frame
+    spriteName: Enemy_Bar_2_Frame
+    isGroup: 0
+    parentIndex: 1
+    spriteID: c3b947cb975e12a42a9ebba85dee02db
+    layerID: 37
+    mosaicPosition: {x: 496, y: 98}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Enemy_Bar_1_Fill
+    spriteName: Enemy_Bar_1_Fill
+    isGroup: 0
+    parentIndex: 1
+    spriteID: 41557f0ce655fc648a371fa94bc6dedd
+    layerID: 36
+    mosaicPosition: {x: 484, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Enemy_Bar_1_Frame
+    spriteName: Enemy_Bar_1_Frame
+    isGroup: 0
+    parentIndex: 1
+    spriteID: 8cd52bc8d9760b84da01305c345d5140
+    layerID: 35
+    mosaicPosition: {x: 484, y: 51}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Player Health
+    spriteName: 
+    isGroup: 1
+    parentIndex: 0
+    spriteID: a4a219ae0a89db84a8e675e4b4efd53d
+    layerID: 33
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Player_Bar_2_Fill
+    spriteName: Player_Bar_2_Fill
+    isGroup: 0
+    parentIndex: 6
+    spriteID: 020a565931e4b794085f109700cbd1c3
+    layerID: 32
+    mosaicPosition: {x: 407, y: 216}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Player_Bar_2_Frame
+    spriteName: Player_Bar_2_Frame
+    isGroup: 0
+    parentIndex: 6
+    spriteID: fb8a533607d9a5a41ae1ffde1e821af2
+    layerID: 31
+    mosaicPosition: {x: 420, y: 216}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Player_Bar_1_Fill
+    spriteName: Player_Bar_1_Fill
+    isGroup: 0
+    parentIndex: 6
+    spriteID: 64d183a90c8f81349a02051fab65bf40
+    layerID: 30
+    mosaicPosition: {x: 496, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Player_Bar_1_Frame
+    spriteName: Player_Bar_1_Frame
+    isGroup: 0
+    parentIndex: 6
+    spriteID: 581b9a3eff0e61d4c98ec13700279fc5
+    layerID: 29
+    mosaicPosition: {x: 496, y: 51}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Layer 10
+    spriteName: Layer 10
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 56fdce4b980046d4ba3ccfc3982338ce
+    layerID: 27
+    mosaicPosition: {x: 245, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  - name: Layer 10
+    spriteName: Layer 10
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 56fdce4b980046d4ba3ccfc3982338ce
+    layerID: 26
+    mosaicPosition: {x: 183, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  - name: From selection
+    spriteName: From selection
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 5b3029d50b0b58d4484bba0fe4f65270
+    layerID: 25
+    mosaicPosition: {x: 407, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  - name: From selection
+    spriteName: From selection
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 5b3029d50b0b58d4484bba0fe4f65270
+    layerID: 24
+    mosaicPosition: {x: 457, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  - name: Combat_Main_Split
+    spriteName: Combat_Main_Split
+    isGroup: 0
+    parentIndex: 0
+    spriteID: fc565941997f7ca44ba6d0aad8f46f2d
+    layerID: 23
+    mosaicPosition: {x: 393, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Layer 7
+    spriteName: Layer 7
+    isGroup: 0
+    parentIndex: 0
+    spriteID: a3b94daa78741ac44aa814043e9af182
+    layerID: 22
+    mosaicPosition: {x: 4, y: 138}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  - name: Combat_Main_Frame
+    spriteName: Combat_Main_Frame
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 5c9041dc3d5d07f49a5434472b164c16
+    layerID: 21
+    mosaicPosition: {x: 198, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Main_Background
+    spriteName: Combat_Main_Background
+    isGroup: 0
+    parentIndex: 0
+    spriteID: a5e4fccccf28dd343bd01640b3fd8900
+    layerID: 20
+    mosaicPosition: {x: 302, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Stats
+    spriteName: 
+    isGroup: 1
+    parentIndex: -1
+    spriteID: ebfb22d957b74d84d96f3fe29da4b052
+    layerID: 18
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Combat_Stats_Frame
+    spriteName: Combat_Stats_Frame
+    isGroup: 0
+    parentIndex: 19
+    spriteID: b88a456c837e2a340a9c218d3448a7a4
+    layerID: 17
+    mosaicPosition: {x: 73, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Stats_Background
+    spriteName: Combat_Stats_Background
+    isGroup: 0
+    parentIndex: 19
+    spriteID: 1b1f1b09852115b40a8de0cad5d5a742
+    layerID: 16
+    mosaicPosition: {x: 132, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Decoration
+    spriteName: 
+    isGroup: 1
+    parentIndex: -1
+    spriteID: d348251371ea3bd4eac7b28ec8ea1d48
+    layerID: 14
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Combat_Decoration_Reticule
+    spriteName: Combat_Decoration_Reticule
+    isGroup: 0
+    parentIndex: 22
+    spriteID: 6f04b4405b0dd8b49a5562ad13e0a30e
+    layerID: 13
+    mosaicPosition: {x: 245, y: 221}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Decoration_Frame
+    spriteName: Combat_Decoration_Frame
+    isGroup: 0
+    parentIndex: 22
+    spriteID: f81c61bab93181846a81c69a2d38c652
+    layerID: 12
+    mosaicPosition: {x: 356, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Decoration_Background
+    spriteName: Combat_Decoration_Background
+    isGroup: 0
+    parentIndex: 22
+    spriteID: fa51565602a0f6547b625c43f68d9f22
+    layerID: 11
+    mosaicPosition: {x: 306, y: 220}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Face
+    spriteName: 
+    isGroup: 1
+    parentIndex: -1
+    spriteID: 845784eda6e69bb4bb8582a6e67b0a3e
+    layerID: 9
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Combat_Face_NervousMouth
+    spriteName: Combat_Face_NervousMouth
+    isGroup: 0
+    parentIndex: 26
+    spriteID: 72b70921540782d4c80e397fc73d6313
+    layerID: 8
+    mosaicPosition: {x: 302, y: 104}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Face_AngryMouth
+    spriteName: Combat_Face_AngryMouth
+    isGroup: 0
+    parentIndex: 26
+    spriteID: 075dc17f524b35a49901612bbbca0d1c
+    layerID: 7
+    mosaicPosition: {x: 183, y: 222}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Face_HearbeatMouth
+    spriteName: Combat_Face_HearbeatMouth
+    isGroup: 0
+    parentIndex: 26
+    spriteID: 83a5c1c0d5e351c4b8dfeb4d83aa33f3
+    layerID: 6
+    mosaicPosition: {x: 4, y: 232}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Face_Frame
+    spriteName: Combat_Face_Frame
+    isGroup: 0
+    parentIndex: 26
+    spriteID: 0807293f800157245820dd64b0e2ff9d
+    layerID: 5
+    mosaicPosition: {x: 306, y: 174}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Face_Background
+    spriteName: Combat_Face_Background
+    isGroup: 0
+    parentIndex: 26
+    spriteID: 3474f3c3e004a864d929e30bdcf87299
+    layerID: 4
+    mosaicPosition: {x: 356, y: 219}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Combat_Button_Panel
+    spriteName: Combat_Button_Panel
+    isGroup: 0
+    parentIndex: -1
+    spriteID: aef839c573e5d6346ba92be52572e980
+    layerID: 2
+    mosaicPosition: {x: 73, y: 138}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Background
+    spriteName: Background
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 9e5faa7a0369e5d45b0e8066a2936b03
+    layerID: 1
+    mosaicPosition: {x: 4, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  mosaicPSDLayers: []
+  rigPSDLayers: []
+  sharedRigPSDLayers: []
+  importFileNodeState: 1
+  platformSettingsDirtyTick: 0
+  spriteSizeExpandChanged: 0
+  generateGOHierarchy: 0
+  textureAssetName: 
+  prefabAssetName: 
+  spriteLibAssetName: 
+  skeletonAssetName: 
+  secondarySpriteTextures: []
