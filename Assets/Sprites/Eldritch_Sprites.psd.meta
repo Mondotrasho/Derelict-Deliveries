@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 4b03fe60768973e46b6db2f8f85ce916
+guid: f1197d6f838dd8e4f955805c3c905234
 importerOverride:
   nativeImporterType: 2089858483
   scriptedImporterType:
@@ -40,7 +40,7 @@ ScriptedImporter:
     spriteMeshType: 1
     alignment: 0
     spritePivot: {x: 0.5, y: 0.5}
-    spritePixelsToUnits: 100
+    spritePixelsToUnits: 30
     spriteBorder: {x: 0, y: 0, z: 0, w: 0}
     spriteGenerateFallbackPhysicsShape: 0
     generateCubemap: 6
@@ -88,7 +88,7 @@ ScriptedImporter:
       y: 0
       width: 0
       height: 0
-    spriteID: 0d6a5c88cc525814dbd7bfb39c339c94
+    spriteID: a2196d6ca9edb5f4ebc6eda1d426d71b
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -100,7 +100,7 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
-  - name: Combat_Enemy_Shield
+  - name: Eldritch _Horror_1
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -108,33 +108,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 119
-      width: 53
-      height: 39
-    spriteID: 503a0a4d71afb6b40a26950bc14db0b8
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 3, y: 118}
-    spritePosition: {x: 1, y: 1}
-  - name: Combat_Player_Shield
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 65
+      x: 27
       y: 4
-      width: 54
-      height: 40
-    spriteID: 4d2588e07f96d014893811c7fa8864bb
+      width: 15
+      height: 15
+    spriteID: 81a17d0cca702654b835fa6ac2c034b9
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -142,75 +120,9 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 65, y: 4}
+    uvTransform: {x: 27, y: 4}
     spritePosition: {x: 0, y: 0}
-  - name: Combat_Enemy_Ship_1
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 166
-      width: 42
-      height: 34
-    spriteID: 3ac024dd773fc8c4db6aa23e652293c6
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: -5, y: 163}
-    spritePosition: {x: 9, y: 3}
-  - name: Combat_Player_Ship
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 208
-      width: 46
-      height: 29
-    spriteID: 188812b100e0c5c418ae8e3fdb34fe84
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 0, y: 203}
-    spritePosition: {x: 4, y: 5}
-  - name: Combat_Enemy_Indicators
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 0
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 65
-      width: 48
-      height: 46
-    spriteID: 95d1615a35b4a7644a3c28b4334daa88
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: -3, y: 65}
-    spritePosition: {x: 7, y: 0}
-  - name: Combat_Player_Indicators
+  - name: Eldritch _Horror_2
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -220,9 +132,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 53
-      height: 53
-    spriteID: 251eef3bdd4ba594c95e6e5b5e436f83
+      width: 15
+      height: 16
+    spriteID: b31331a825c204c4d8d867c4da8a6f58
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -230,8 +142,96 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: -1, y: 4}
-    spritePosition: {x: 5, y: 0}
+    uvTransform: {x: 4, y: 4}
+    spritePosition: {x: 0, y: 0}
+  - name: Eldritch _Horror_3
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 28
+      width: 15
+      height: 16
+    spriteID: 4b0f059be8b7b294b9e54a0de64b78c9
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 28}
+    spritePosition: {x: 0, y: 0}
+  - name: Eldritch _Horror_4
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 52
+      width: 15
+      height: 16
+    spriteID: 96882e2014841784e9531a493466673a
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 52}
+    spritePosition: {x: 0, y: 0}
+  - name: Layer 1
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 76
+      width: 15
+      height: 16
+    spriteID: 16f055f999afbdf4cae4b8f3b5b25dc7
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 76}
+    spritePosition: {x: 0, y: 0}
+  - name: Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 100
+      width: 15
+      height: 16
+    spriteID: d3acb5b693c8b904c8edbdd2d7cc93f1
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 100}
+    spritePosition: {x: 0, y: 0}
   spriteImportData: []
   rigSpriteImportData: []
   sharedRigSpriteImportData: []
@@ -288,10 +288,10 @@ ScriptedImporter:
     allowsAlphaSplitting: 0
     androidETC2FallbackOverride: 0
   mosaicLayers: 1
-  characterMode: 0
+  characterMode: 1
   documentPivot: {x: 0, y: 0}
   documentAlignment: 7
-  importHiddenLayers: 0
+  importHiddenLayers: 1
   layerMappingOption: 0
   generatePhysicsShape: 0
   paperDollMode: 0
@@ -315,81 +315,71 @@ ScriptedImporter:
   resliceFromLayer: 0
   pSDLayerImportSetting: []
   psdLayers:
-  - name: Combat_Enemy_Shield
-    spriteName: Combat_Enemy_Shield
+  - name: Eldritch _Horror_1
+    spriteName: Eldritch _Horror_1
     isGroup: 0
     parentIndex: -1
-    spriteID: 503a0a4d71afb6b40a26950bc14db0b8
-    layerID: 7
-    mosaicPosition: {x: 4, y: 119}
-    flatten: 0
-    isImported: 1
-    isVisible: 1
-  - name: Combat_Player_Shield
-    spriteName: Combat_Player_Shield
-    isGroup: 0
-    parentIndex: -1
-    spriteID: 4d2588e07f96d014893811c7fa8864bb
+    spriteID: 81a17d0cca702654b835fa6ac2c034b9
     layerID: 6
-    mosaicPosition: {x: 65, y: 4}
+    mosaicPosition: {x: 27, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
-  - name: Combat_Enemy_Ship_1
-    spriteName: Combat_Enemy_Ship_1
+  - name: Eldritch _Horror_2
+    spriteName: Eldritch _Horror_2
     isGroup: 0
     parentIndex: -1
-    spriteID: 3ac024dd773fc8c4db6aa23e652293c6
+    spriteID: b31331a825c204c4d8d867c4da8a6f58
     layerID: 5
-    mosaicPosition: {x: 4, y: 166}
-    flatten: 0
-    isImported: 1
-    isVisible: 1
-  - name: Combat_Player_Ship
-    spriteName: Combat_Player_Ship
-    isGroup: 0
-    parentIndex: -1
-    spriteID: 188812b100e0c5c418ae8e3fdb34fe84
-    layerID: 4
-    mosaicPosition: {x: 4, y: 208}
-    flatten: 0
-    isImported: 1
-    isVisible: 1
-  - name: Combat_Enemy_Indicators
-    spriteName: Combat_Enemy_Indicators
-    isGroup: 0
-    parentIndex: -1
-    spriteID: 95d1615a35b4a7644a3c28b4334daa88
-    layerID: 3
-    mosaicPosition: {x: 4, y: 65}
-    flatten: 0
-    isImported: 1
-    isVisible: 1
-  - name: Combat_Player_Indicators
-    spriteName: Combat_Player_Indicators
-    isGroup: 0
-    parentIndex: -1
-    spriteID: 251eef3bdd4ba594c95e6e5b5e436f83
-    layerID: 2
     mosaicPosition: {x: 4, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
-  - name: Background
-    spriteName: 
+  - name: Eldritch _Horror_3
+    spriteName: Eldritch _Horror_3
     isGroup: 0
     parentIndex: -1
-    spriteID: 9935cf0f3380d944aa37498913ac0d88
-    layerID: 1
-    mosaicPosition: {x: 0, y: 0}
+    spriteID: 4b0f059be8b7b294b9e54a0de64b78c9
+    layerID: 4
+    mosaicPosition: {x: 4, y: 28}
     flatten: 0
-    isImported: 0
+    isImported: 1
+    isVisible: 1
+  - name: Eldritch _Horror_4
+    spriteName: Eldritch _Horror_4
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 96882e2014841784e9531a493466673a
+    layerID: 3
+    mosaicPosition: {x: 4, y: 52}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Layer 1
+    spriteName: Layer 1
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 16f055f999afbdf4cae4b8f3b5b25dc7
+    layerID: 2
+    mosaicPosition: {x: 4, y: 76}
+    flatten: 0
+    isImported: 1
+    isVisible: 0
+  - name: Background
+    spriteName: Background
+    isGroup: 0
+    parentIndex: -1
+    spriteID: d3acb5b693c8b904c8edbdd2d7cc93f1
+    layerID: 1
+    mosaicPosition: {x: 4, y: 100}
+    flatten: 0
+    isImported: 1
     isVisible: 0
   mosaicPSDLayers: []
   rigPSDLayers: []
   sharedRigPSDLayers: []
   importFileNodeState: 1
-  platformSettingsDirtyTick: 639260525628587207
+  platformSettingsDirtyTick: 639260558144680519
   spriteSizeExpandChanged: 0
   generateGOHierarchy: 0
   textureAssetName: 
