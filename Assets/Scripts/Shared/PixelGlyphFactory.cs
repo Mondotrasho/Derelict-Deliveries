@@ -21,12 +21,31 @@ public static class PixelGlyphFactory
         ".#..##..",
     };
 
+    /// <summary>8x8 diagonal hatch used as the placeholder route-hazard tile.</summary>
+    public static readonly string[] HazardHatch =
+    {
+        "#...#...",
+        ".#...#..",
+        "..#...#.",
+        "...#...#",
+        "#...#...",
+        ".#...#..",
+        "..#...#.",
+        "...#...#",
+    };
+
     private static readonly Dictionary<string, Sprite> cache = new Dictionary<string, Sprite>();
 
 
     public static Sprite GetWreckPlaceholder(int pixelsPerUnit = 8)
     {
         return GetSprite("wreck", WreckPlaceholder, pixelsPerUnit, new Color(0.62f, 0.66f, 0.72f, 1f));
+    }
+
+
+    public static Sprite GetHazardPlaceholder(int pixelsPerUnit = 8)
+    {
+        return GetSprite("hazard", HazardHatch, pixelsPerUnit);
     }
 
 
