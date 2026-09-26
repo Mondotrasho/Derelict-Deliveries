@@ -18,6 +18,12 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class EventLabelPresenter : MonoBehaviour
 {
+    [Header("Identified Description")]
+    [Tooltip("Show the event's Short Description under its name once identified.")]
+    [SerializeField] private bool showDescription = true;
+    [Tooltip("Wrap the description at about this many characters per line.")]
+    [Min(8)] [SerializeField] private int descriptionWrapColumns = 30;
+
     [Header("References")]
     [SerializeField] private EventSiteRegistry registry;
     [SerializeField] private VisionManager visionManager;
@@ -104,7 +110,7 @@ public class EventLabelPresenter : MonoBehaviour
 
         if (site.Knowledge == PlanetKnowledgeState.Identified)
         {
-            if (changed) label.SetText(name, identifiedColor);
+            if (changed) label.SetText(WithDescription(name, site.Definition), identifiedColor);
         }
         else if (changed || refresh || !label.Label.HasText)
         {
@@ -173,5 +179,37 @@ public class EventLabelPresenter : MonoBehaviour
         if (label != null) label.Hide();
         shownSite = null;
         garbleTimer = 0f;
+    }
+
+
+    /// <summary>Name plus the definition's short description, wrapped, once identified.</summary>
+    private string WithDescription(string name, EventDefinition definition)
+    {
+        if (!showDescription || definition == null || string.IsNullOrWhiteSpace(definition.ShortDescription)) return name;
+        return name + "\n" + Wrap(definition.ShortDescription.Trim(), Mathf.Max(8, descriptionWrapColumns));
+    }
+
+
+    private static string Wrap(string text, int columns)
+    {
+        var sb = new System.Text.StringBuilder();
+        int lineLength = 0;
+        foreach (string word in text.Split(' '))
+        {
+            if (word.Length == 0) continue;
+            if (lineLength > 0 && lineLength + 1 + word.Length > columns)
+            {
+                sb.Append('\n');
+                lineLength = 0;
+            }
+            else if (lineLength > 0)
+            {
+                sb.Append(' ');
+                lineLength++;
+            }
+            sb.Append(word);
+            lineLength += word.Length;
+        }
+        return sb.ToString();
     }
 }
