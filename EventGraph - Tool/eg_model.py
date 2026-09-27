@@ -129,6 +129,38 @@ def build(snap, project):
     events = {guid: a for guid, a in snap.assets.items() if a.cls == 'EventDefinition'}
     tables = {guid: a for guid, a in snap.assets.items() if a.cls == 'EventTable'}
     enemies = {guid: a for guid, a in snap.assets.items() if a.cls == 'EnemyShipDefinition'}
+    poi = snap.poi or {}
+
+    def iter_poi_options():
+        for entry in poi.get('planetOptions') or []:
+            pid = _s(entry.get('planetId')) or None
+            for opt in entry.get('options') or []:
+                yield pid, opt
+        for opt in poi.get('sharedOptions') or []:
+            yield None, opt
+
+    # Event POI options can now roll an EventTable instead of pointing at one
+    # EventDefinition. Treat those options as table sources so table usage,
+    # tag checks and the graph all match PointOfInterestController.RunEvent.
+    poi_table_sources = []
+    for pid, opt in iter_poi_options():
+        if POI_KIND.get(_int(opt.get('kind'), -1)) != 'Event':
+            continue
+        if guid_of(opt.get('eventDefinition')):
+            continue  # direct EventDefinition wins in the game
+        table_guid = guid_of(opt.get('eventTable'))
+        if not table_guid:
+            continue
+        title = _s(opt.get('title')) or _s(opt.get('id')) or 'planet event option'
+        poi_table_sources.append({
+            'label': f'planet option "{title}"',
+            'table': table_guid,
+            'tags': [str(t) for t in (opt.get('eventTags') or [])],
+            'enabled': True,
+            'planet_id': pid,
+            'conditions': opt.get('conditions') or {},
+            'option_id': _s(opt.get('id')),
+        })
 
     for path, msg in snap.parse_errors:
         g.issue('error', f'{os.path.basename(path)}: {msg}')
@@ -164,7 +196,7 @@ def build(snap, project):
             n.guid = guid
             data = project.load_dialogue(snap, guid)
             n.data = data or {}
-            check_dialogue(g, n)
+            check_dialogue(g, n, snap)
         return nid
 
     def ensure_enemy(guid):
@@ -204,6 +236,11 @@ def build(snap, project):
         for res in d.get('pickupResources') or []:
             if _int(res.get('kind'), -1) == 3:
                 g.key('counter', 'Player', 'res.supplies').writers.append((nid, 'pickup', None))
+
+        root_dialogue = guid_of(d.get('dialogueJson'))
+        if root_dialogue and check_ref(root_dialogue, nid, 'root dialogue'):
+            label = _s(d.get('dialogueButtonLabel')).strip() or 'TALK'
+            g.edge(nid, ensure_dialogue(root_dialogue), 'dialogue', label, 'root dialogue')
 
         choices = d.get('choices') or []
         seen_choice = set()
@@ -257,7 +294,7 @@ def build(snap, project):
 
     # -- tables and the sources that roll them ------------------------------
     sources_by_table = {}
-    for s in snap.sources:
+    for s in list(snap.sources) + poi_table_sources:
         sources_by_table.setdefault(s['table'], []).append(s)
     for guid, a in tables.items():
         nid = 'tb:' + guid
@@ -280,17 +317,16 @@ def build(snap, project):
                 continue
             if w <= 0:
                 g.issue('info', f'{a.name}: {g.nodes["ev:" + eg].title} has weight 0 (never picked)', nid)
-            g.edge(nid, 'ev:' + eg, 'entry', f'w {w:g}' + (f' ({w / total:.0%})' if total > 0 else ''))
+            g.edge(nid, 'ev:' + eg, 'entry', f'w {w:g}' + (f' (base {w / total:.0%})' if total > 0 else ''))
             ev_tags = {str(t) for t in (events[eg].data.get('tags') or [])}
             if src_tags and not (ev_tags & src_tags):
                 g.issue('warning', f'{a.name}: {g.nodes["ev:" + eg].title} has tags {sorted(ev_tags)} but its source only rolls {sorted(src_tags)} (never picked)', 'ev:' + eg)
-    for s in snap.sources:
+    for s in list(snap.sources) + poi_table_sources:
         if s['table'] not in tables:
             g.issue('error' if s['table'] not in snap.guid_to_path else 'warning',
                     f'{s["label"]}: its table {ref_name(s["table"])} is not an EventTable in this project')
 
     # -- planet options -----------------------------------------------------
-    poi = snap.poi or {}
     planet_names = {p['id']: (p['displayName'] or p['id']) for p in snap.planets}
     for p in snap.planets:
         for t in p['tags']:
@@ -306,21 +342,29 @@ def build(snap, project):
         write_state(g, opt.get('onComplete'), nid, 'on complete')
         if kind == 'Event':
             ev = guid_of(opt.get('eventDefinition'))
+            table = guid_of(opt.get('eventTable'))
             if ev and check_ref(ev, nid, 'event', 'event'):
                 g.edge(nid, 'ev:' + ev, 'entry', 'option')
-            elif not ev:
-                g.issue('warning', f'Planet option "{n.title}" is an Event option with no Event Definition', nid)
+                if table:
+                    g.issue('info', f'Planet option "{n.title}" has both Event Definition and Event Table; the direct Event Definition wins', nid)
+            elif table:
+                if table in tables:
+                    tags = ', '.join(str(t) for t in (opt.get('eventTags') or [])) or 'any event tag'
+                    g.edge(nid, 'tb:' + table, 'entry', f'roll table · {tags}')
+                elif table not in snap.guid_to_path:
+                    g.issue('error', f'Planet option "{n.title}" points to a missing Event Table ({table[:8]}...)', nid)
+                else:
+                    g.issue('warning', f'Planet option "{n.title}" Event Table is not an EventTable asset', nid)
+            else:
+                g.issue('warning', f'Planet option "{n.title}" is an Event option with neither Event Definition nor Event Table', nid)
         elif kind == 'Dialogue':
             dj = guid_of(opt.get('dialogueJson'))
             if dj and check_ref(dj, nid, 'dialogue'):
                 g.edge(nid, ensure_dialogue(dj), 'dialogue', 'hail')
         return n
 
-    for entry in poi.get('planetOptions') or []:
-        for opt in entry.get('options') or []:
-            add_option(opt, _s(entry.get('planetId')))
-    for opt in poi.get('sharedOptions') or []:
-        add_option(opt)
+    for planet_id, opt in iter_poi_options():
+        add_option(opt, planet_id)
 
     # -- quest start events ------------------------------------------------
     sched = snap.scheduler or {}
@@ -380,12 +424,14 @@ def build(snap, project):
     # drop edges to nodes that don't exist (missing refs already reported)
     g.edges = [e for e in g.edges if e.src in g.nodes and e.dst in g.nodes]
     compute_groups(g, snap)
+    resolve_planet_contexts(g, snap)
+    validate_dialogue_actions(g)
     resolve_banners(g, snap)
     return g
 
 
 # --------------------------------------------------------------------------
-# Banners (mirrors BannerLibrary.Resolve / ResolvePlanet in the game)
+# Planet context / dialogue actions / banners
 # --------------------------------------------------------------------------
 
 SPRITE_FILEID = 21300000        # a single-sprite texture's sprite
@@ -399,10 +445,163 @@ def _ref(ref):
     return g_, (ref.get('fileID') if isinstance(ref, dict) else None)
 
 
+def _planet_condition_pairs(cond):
+    return [(_s(t.get('tag')).strip(), bool(_int(t.get('mustHave'), 1)))
+            for t in ((cond or {}).get('tags') or [])
+            if _int(t.get('scope')) == 1 and _s(t.get('tag')).strip()]
+
+
+def _planet_matches(planet, pairs):
+    tags = {str(t).strip().lower() for t in planet.get('tags', [])}
+    return all(((tag.lower() in tags) == must) for tag, must in pairs)
+
+
+def resolve_planet_contexts(g, snap):
+    """Work out which scene planets an option/table/event can actually run on.
+
+    This is intentionally static. Planet tag conditions are evaluated because the
+    scene tells us those values. Player/quest state, counters and once-per-planet
+    state remain runtime conditions and are not guessed.
+    """
+    planets = {p['id']: p for p in snap.planets if p.get('id')}
+    all_planets = list(planets)
+    g.option_planets = {}
+    g.event_planets = {}
+    g.table_planet_rolls = {}
+
+    for nid, n in g.nodes.items():
+        if n.kind != 'option':
+            continue
+        encoded = nid.split(':', 2)[1]
+        exact = None if encoded == '*' else encoded
+        conds = _planet_condition_pairs(n.data.get('conditions'))
+        g.option_planets[nid] = [pid for pid, p in planets.items()
+                                 if (not exact or pid == exact) and _planet_matches(p, conds)]
+
+    # Contexts supplied by planet options that roll tables. These also power the
+    # effective per-planet probabilities shown in table details.
+    table_option_edges = {}
+    for e in g.edges:
+        if e.src in g.nodes and e.dst in g.nodes and g.nodes[e.src].kind == 'option' and g.nodes[e.dst].kind == 'table':
+            table_option_edges.setdefault(e.dst, []).append(e.src)
+
+    for tid, option_ids in table_option_edges.items():
+        table = g.nodes[tid]
+        rolls = []
+        for oid in option_ids:
+            opt = g.nodes[oid]
+            source_tags = [str(t) for t in (opt.data.get('eventTags') or [])]
+            for pid in g.option_planets.get(oid, []):
+                planet = planets.get(pid)
+                eligible = []
+                for entry in table.data.get('entries') or []:
+                    eg = guid_of(entry.get('definition'))
+                    eid = 'ev:' + eg if eg else None
+                    if not eid or eid not in g.nodes:
+                        continue
+                    ev = g.nodes[eid]
+                    weight = max(0.0, _num(entry.get('weight'), 0))
+                    if weight <= 0:
+                        continue
+                    ev_tags = {str(t).strip().lower() for t in (ev.data.get('tags') or [])}
+                    wanted = {t.strip().lower() for t in source_tags if t.strip()}
+                    if wanted and not (ev_tags & wanted):
+                        continue
+                    if not _planet_matches(planet, _planet_condition_pairs(ev.data.get('conditions'))):
+                        continue
+                    eligible.append((eid, weight))
+                total = sum(w for _, w in eligible)
+                rolls.append({
+                    'planet': pid,
+                    'source': oid,
+                    'source_title': opt.title,
+                    'tags': source_tags,
+                    'entries': [(eid, w, (w / total if total > 0 else 0.0)) for eid, w in eligible],
+                })
+        g.table_planet_rolls[tid] = rolls
+
+    # First pass: explicit option/table entry points give the strongest context.
+    direct = {}
+    for nid, n in g.nodes.items():
+        if n.kind != 'event' or n.category != 'Planet':
+            continue
+        ps = set()
+        constrained = False
+        for e in g.edges:
+            if e.dst != nid or e.kind != 'entry':
+                continue
+            src = g.nodes.get(e.src)
+            if not src:
+                continue
+            if src.kind == 'option':
+                constrained = True
+                ps.update(g.option_planets.get(src.id, []))
+            elif src.kind == 'table':
+                opts = table_option_edges.get(src.id, [])
+                if opts:
+                    constrained = True
+                    for oid in opts:
+                        ps.update(g.option_planets.get(oid, []))
+        if constrained:
+            direct[nid] = ps
+
+    # Follow-ups between planet events retain the same planet. Propagate that
+    # context before falling back to every planet in the scene.
+    contexts = {nid: set(ps) for nid, ps in direct.items()}
+    pending = [nid for nid, n in g.nodes.items() if n.kind == 'event' and n.category == 'Planet' and nid not in contexts]
+    for _ in range(max(1, len(pending))):
+        changed = False
+        for nid in list(pending):
+            ps = set()
+            for e in g.edges:
+                if e.dst != nid or e.kind not in ('follow', 'schedule', 'story'):
+                    continue
+                src = g.nodes.get(e.src)
+                if src and src.kind == 'event' and src.category == 'Planet' and e.src in contexts:
+                    ps.update(contexts[e.src])
+            if ps:
+                contexts[nid] = ps
+                pending.remove(nid)
+                changed = True
+        if not changed:
+            break
+
+    for nid, n in g.nodes.items():
+        if n.kind != 'event' or n.category != 'Planet':
+            continue
+        candidates = contexts.get(nid, set(all_planets))
+        conds = _planet_condition_pairs(n.data.get('conditions'))
+        g.event_planets[nid] = [pid for pid in all_planets
+                                if pid in candidates and _planet_matches(planets[pid], conds)]
+
+
+def validate_dialogue_actions(g):
+    """Validate action ids in root event dialogues against EventChoice ids."""
+    for nid, n in g.nodes.items():
+        if n.kind != 'dialogue' or not isinstance(n.data, dict) or '__error__' in n.data:
+            continue
+        owners = []
+        for e in g.edges:
+            if e.dst == nid and e.kind == 'dialogue' and e.detail == 'root dialogue':
+                owner = g.nodes.get(e.src)
+                if owner and owner.kind == 'event':
+                    owners.append(owner)
+        n.root_event_owners = [o.id for o in owners]
+        if not owners:
+            continue
+        for cs in n.data.get('choices') or []:
+            for o in cs.get('options') or []:
+                action = _s(o.get('action')).strip()
+                if not action:
+                    continue
+                for owner in owners:
+                    ids = {_s(c.get('id')) for c in (owner.data.get('choices') or [])}
+                    if action not in ids:
+                        g.issue('warning', f'Dialogue {n.title}: action "{action}" is not a choice on {owner.title}', nid)
+
+
 def resolve_banners(g, snap):
-    """Sets node.banner on events and planet options:
-       {'single': (guid, fileID, source)} or {'planets': [(planet, guid, fileID, source)]}.
-    Also records g.banner_uses: guid -> [(node id or None, why)] and banner checks."""
+    """Mirror BannerLibrary.Resolve including event+planet and event-family overrides."""
     libs = [a for a in snap.assets.values() if a.cls == 'BannerLibrary']
     g.banner_library = libs[0] if libs else None
     g.banner_uses = {}
@@ -419,7 +618,10 @@ def resolve_banners(g, snap):
     def exists(gid):
         return gid in snap.guid_to_path
 
-    # library slots
+    def validate_image(gid, label):
+        if gid and not exists(gid):
+            g.issue('error', f'Banner Library: {label} points to a missing image')
+
     tag_entries = []
     for e in lib.get('planetTags') or []:
         gid, fid = _ref(e.get('banner'))
@@ -427,37 +629,71 @@ def resolve_banners(g, snap):
     asteroid = _ref(lib.get('asteroid'))
     derelict = _ref(lib.get('derelict'))
     fallback = _ref(lib.get('planetFallback'))
-    overrides = {}
+
+    exact_overrides = []
+    for e in lib.get('eventPlanetOverrides') or []:
+        dg, _ = _ref(e.get('definition'))
+        bg, bf = _ref(e.get('banner'))
+        exact_overrides.append((dg, _s(e.get('planetId')).strip(), bg, bf))
+    tag_overrides = []
+    for e in lib.get('eventPlanetTagOverrides') or []:
+        dg, _ = _ref(e.get('definition'))
+        bg, bf = _ref(e.get('banner'))
+        tag_overrides.append((dg, _s(e.get('planetTag')).strip(), bg, bf))
+    family_overrides = []
+    for e in lib.get('eventTagPlanetTagOverrides') or []:
+        bg, bf = _ref(e.get('banner'))
+        family_overrides.append((_s(e.get('eventTag')).strip(), _s(e.get('planetTag')).strip(), bg, bf))
+    definition_overrides = []
     for e in lib.get('definitionOverrides') or []:
         dg, _ = _ref(e.get('definition'))
-        if dg:
-            overrides[dg] = _ref(e.get('banner'))
+        bg, bf = _ref(e.get('banner'))
+        definition_overrides.append((dg, bg, bf))
+
     for label, (gid, _) in (('Asteroid default', asteroid), ('Derelict default', derelict), ('Planet fallback', fallback)):
         use(gid, None, f'library: {label}')
+        validate_image(gid, label)
     for tag, gid, _ in tag_entries:
         use(gid, None, f'library: planet tag {tag}')
-    for label, (gid, _) in (('Asteroid default', asteroid), ('Derelict default', derelict), ('Planet fallback', fallback)):
-        if gid and not exists(gid):
-            g.issue('error', f'Banner Library: {label} points to a missing image')
-    planet_tags = {t.lower() for p in snap.planets for t in p['tags']}
+        validate_image(gid, f'planet tag "{tag}"')
+    for dg, pid, gid, _ in exact_overrides:
+        if gid:
+            use(gid, None, f'library: event + planet {pid}')
+            validate_image(gid, f'event + exact planet "{pid}" override')
+    for dg, tag, gid, _ in tag_overrides:
+        if gid:
+            use(gid, None, f'library: event + planet tag {tag}')
+            validate_image(gid, f'event + planet tag "{tag}" override')
+    for etag, ptag, gid, _ in family_overrides:
+        if gid:
+            use(gid, None, f'library: event tag {etag} + planet tag {ptag}')
+            validate_image(gid, f'event tag "{etag}" + planet tag "{ptag}" override')
+    for dg, gid, _ in definition_overrides:
+        if gid:
+            use(gid, None, 'library: per-event override')
+            validate_image(gid, 'per-event override')
+
+    planet_tags_in_scene = {str(t).strip().lower() for p in snap.planets for t in p.get('tags', [])}
     for tag, gid, _ in tag_entries:
-        if gid and not exists(gid):
-            g.issue('error', f'Banner Library: planet tag "{tag}" points to a missing image')
         if not gid:
             g.issue('warning', f'Banner Library: planet tag "{tag}" has no banner set')
-        if tag and tag.lower() not in planet_tags:
+        if tag and tag.lower() not in planet_tags_in_scene:
             g.issue('info', f'Banner Library: planet tag "{tag}" is not on any planet in the scene')
 
+    def has_tag(planet, tag):
+        wanted = tag.strip().lower()
+        return any(str(t).strip().lower() == wanted for t in planet.get('tags', []))
+
     def planet_banner(planet):
-        tags = {t.strip().lower() for t in planet['tags']}
         for tag, gid, fid in tag_entries:
-            if gid and tag.lower() in tags:
+            if gid and tag and has_tag(planet, tag):
                 return gid, fid, f'planet tag {tag}'
         if fallback[0]:
             return fallback[0], fallback[1], 'planet fallback'
         return None, None, 'no banner'
 
     g.planet_banners = {}
+    planets_by_id = {p['id']: p for p in snap.planets if p.get('id')}
     for p in snap.planets:
         gid, fid, why = planet_banner(p)
         g.planet_banners[p['id']] = (gid, fid, why)
@@ -465,67 +701,70 @@ def resolve_banners(g, snap):
         if not gid:
             g.issue('warning', f'Planet {p["id"]} shows no banner: none of its tags {p["tags"]} is in the Banner Library and there is no fallback')
 
-    def planets_for(requirements):
-        """Planets matching any of the requirement sets [(planet_id or None, [(tag, must)])]."""
-        out = []
-        for p in snap.planets:
-            tags = {t.strip().lower() for t in p['tags']}
-            for pid, conds in requirements:
-                if pid and pid != p['id']:
-                    continue
-                if all((t.lower() in tags) == must for t, must in conds):
-                    out.append(p)
-                    break
-        return out
+    def event_banner(n, planet):
+        own = _ref(n.data.get('banner'))
+        if own[0]:
+            return own[0], own[1], "the event's own Banner field"
+        if planet is not None:
+            for dg, pid, gid, fid in exact_overrides:
+                if dg == n.guid and gid and pid and pid.lower() == _s(planet.get('id')).strip().lower():
+                    return gid, fid, f'event + exact planet {pid} override'
+            for dg, ptag, gid, fid in tag_overrides:
+                if dg == n.guid and gid and ptag and has_tag(planet, ptag):
+                    return gid, fid, f'event + planet tag {ptag} override'
+            event_tags = {str(t).strip().lower() for t in (n.data.get('tags') or [])}
+            for etag, ptag, gid, fid in family_overrides:
+                if gid and etag and ptag and etag.lower() in event_tags and has_tag(planet, ptag):
+                    return gid, fid, f'event tag {etag} + planet tag {ptag} override'
+        for dg, gid, fid in definition_overrides:
+            if dg == n.guid and gid:
+                return gid, fid, 'Banner Library per-event override'
+        if n.category in ('Asteroid', 'Hazard'):
+            return asteroid[0], asteroid[1], 'Banner Library asteroid default'
+        if n.category == 'Derelict':
+            return derelict[0], derelict[1], 'Banner Library derelict default'
+        if n.category == 'Planet' and planet is not None:
+            return planet_banner(planet)
+        return None, None, 'no banner for this category'
 
-    def planet_conds(cond):
-        return [(_s(t.get('tag')).strip(), bool(_int(t.get('mustHave'), 1)))
-                for t in ((cond or {}).get('tags') or []) if _int(t.get('scope')) == 1]
-
-    option_req = {}
+    # Planet options themselves still show the normal planet presentation. The
+    # selected EventDefinition is what applies market/event-specific overrides.
     for nid, n in g.nodes.items():
-        if n.kind == 'option':
-            pid = nid.split(':', 2)[1]
-            option_req[nid] = (None if pid == '*' else pid, planet_conds(n.data.get('conditions')))
-            ps = planets_for([option_req[nid]])
-            n.banner = {'planets': [(p['id'],) + planet_banner(p) for p in ps]}
-            for p in ps:
-                use(planet_banner(p)[0], nid, f'planet {p["id"]}')
+        if n.kind != 'option':
+            continue
+        rows = []
+        for pid in getattr(g, 'option_planets', {}).get(nid, []):
+            p = planets_by_id.get(pid)
+            if not p:
+                continue
+            gid, fid, why = planet_banner(p)
+            rows.append((pid, gid, fid, why))
+            use(gid, nid, f'planet {pid}')
+        n.banner = {'planets': rows}
 
     for nid, n in g.nodes.items():
         if n.kind != 'event':
             continue
-        own = _ref(n.data.get('banner'))
-        if own[0]:
-            n.banner = {'single': (own[0], own[1], "the event's own Banner field")}
-        elif n.guid in overrides and overrides[n.guid][0]:
-            o = overrides[n.guid]
-            n.banner = {'single': (o[0], o[1], 'Banner Library per-event override')}
-        elif n.category in ('Asteroid', 'Hazard'):
-            n.banner = {'single': asteroid + ('Banner Library asteroid default',)}
-        elif n.category == 'Derelict':
-            n.banner = {'single': derelict + ('Banner Library derelict default',)}
-        elif n.category == 'Planet':
-            reqs = [option_req[e.src] for e in g.edges if e.dst == nid and e.src in option_req]
-            ev_conds = planet_conds(n.data.get('conditions'))
-            if reqs:
-                reqs = [(pid, conds + ev_conds) for pid, conds in reqs]
-            else:
-                reqs = [(None, ev_conds)]
-            ps = planets_for(reqs)
-            n.banner = {'planets': [(p['id'],) + planet_banner(p) for p in ps]}
+        if n.category == 'Planet':
+            rows = []
+            for pid in getattr(g, 'event_planets', {}).get(nid, []):
+                p = planets_by_id.get(pid)
+                if not p:
+                    continue
+                gid, fid, why = event_banner(n, p)
+                rows.append((pid, gid, fid, why))
+                use(gid, nid, f'on {pid}: {why}')
+                if gid and not exists(gid):
+                    g.issue('error', f'{n.title}: banner ({why}) points to a missing image', nid)
+            n.banner = {'planets': rows}
         else:
-            n.banner = {'single': (None, None, 'no banner for this category')}
-        if 'single' in n.banner:
-            gid, fid, why = n.banner['single']
+            gid, fid, why = event_banner(n, None)
+            n.banner = {'single': (gid, fid, why)}
             use(gid, nid, why)
             if gid and not exists(gid):
                 g.issue('error', f'{n.title}: banner ({why}) points to a missing image', nid)
             if not gid and n.category in ('Asteroid', 'Hazard', 'Derelict') and n.data.get('choices'):
-                g.issue('info', f'{n.title} shows no banner: the Banner Library\'s {n.category.lower() if n.category != "Hazard" else "asteroid"} default is empty', nid)
-        else:
-            for pl, gid, fid, why in n.banner['planets']:
-                use(gid, nid, f'on {pl}')
+                g.issue('info', f'{n.title} shows no banner: the Banner Library category default is empty', nid)
 
 
 def compute_groups(g, snap):
@@ -708,7 +947,7 @@ def write_state(g, writes, nid, where):
         g.key('counter', SCOPE.get(_int(c.get('scope')), '?'), _s(c.get('key'))).writers.append((nid, where, None))
 
 
-def check_dialogue(g, n):
+def check_dialogue(g, n, snap):
     d = n.data
     if not d:
         g.issue('error', f'Dialogue {n.title}: file missing or empty', n.id)
@@ -719,21 +958,46 @@ def check_dialogue(g, n):
     lines = d.get('lines') or []
     ticks = {l.get('tick') for l in lines}
     chars = d.get('characters') or {}
-    speakers = {'left', 'right', _s(chars.get('left')).lower(), _s(chars.get('right')).lower()}
+    left = _s(chars.get('left')).strip().lower()
+    right = _s(chars.get('right')).strip().lower()
+    speakers = {'left', 'right', left, right}
+
+    # Portraits are scene data. If the chosen scene has a DialoguePanelController,
+    # check that both JSON character ids resolve to its Character Definitions.
+    char_defs = getattr(snap, 'dialogue_characters', {}) or {}
+    if char_defs:
+        for side, cid in (('left', left), ('right', right)):
+            if not cid:
+                g.issue('warning', f'Dialogue {n.title}: {side} character id is empty', n.id)
+                continue
+            definition = char_defs.get(cid)
+            if not definition:
+                g.issue('warning', f'Dialogue {n.title}: {side} character "{cid}" has no Character Definition in the scene dialogue panel', n.id)
+                continue
+            sg = guid_of(definition.get('sprite'))
+            if not sg:
+                g.issue('warning', f'Dialogue {n.title}: character "{cid}" has no portrait sprite assigned', n.id)
+            elif sg not in snap.guid_to_path:
+                g.issue('error', f'Dialogue {n.title}: character "{cid}" portrait points to a missing image', n.id)
+
     for l in lines:
         sp = _s(l.get('speaker')).lower()
         if sp not in speakers:
             g.issue('warning', f'Dialogue {n.title}: tick {l.get("tick")} speaker "{l.get("speaker")}" is neither the left nor right character (the line is skipped)', n.id)
-        nt = l.get('nextTick') or 0
-        if nt and nt not in ticks:
+        nt = _int(l.get('nextTick'), 0)
+        if nt > 0 and nt not in ticks:
             g.issue('warning', f'Dialogue {n.title}: tick {l.get("tick")} jumps to missing tick {nt}', n.id)
     for cs in d.get('choices') or []:
         if cs.get('tick') not in ticks:
             g.issue('warning', f'Dialogue {n.title}: choices at tick {cs.get("tick")}, which has no lines', n.id)
         for o in cs.get('options') or []:
-            nt = o.get('nextTick') or 0
-            if nt and nt not in ticks:
+            nt = _int(o.get('nextTick'), 0)
+            if nt > 0 and nt not in ticks:
                 g.issue('warning', f'Dialogue {n.title}: option "{o.get("text")}" jumps to missing tick {nt}', n.id)
+            for ot in o.get('outcomeTicks') or []:
+                ot = _int(ot, 0)
+                if ot > 0 and ot not in ticks:
+                    g.issue('warning', f'Dialogue {n.title}: option "{o.get("text")}" outcome jumps to missing tick {ot}', n.id)
 
 
 # --------------------------------------------------------------------------
@@ -824,7 +1088,7 @@ def details(g, nid, project=None, snap=None):
             if not ps:
                 add('Banner: depends on the planet, but no planet in the scene matches its conditions\n', 'warn')
             else:
-                add('Banner (the planet\'s own, by tag):\n', 'b')
+                add('Effective banner by planet:\n', 'b')
                 for pl, gid, fid, why in ps:
                     if gid:
                         add(f'{pl}: {why}\n', 'img:' + gid + '|' + str(fid or '') + '|200')
@@ -886,6 +1150,16 @@ def details(g, nid, project=None, snap=None):
         pr = d.get('pickupResources') or []
         if pr:
             add('Pickup: ', 'b'); add(', '.join(f'{RESOURCE.get(_int(r.get("kind")), "?")} {_num(r.get("amount")):+g}' for r in pr) + '\n')
+        root_dt = ref_title(d.get('dialogueJson'))
+        if root_dt:
+            add('Dialogue card action: ', 'b')
+            add((_s(d.get('dialogueButtonLabel')).strip() or 'TALK') + ' -> ')
+            target = next((e.dst for e in g.edges if e.src == nid and e.kind == 'dialogue' and e.detail == 'root dialogue'), None)
+            if target:
+                add(root_dt, 'link:' + target)
+            else:
+                add(root_dt)
+            add('\n')
         for c in d.get('choices') or []:
             add('\n▸ ' + (_s(c.get('text')) or _s(c.get('id'))), 'h2')
             flags = []
@@ -893,7 +1167,11 @@ def details(g, nid, project=None, snap=None):
                 flags.append(f'needs {_int(c.get("minCrew"))} crew')
             ct = cond_text(c.get('availability'))
             if ct:
-                flags.append('only if ' + ct)
+                if _int(c.get('showWhenLocked')):
+                    reason = _s(c.get('lockedReason')).strip()
+                    flags.append('disabled unless ' + ct + (f' ({reason})' if reason else ''))
+                else:
+                    flags.append('hidden unless ' + ct)
             if _s(c.get('bonusStat')):
                 flags.append(f'[{_s(c.get("bonusStat")).title()}] +{_num(c.get("chancePerPoint"), 0.05):.0%} per point'
                              + (f', needs {_int(c.get("minBonus"))}' if _int(c.get('minBonus')) else ''))
@@ -943,32 +1221,127 @@ def details(g, nid, project=None, snap=None):
     elif n.kind == 'table':
         add('Rolled by: ', 'b'); add(n.subtitle + '\n\n')
         for e in g.edges:
-            if e.src == nid:
+            if e.src == nid and g.nodes.get(e.dst) and g.nodes[e.dst].kind == 'event':
                 add(f'  {e.label:<14}', 'pct'); add(g.nodes[e.dst].title + '\n')
+        rolls = getattr(g, 'table_planet_rolls', {}).get(nid, [])
+        if rolls:
+            add('\nEffective planet rolls\n', 'h2')
+            add('Planet-tag eligibility is applied. Player/quest state and once-per-planet completion are runtime conditions and are not guessed.\n', 'dim')
+            for roll in rolls:
+                tags = ', '.join(roll.get('tags') or []) or 'any tags'
+                add(f'\n{roll.get("planet")}  ', 'b')
+                add(f'via {roll.get("source_title")} [{tags}]\n', 'dim')
+                if not roll.get('entries'):
+                    add('  no statically eligible entries\n', 'warn')
+                for eid, weight, pct in roll.get('entries') or []:
+                    add(f'  {pct:>5.1%}  ', 'pct')
+                    add(g.nodes[eid].title, 'link:' + eid)
+                    add(f'  (weight {weight:g})\n', 'dim')
     elif n.kind == 'option':
         add('Kind: ', 'b'); add(POI_KIND.get(_int(d.get('kind')), '?') + '\n')
         ct = cond_text(d.get('conditions'))
         if ct:
             add('Shown when: ', 'b'); add(ct + '\n')
         add('Once per planet: ', 'b'); add(('yes' if _int(d.get('oncePerPlanet')) else 'no') + '\n')
+        table_ref = guid_of(d.get('eventTable'))
+        if table_ref:
+            target = 'tb:' + table_ref
+            add('Event table: ', 'b')
+            if target in g.nodes:
+                add(g.nodes[target].title, 'link:' + target)
+            else:
+                add('missing table', 'warn')
+            tags = ', '.join(str(t) for t in (d.get('eventTags') or [])) or 'any'
+            add(f'  [tags: {tags}]\n', 'dim')
         if _s(d.get('description')):
             add('\n' + _s(d.get('description')) + '\n', 'quote')
     elif n.kind == 'dialogue':
         if '__error__' in d:
             add('Invalid JSON: ' + d['__error__'] + '\n', 'err')
         else:
+            terminal = d.get('terminal') or {}
+            if terminal:
+                add(_s(terminal.get('title')) + ('  /  ' + _s(terminal.get('status')) if terminal.get('status') else '') + '\n', 'dim')
             chars = d.get('characters') or {}
-            add(f'Left: {_s(chars.get("left"))}   Right: {_s(chars.get("right"))}\n\n', 'dim')
+            char_defs = getattr(snap, 'dialogue_characters', {}) if snap is not None else {}
+            add('Characters\n', 'h2')
+            for side in ('left', 'right'):
+                cid = _s(chars.get(side)).strip()
+                definition = (char_defs or {}).get(cid.lower()) if cid else None
+                display = _s((definition or {}).get('displayName')).strip() or cid or '(none)'
+                add(f'{side.title()}: {display}', 'b')
+                if cid and display.lower() != cid.lower():
+                    add(f'  [{cid}]', 'dim')
+                add('\n')
+                sg, sf = _ref((definition or {}).get('sprite'))
+                if sg:
+                    add(f'{side.title()} portrait\n', 'img:' + sg + '|' + str(sf or '') + '|190')
+                elif cid:
+                    add('  no portrait sprite assigned in the selected scene\n', 'warn')
+            add('\n')
+
+            owners = [g.nodes[oid] for oid in getattr(n, 'root_event_owners', []) if oid in g.nodes]
+            if owners:
+                add('Gameplay actions resolve against: ', 'b')
+                for i, owner in enumerate(owners):
+                    if i:
+                        add(', ')
+                    add(owner.title, 'link:' + owner.id)
+                add('\n')
+
+            def action_target(action):
+                hits = []
+                for owner in owners:
+                    for c in owner.data.get('choices') or []:
+                        if _s(c.get('id')) == action:
+                            hits.append((owner, c))
+                return hits
+
+            def tick_dest(value):
+                v = _int(value, 0)
+                if v < 0:
+                    return 'QUIT'
+                if v > 0:
+                    return str(v)
+                return 'next'
+
             choices = {cs.get('tick'): cs for cs in d.get('choices') or []}
-            for l in sorted(d.get('lines') or [], key=lambda x: x.get('tick', 0)):
-                add(f'{l.get("tick"):>3} ', 'pct'); add(f'{_s(l.get("speaker"))}: ', 'b'); add(_s(l.get('text')))
-                if l.get('nextTick'):
-                    add(f'  → {l.get("nextTick")}', 'dim')
+            for l in sorted(d.get('lines') or [], key=lambda x: (_int(x.get('tick')), _int(x.get('order')))):
+                add(f'{_int(l.get("tick")):>3} ', 'pct'); add(f'{_s(l.get("speaker"))}: ', 'b'); add(_s(l.get('text')))
+                if _int(l.get('nextTick')):
+                    add(f'  -> {tick_dest(l.get("nextTick"))}', 'dim')
                 add('\n')
                 cs = choices.pop(l.get('tick'), None)
                 if cs:
                     for o in cs.get('options') or []:
-                        add(f'      ◆ {_s(o.get("text"))}', 'h2'); add(f'  → {o.get("nextTick") or "next"}\n', 'dim')
+                        add(f'      > {_s(o.get("text"))}', 'h2')
+                        add(f'  -> {tick_dest(o.get("nextTick"))}', 'dim')
+                        action = _s(o.get('action')).strip()
+                        if action:
+                            targets = action_target(action)
+                            if targets:
+                                add('  action: ', 'dim')
+                                for j, (owner, choice) in enumerate(targets):
+                                    if j:
+                                        add(', ', 'dim')
+                                    label = _s(choice.get('text')) or action
+                                    add(f'{label} [{action}]', 'link:' + owner.id)
+                                    requirement = cond_text(choice.get('availability'))
+                                    if requirement:
+                                        if _int(choice.get('showWhenLocked')):
+                                            reason = _s(choice.get('lockedReason')).strip()
+                                            add(' (disabled unless ' + requirement + (f'; {reason}' if reason else '') + ')', 'dim')
+                                        else:
+                                            add(' (hidden unless ' + requirement + ')', 'dim')
+                            else:
+                                add(f'  action: {action}', 'warn')
+                        outcome_ticks = [_int(x, 0) for x in (o.get('outcomeTicks') or [])]
+                        if outcome_ticks:
+                            add('  outcomes -> ' + ', '.join(tick_dest(x) for x in outcome_ticks), 'dim')
+                        add('\n')
+                        line = _s(o.get('line')).strip()
+                        if line:
+                            add('          player: ' + line + '\n', 'quote')
     elif n.kind == 'enemy':
         caps = d.get('capabilities') or {}
         add(f'Hull {_s(d.get("maxHull"))} · Shields {_s(caps.get("maxShields"))} · Damage {_s(caps.get("weaponDamage"))}\n')

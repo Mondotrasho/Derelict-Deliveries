@@ -18,7 +18,7 @@ import eg_yaml
 
 TRACKED_EXT = ('.asset', '.json', '.meta', '.unity', '.psd', '.psb', '.png', '.jpg', '.jpeg', '.tga', '.gif')
 ASSET_CLASSES = ('EventDefinition', 'EventTable', 'EnemyShipDefinition', 'BannerLibrary')
-SCENE_CLASSES = ('PointOfInterestController', 'QuestScheduler', 'WarpExitController', 'PlanetManager')
+SCENE_CLASSES = ('PointOfInterestController', 'QuestScheduler', 'WarpExitController', 'PlanetManager', 'DialoguePanelController')
 
 GUID_LINE = re.compile(r'^guid: ([0-9a-fA-F]{32})', re.M)
 SCRIPT_GUID = re.compile(r'm_Script: \{fileID: \d+, guid: ([0-9a-fA-F]{32})')
@@ -63,6 +63,7 @@ class Snapshot:
         self.warp = None              # WarpExitController data
         self.planets = []             # PlanetManager planets (id, displayName, tags)
         self.sources = []             # {'label', 'table', 'tags', 'enabled'}
+        self.dialogue_characters = {} # character id -> scene CharacterDefinition data
         self.dialogues = {}           # guid -> parsed JSON dict or {'__error__': msg}
         self.parse_errors = []        # (path, message)
 
@@ -170,13 +171,13 @@ class Project:
             if os.path.exists(scene_path):
                 try:
                     scene = self._cached(scene_path, lambda path: self._read_scene(path, snap.script_class))
-                    err = scene[5]
+                    err = scene[6]
                     good = self._last_good.get(scene_path)
                     if (err or scene[0] is None) and good is not None:
                         scene = good          # Unity mid-save: keep the last complete read
                     elif not err:
                         self._last_good[scene_path] = scene
-                    snap.poi, snap.scheduler, snap.warp, snap.planets, snap.sources, _ = scene
+                    snap.poi, snap.scheduler, snap.warp, snap.planets, snap.sources, snap.dialogue_characters, _ = scene
                     if err:
                         snap.parse_errors.append((scene_path, err))
                 except Exception as e:
@@ -235,7 +236,7 @@ class Project:
                     wanted.append((cls, body))
 
         poi = scheduler = warp = None
-        planets, sources, errors = [], [], []
+        planets, sources, dialogue_characters, errors = [], [], {}, []
         for cls, body in wanted:
             try:
                 data = (eg_yaml.parse(body) or {}).get('MonoBehaviour') or {}
@@ -254,12 +255,32 @@ class Project:
                 for p in data.get('planets') or []:
                     tags = ((p.get('eventState') or {}).get('tags')) or []
                     planets.append({'id': p.get('id'), 'displayName': p.get('displayName') or '', 'tags': [str(t) for t in tags]})
+            elif cls == 'DialoguePanelController':
+                # Character presentation is authored on the scene's dialogue panel, not in
+                # each JSON file. Keep the first definition for an id, matching the common
+                # one-panel setup and avoiding duplicate panels silently replacing it.
+                for c in data.get('characterDefinitions') or []:
+                    cid = str(c.get('characterId') or '').strip().lower()
+                    if cid and cid not in dialogue_characters:
+                        item = dict(c)
+                        item['_source'] = go_name
+                        dialogue_characters[cid] = item
+                # Older scenes may still carry the hidden legacy sprite list. Use it only
+                # as a sprite fallback when the newer CharacterDefinition has none.
+                for c in data.get('characterSprites') or []:
+                    cid = str(c.get('characterId') or '').strip().lower()
+                    if not cid:
+                        continue
+                    if cid not in dialogue_characters:
+                        dialogue_characters[cid] = {'characterId': cid, 'displayName': cid, 'sprite': c.get('sprite'), '_source': go_name}
+                    elif not guid_of(dialogue_characters[cid].get('sprite')) and guid_of(c.get('sprite')):
+                        dialogue_characters[cid]['sprite'] = c.get('sprite')
             table = guid_of(data.get('table'))
             if table:
                 tags = [str(t) for t in (data.get('eventTags') or [])]
                 enabled = data.get('sourceEnabled', 1) not in (0, False)
                 sources.append({'label': f'{cls or "?"} on {go_name}', 'table': table, 'tags': tags, 'enabled': enabled})
-        return poi, scheduler, warp, planets, sources, '; '.join(errors) if errors else None
+        return poi, scheduler, warp, planets, sources, dialogue_characters, '; '.join(errors) if errors else None
 
     def _read_json(self, path):
         try:

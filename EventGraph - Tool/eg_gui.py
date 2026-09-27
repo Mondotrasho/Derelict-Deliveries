@@ -62,7 +62,7 @@ def save_settings(data):
 class App(tk.Tk):
     def __init__(self, project_root=None, scene=None):
         super().__init__()
-        self.title('Event Graph · read-only')
+        self.title('Event Graph v2 · read-only')
         self.settings = load_settings()
         self.geometry(self.settings.get('geometry', '1500x900'))
         self.configure(bg=BG)
@@ -841,7 +841,7 @@ class App(tk.Tk):
     # ========================================================== side panels
     # ---------------------------------------------------------------- images
     def _photo(self, guid, max_width):
-        """PhotoImage for a banner GUID (cached by file timestamp), or (None, reason)."""
+        """PhotoImage for any project image GUID (cached by file timestamp), or (None, reason)."""
         path = self.snap.guid_to_path.get(guid) if self.snap else None
         if not path:
             return None, 'missing file (GUID not found in the project)', None
@@ -941,9 +941,14 @@ class App(tk.Tk):
         g, snap = self.g, self.snap
         lib = getattr(g, 'banner_library', None)
         t.insert('end', 'Banners\n', 'h1')
-        t.insert('end', 'What each Banner Library slot shows and who ends up using it. Events resolve: own Banner field, '
-                        'then a library override, then the category default; planet events show the banner of the planet they happen on. '
-                        'Swap a PSD and this refreshes.\n\n', 'dim')
+        t.insert('end', 'Effective BannerLibrary resolution, including event + planet, event + planet-tag, and event-family + planet-tag overrides. '
+                        'Select a planet event to see the exact banner it gets on every eligible planet. Swap a PSD and this refreshes.\n\n', 'dim')
+
+        def definition_name(ref):
+            gid, _ = eg_model._ref(ref)
+            node = g.nodes.get('ev:' + gid) if gid else None
+            return node.title if node else (gid[:8] + '...' if gid else '(none)')
+
         if not lib:
             t.insert('end', 'No BannerLibrary asset in the project.\n', 'warn')
         else:
@@ -952,31 +957,61 @@ class App(tk.Tk):
             slots = [('Asteroid default (asteroid + hazard events)', d.get('asteroid')), ('Derelict default', d.get('derelict'))]
             slots += [(f'Planet tag "{eg_model._s(e.get("tag"))}"', e.get('banner')) for e in d.get('planetTags') or []]
             slots += [('Planet fallback', d.get('planetFallback'))]
-            slots += [(f'Override for {eg_model._s(e.get("definition", {}).get("guid", ""))[:8]}...', e.get('banner'))
+            slots += [(f'Event {definition_name(e.get("definition"))} + exact planet "{eg_model._s(e.get("planetId"))}"', e.get('banner'))
+                      for e in d.get('eventPlanetOverrides') or []]
+            slots += [(f'Event {definition_name(e.get("definition"))} + planet tag "{eg_model._s(e.get("planetTag"))}"', e.get('banner'))
+                      for e in d.get('eventPlanetTagOverrides') or []]
+            slots += [(f'Event family "{eg_model._s(e.get("eventTag"))}" + planet tag "{eg_model._s(e.get("planetTag"))}"', e.get('banner'))
+                      for e in d.get('eventTagPlanetTagOverrides') or []]
+            slots += [(f'Per-event override: {definition_name(e.get("definition"))}', e.get('banner'))
                       for e in d.get('definitionOverrides') or []]
             for label, ref in slots:
                 gid, fid = eg_model._ref(ref)
                 t.insert('end', label + '\n', 'h2')
                 if not gid:
-                    t.insert('end', '  (empty)\n\n', 'warn' if 'fallback' not in label and 'Override' not in label else 'dim')
+                    t.insert('end', '  (empty)\n\n', 'dim')
                     continue
                 self._insert_image(t, self._banner_images, gid, fid, 300, '')
                 uses = [(n, why) for n, why in g.banner_uses.get(gid, []) if n]
                 if uses:
                     names = sorted({g.nodes[n].title for n, _ in uses})
-                    t.insert('end', f'  used by {len(names)}: ' + ', '.join(names[:12]) + (' …' if len(names) > 12 else '') + '\n', 'dim')
+                    t.insert('end', f'  used by {len(names)}: ' + ', '.join(names[:12]) + (' ...' if len(names) > 12 else '') + '\n', 'dim')
                 t.insert('end', '\n')
-        own = [(nid, n) for nid, n in g.nodes.items() if n.kind == 'event' and getattr(n, 'banner', None)
-               and 'single' in n.banner and "own Banner" in n.banner['single'][2]]
+
+        own = []
+        for nid, n in g.nodes.items():
+            if n.kind != 'event':
+                continue
+            gid, fid = eg_model._ref(n.data.get('banner'))
+            if gid:
+                own.append((nid, n, gid, fid))
         if own:
             t.insert('end', 'Events with their own Banner field\n', 'h1')
-            for nid, n in sorted(own, key=lambda kv: kv[1].title.lower()):
-                gid, fid, _ = n.banner['single']
+            for nid, n, gid, fid in sorted(own, key=lambda item: item[1].title.lower()):
                 t.insert('end', n.title + '\n', 'h2')
                 self._insert_image(t, self._banner_images, gid, fid, 300, '')
                 t.insert('end', '\n')
+
+        varying = []
+        for nid, n in g.nodes.items():
+            b = getattr(n, 'banner', None)
+            if n.kind != 'event' or not b or 'planets' not in b:
+                continue
+            rows = b.get('planets') or []
+            signatures = {(gid, why) for _, gid, _, why in rows}
+            if len(rows) > 1 and len(signatures) > 1:
+                varying.append((nid, n, rows))
+        if varying:
+            t.insert('end', 'Events whose banner changes by planet\n', 'h1')
+            for nid, n, rows in sorted(varying, key=lambda item: item[1].title.lower()):
+                t.insert('end', n.title + '\n', 'h2')
+                for pid, gid, fid, why in rows:
+                    name = os.path.basename(snap.guid_to_path.get(gid, '')) if gid else '(none)'
+                    t.insert('end', f'  {pid}: {name}  via {why}\n', 'dim' if gid else 'warn')
+                t.insert('end', '\n')
+
         if snap and snap.planets:
-            t.insert('end', 'Planets\n', 'h1')
+            t.insert('end', 'Normal planet banners\n', 'h1')
             for pl in snap.planets:
                 t.insert('end', f'{pl["id"]}  ', 'h2')
                 t.insert('end', f'tags: {", ".join(pl["tags"]) or "none"}\n', 'dim')
