@@ -86,6 +86,7 @@ public sealed class BannerChoiceView : MonoBehaviour
     private LayoutElement bannerLayout, headerLayout, dividerLayout, bodyLayout;
     private GridLayoutGroup choiceGrid;
     private RectTransform choiceArea;
+    private LayoutElement resultLayout;
 
     private readonly List<Button> buttons = new List<Button>();
     private readonly List<TextMeshProUGUI> buttonLabels = new List<TextMeshProUGUI>();
@@ -289,6 +290,8 @@ public sealed class BannerChoiceView : MonoBehaviour
         resultText = CreateText("Result", contentRect);
         resultText.alignment = TextAlignmentOptions.TopLeft;
         resultText.textWrappingMode = TextWrappingModes.Normal;
+        resultLayout = resultText.gameObject.AddComponent<LayoutElement>();
+        resultLayout.flexibleHeight = 0f;
 
         choiceArea = CreateRect("Choices", contentRect);
         // A grid, so many choices can go into two columns. Its preferred height
@@ -414,7 +417,25 @@ public sealed class BannerChoiceView : MonoBehaviour
         float bodySize = style != null ? style.BodyFontSize : 28f;
         float minBody = bodyText.gameObject.activeSelf ? bodySize * 1.25f * minBodyLines : 0f;
         bool showingResult = resultText.gameObject.activeSelf;
-        float resultHeight = showingResult ? resultText.preferredHeight : 0f;
+        // Do not use resultText.preferredHeight here. On the first result shown in a
+        // freshly-opened panel, the Result RectTransform can still have its old/inactive
+        // width for this frame. TMP then measures against that stale width and can report
+        // an enormous height, which makes the banner collapse until another interaction
+        // happens to force a second layout pass. Measure against the width we are about to
+        // give the result instead, so first-result and later-result layouts are identical.
+        float resultHeight = 0f;
+        if (showingResult)
+        {
+            resultHeight = resultText.GetPreferredValues(resultText.text, contentWidth, Mathf.Infinity).y;
+            resultHeight = Mathf.Max(0f, resultHeight);
+        }
+
+        if (resultLayout != null)
+        {
+            resultLayout.minHeight = resultHeight;
+            resultLayout.preferredHeight = resultHeight;
+        }
+
         int visibleChildren = 0;
         foreach (Transform child in contentRect) if (child.gameObject.activeSelf) visibleChildren++;
         float fixedHeight = column.padding.top + column.padding.bottom + headerHeight + border
