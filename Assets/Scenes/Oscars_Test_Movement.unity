@@ -2979,6 +2979,7 @@ MonoBehaviour:
     eventState:
       tags:
       - Green
+      - Frontier
       flags: []
       counters: []
       deliveries: []
@@ -2997,6 +2998,7 @@ MonoBehaviour:
     eventState:
       tags:
       - Red
+      - Cult
       flags: []
       counters: []
       deliveries: []
@@ -3032,6 +3034,7 @@ MonoBehaviour:
     eventState:
       tags:
       - Grey
+      - Industrial
       flags: []
       counters: []
       deliveries: []
@@ -3050,6 +3053,7 @@ MonoBehaviour:
     eventState:
       tags:
       - Yellow
+      - Corporate
       flags: []
       counters: []
       deliveries: []
@@ -17784,7 +17788,7 @@ MonoBehaviour:
   - {r: 1, g: 0.55, b: 0.3, a: 1}
   - {r: 1, g: 0.35, b: 0.3, a: 1}
   sortingLayerName: Foreground
-  sortingOrder: 122
+  sortingOrder: 80
   showTurnLabels: 1
   placeLabelOnTarget: 1
   turnLabelPrefix: '#'
@@ -18730,7 +18734,7 @@ MonoBehaviour:
     textColour: {r: 0.83137256, g: 0.54901963, b: 1, a: 1}
   hidePortraitWhenNoSprite: 1
   sideAreaFraction: 0.2
-  controlsHeightFraction: 0.128
+  controlsHeightFraction: 0.2
   outerInsetFraction: 0.018
   portraitPaddingFraction: 0.018
   topInsetFraction: 0.0589
@@ -18784,7 +18788,7 @@ MonoBehaviour:
   autoScrollToNewest: 1
   showDebugResetButton: 0
   continueButtonText: CONTINUE
-  choiceAreaFraction: 0.5
+  choiceAreaFraction: 0.62
   showCloseButton: 1
   closeButtonText: QUIT
   bringToFrontOnOpen: 1
@@ -18909,7 +18913,7 @@ MonoBehaviour:
   maxHullIntegrity: 100
   hullIntegrity: 100
   maxFuel: 100
-  fuel: 100
+  fuel: 80
   maxShields: 40
   shields: 40
   maxCrew: 10
@@ -18985,6 +18989,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7100000502}
   - {fileID: 7100000402}
   - {fileID: 2100000004}
   m_Father: {fileID: 0}
@@ -19151,7 +19156,7 @@ MonoBehaviour:
       completeResources: []
       completeDetectionTurns: 0
       returnToPicker: 1
-      dialogueJson: {fileID: 4900000, guid: 412fc1db5764ab549a4d59c3ca7c6605, type: 3}
+      dialogueJson: {fileID: 4900000, guid: a06df33003614e12b832163169e3fa76, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
   - planetId: Grey_Planet
@@ -19172,7 +19177,7 @@ MonoBehaviour:
       completeResources: []
       completeDetectionTurns: 0
       returnToPicker: 1
-      dialogueJson: {fileID: 4900000, guid: f7c4f7919b403624c95bead0137244ef, type: 3}
+      dialogueJson: {fileID: 4900000, guid: bd288fe65dda4ccc9512a97e33193fdc, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
   - planetId: Red_planet
@@ -19193,7 +19198,7 @@ MonoBehaviour:
       completeResources: []
       completeDetectionTurns: 0
       returnToPicker: 1
-      dialogueJson: {fileID: 4900000, guid: add037795f36b5443b8ea77129f12381, type: 3}
+      dialogueJson: {fileID: 4900000, guid: 31ba0ebd796640b4b3769a6838cd7979, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
   - planetId: Red_planet_moon
@@ -19235,7 +19240,7 @@ MonoBehaviour:
       completeResources: []
       completeDetectionTurns: 0
       returnToPicker: 1
-      dialogueJson: {fileID: 4900000, guid: a3703e4c4ed613046a492e8415da1920, type: 3}
+      dialogueJson: {fileID: 4900000, guid: 851b21d2a02a48ca831bc226e498d35a, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
   sharedOptions:
@@ -19346,6 +19351,59 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: 97c04eb8928441ca88c2c30fc612b440, type: 2}
+  - id: cult.dropoff
+    title: Drop off the robed passengers
+    description: Your passengers are very keen to get off.
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Grey
+        mustHave: 1
+      flags:
+      - scope: 0
+        key: cult:passengers
+        expected: 1
+      - scope: 0
+        key: cult:ritual_done
+        expected: 1
+      counters: []
+    oncePerPlanet: 0
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: 4b1504f6e00146d79db836dc8bfc9d91, type: 2}
+  - id: cult.deliver
+    title: Deliver the egg
+    description: The customer is waiting. The egg is humming.
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Yellow
+        mustHave: 1
+      flags:
+      - scope: 0
+        key: cult:egg
+        expected: 1
+      counters: []
+    oncePerPlanet: 0
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: b2309cfa2edf4b1ba8e906058a9f74e3, type: 2}
 --- !u!114 &2100000009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19837,6 +19895,8 @@ MonoBehaviour:
   dialoguePanel: {fileID: 2031162150}
   enemySpawner: {fileID: 0}
   enemyTurnController: {fileID: 0}
+  questScheduler: {fileID: 0}
+  roster: {fileID: 0}
   titlePrefix: SYS://
   upperCaseTitle: 1
   planetNameAsStatus: 1
@@ -20016,6 +20076,7 @@ MonoBehaviour:
   style: {fileID: 11400000, guid: e2fa03d164984edfa08c97362373abd6, type: 2}
   player: {fileID: 2078833601}
   enemySpawner: {fileID: 0}
+  roster: {fileID: 0}
   fontSize: 22
   refreshSeconds: 0.25
   alignment: 260
@@ -20025,6 +20086,7 @@ MonoBehaviour:
   showCrew: 1
   showSupplies: 1
   showHunt: 1
+  showOfficers: 1
   detectionLabel: DETECTION IN
   waveLabel: NEXT WAVE IN
 --- !u!1 &7100000101
@@ -22808,6 +22870,81 @@ MonoBehaviour:
     kind: 2
     key: capsule:shot
     showWhenZero: 0
+  - label: 'Cult ending 1: Total Rejection'
+    kind: 1
+    key: cult:end:rejection
+    showWhenZero: 0
+  - label: 'Cult ending 2: Saboteur'
+    kind: 1
+    key: cult:end:saboteur
+    showWhenZero: 0
+  - label: 'Cult ending 3: The Airlock'
+    kind: 1
+    key: cult:end:airlock
+    showWhenZero: 0
+  - label: 'Cult ending 4: Paid in Full'
+    kind: 1
+    key: cult:end:paid
+    showWhenZero: 0
+  - label: 'Cult ending 5: The Airlock II'
+    kind: 1
+    key: cult:end:airlock2
+    showWhenZero: 0
+  - label: 'Cult ending 6: The Beast'
+    kind: 1
+    key: cult:end:beast
+    showWhenZero: 0
+--- !u!1 &7100000501
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7100000502}
+  - component: {fileID: 7100000503}
+  m_Layer: 0
+  m_Name: QuestScheduler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7100000502
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000501}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2100000002}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7100000503
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b33143abe47d4aad82c190a515b2dcb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestScheduler
+  presenterBehaviour: {fileID: 7100000003}
+  player: {fileID: 2078833601}
+  turnManager: {fileID: 651697407}
+  startEvents:
+  - definition: {fileID: 11400000, guid: 447e126e10834007857856fb3c2d7155, type: 2}
+    fromTurn: 8
+  logSchedule: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
