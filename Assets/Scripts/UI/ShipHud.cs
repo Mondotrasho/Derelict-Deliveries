@@ -11,15 +11,19 @@ using UnityEngine.UI;
 ///   top-centre   THREAT bar - fills as detection / the next hunter wave gets
 ///                closer, shifting amber to red, pulsing faster, glitching and
 ///                shaking as it closes in. Turns into HUNTED once detected.
-///   top-right    SHIP STATUS - hull, shields and fuel as filling bars, crew,
-///                supplies, officers and the turn number.
+///   top-right    STATUS - hull, shields and fuel bars (icon + value over the
+///                bar), crew and supplies counts and an INVENTORY button (it
+///                raises On Inventory Pressed / InventoryPressed - wire it up).
+///                Changes float off as +10 / -15; low hull or fuel pulses red.
 ///   bottom-right MOVEMENT - one pip per movement point (the planned route's
-///                cost blinks on the pips it would spend), the plot-mode toggle
-///                (THIS TURN / MULTI-TURN) and the GO / CANCEL / END TURN buttons.
+///                cost blinks on the pips it would spend), the turn number, the
+///                route's cost readout, the plot-mode toggle and GO / CANCEL /
+///                END TURN. Keys: SPACE = GO, E = END TURN, M = plot mode.
 ///
-/// Every sprite slot is optional: temporary art ships with it (Sprites/HUD) and
-/// anything left empty falls back to plain tinted boxes, so replacing art never
-/// breaks the layout. Colours and fonts come from the TerminalStyle asset.
+/// Every sprite slot is optional: temporary art ships with it (Sprites/HUD, and
+/// the icons in Resources/HUDIcons, loaded automatically when a slot is empty)
+/// and anything still missing falls back to plain tinted boxes, so replacing art
+/// never breaks the layout. Colours and fonts come from the TerminalStyle asset.
 /// Objects in Hide On Start (the old temp buttons and readouts) are switched off
 /// when the HUD starts, so it can be removed again without losing them.
 /// </summary>
@@ -33,7 +37,6 @@ public sealed class ShipHud : MonoBehaviour
     [SerializeField] private RoutePlanner routePlanner;
     [SerializeField] private TurnManager turnManager;
     [SerializeField] private EnemySpawnController enemySpawner;
-    [SerializeField] private OfficerRoster roster;
 
     [Header("Art (temporary - replace with your own)")]
     [SerializeField] private Sprite barFrame;
@@ -44,6 +47,28 @@ public sealed class ShipHud : MonoBehaviour
     [SerializeField] private Sprite threatIcon;
     [Tooltip("Tiling texture scrolled inside the threat bar (wrap mode Repeat).")]
     [SerializeField] private Texture2D threatStripes;
+
+    [Header("Icons (empty = load the temp ones from Resources/HUDIcons)")]
+    [SerializeField] private Sprite hullIcon;
+    [SerializeField] private Sprite shieldIcon;
+    [SerializeField] private Sprite fuelIcon;
+    [SerializeField] private Sprite crewIcon;
+    [SerializeField] private Sprite suppliesIcon;
+    [SerializeField] private Sprite inventoryIcon;
+
+    [Header("Inventory")]
+    [Tooltip("Raised when the INVENTORY button is pressed. Nothing is wired yet.")]
+    [SerializeField] private UnityEngine.Events.UnityEvent onInventoryPressed = new UnityEngine.Events.UnityEvent();
+
+    /// <summary>Raised when the INVENTORY button is pressed (for code; the inspector event fires too).</summary>
+    public event System.Action InventoryPressed;
+
+    [Header("Feedback")]
+    [Tooltip("Hull or fuel below this fraction pulses red.")]
+    [Range(0f, 1f)] [SerializeField] private float lowFraction = 0.25f;
+    [SerializeField] private Color gainColour = new Color(0.45f, 1f, 0.55f, 1f);
+    [SerializeField] private Color lossColour = new Color(1f, 0.35f, 0.3f, 1f);
+    [SerializeField] private bool showKeyHints = true;
 
     [Header("Layout")]
     [Min(0.25f)] [SerializeField] private float scale = 1f;
@@ -78,6 +103,19 @@ public sealed class ShipHud : MonoBehaviour
     [Tooltip("How visible a disabled button's art stays (0 = invisible).")]
     [Range(0f, 1f)] [SerializeField] private float disabledButtonAlpha = 0.35f;
 
+    [Header("Hide while events / combat are open")]
+    [Tooltip("The movement / turn panel (bottom right).")]
+    [SerializeField] private bool hideMovementPanel = true;
+    [SerializeField] private bool hideStatusPanel = false;
+    [SerializeField] private bool hideThreatPanel = false;
+    [Min(0.01f)] [SerializeField] private float hideFadeSeconds = 0.15f;
+    [Tooltip("Also hide whenever the game blocks player input (any event, dialogue or hold that pauses movement) - catches windows the HUD doesn't know by name.")]
+    [SerializeField] private bool hideWhenInputBlocked = true;
+    [Tooltip("Print to the console what made the panels hide / show (for tracking down a window that isn't caught).")]
+    [SerializeField] private bool logVisibility = false;
+    [Tooltip("Waits this long after the last window closes before coming back, so chained windows (planet -> event -> dialogue) don't make it flicker.")]
+    [Min(0f)] [SerializeField] private float reshowDelaySeconds = 0.25f;
+
     [Header("Old UI")]
     [Tooltip("Switched off when the HUD starts (the temp buttons and text readouts it replaces).")]
     [SerializeField] private List<GameObject> hideOnStart = new List<GameObject>();
@@ -85,17 +123,43 @@ public sealed class ShipHud : MonoBehaviour
     // ------------------------------------------------------------------ state
     private sealed class Bar
     {
-        public RectTransform fill;
-        public TMP_Text value;
-        public float shown = -1f;
+        public RectTransform root, fill;
+        public Image fillImage, icon;
+        public Color colour;
+        public TMP_Text value, valueShadow;
+        public bool warnLow;
+        public float shown = -1f, last = float.NaN, flashUntil;
+    }
+
+    private sealed class Floater
+    {
+        public TMP_Text text;
+        public Vector2 start;
+        public float born;
     }
 
     private TerminalStyle.Palette palette;
     private Bar hullBar, shieldBar, fuelBar;
-    private TMP_Text headerText, crewText, officerText, moveText;
+    private TMP_Text crewText, suppliesText, moveText, turnText, routeText;
+    private Image crewIconImage, suppliesIconImage;
+    private RectTransform statusRoot;
+    private int lastCrew = int.MinValue, lastSupplies = int.MinValue;
+    private readonly List<Floater> floaters = new List<Floater>();
+
+    // windows that hide the HUD panels while open
+    private RectTransform movePanel;
+    private CanvasGroup moveGroup, statusGroup, threatGroup;
+    private EventPanel[] eventPanels;
+    private PlanetPicker[] planetPickers;
+    private DialoguePanelController[] dialoguePanels;
+    private CombatScreenController[] combatScreens;
+    private CombatEncounterController[] combatControllers;
+    private WarpExitController[] warpScreens;
+    private float lastModalTime = float.NegativeInfinity;
+    private bool panelsHidden;
     private RectTransform pipRow;
     private readonly List<Image> pips = new List<Image>();
-    private Button modeButton, goButton, cancelButton, endButton;
+    private Button modeButton, goButton, cancelButton, endButton, inventoryButton;
     private TMP_Text modeLabel, goText, cancelText, endText;
     private readonly Dictionary<Button, bool> buttonState = new Dictionary<Button, bool>();
 
@@ -118,7 +182,12 @@ public sealed class ShipHud : MonoBehaviour
         if (routePlanner == null) routePlanner = FindFirstObjectByType<RoutePlanner>();
         if (turnManager == null) turnManager = FindFirstObjectByType<TurnManager>();
         if (enemySpawner == null) enemySpawner = FindFirstObjectByType<EnemySpawnController>();
-        if (roster == null) roster = FindFirstObjectByType<OfficerRoster>();
+        if (hullIcon == null) hullIcon = Resources.Load<Sprite>("HUDIcons/hud_icon_hull");
+        if (shieldIcon == null) shieldIcon = Resources.Load<Sprite>("HUDIcons/hud_icon_shield");
+        if (fuelIcon == null) fuelIcon = Resources.Load<Sprite>("HUDIcons/hud_icon_fuel");
+        if (crewIcon == null) crewIcon = Resources.Load<Sprite>("HUDIcons/hud_icon_crew");
+        if (suppliesIcon == null) suppliesIcon = Resources.Load<Sprite>("HUDIcons/hud_icon_supplies");
+        if (inventoryIcon == null) inventoryIcon = Resources.Load<Sprite>("HUDIcons/hud_icon_inventory");
 
         palette = style != null ? style.GetPalette(false) : new TerminalStyle.Palette
         {
@@ -127,12 +196,22 @@ public sealed class ShipHud : MonoBehaviour
             dim = new Color(0.61f, 0.42f, 0f, 1f)
         };
 
+        eventPanels = FindObjectsByType<EventPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        planetPickers = FindObjectsByType<PlanetPicker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        dialoguePanels = FindObjectsByType<DialoguePanelController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        combatScreens = FindObjectsByType<CombatScreenController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        combatControllers = FindObjectsByType<CombatEncounterController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        warpScreens = FindObjectsByType<WarpExitController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
         foreach (GameObject go in hideOnStart)
         {
             if (go != null) go.SetActive(false);
         }
 
         Build();
+        moveGroup = movePanel.gameObject.AddComponent<CanvasGroup>();
+        statusGroup = statusRoot.gameObject.AddComponent<CanvasGroup>();
+        threatGroup = threatRoot.gameObject.AddComponent<CanvasGroup>();
     }
 
 
@@ -142,9 +221,15 @@ public sealed class ShipHud : MonoBehaviour
         UpdateMovement();
         UpdateThreat();
 
-        if (Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame)
+        UpdateFloaters();
+        UpdatePanelVisibility();
+
+        Keyboard k = Keyboard.current;
+        if (k != null && !(panelsHidden && hideMovementPanel))
         {
-            ToggleMode();
+            if (k.mKey.wasPressedThisFrame) ToggleMode();
+            if (k.spaceKey.wasPressedThisFrame && goButton.interactable) planController?.CommitSegment();
+            if (k.eKey.wasPressedThisFrame && endButton.interactable) EndTurn();
         }
     }
 
@@ -154,35 +239,48 @@ public sealed class ShipHud : MonoBehaviour
     {
         var root = (RectTransform)transform;
 
-        // SHIP STATUS (top right)
-        RectTransform status = Panel(root, "ShipStatus", new Vector2(1f, 1f), new Vector2(-screenMargin.x, -screenMargin.y),
-                                     new Vector2(380f, 262f));
-        var col = Column(status, 14f, 6f);
-        headerText = Label(col, "SHIP STATUS", style != null ? style.HeaderFontSize : 20f, palette.primary, 26f);
-        hullBar = MakeBar(col, "HULL", hullColour);
-        shieldBar = MakeBar(col, "SHIELDS", shieldColour);
-        fuelBar = MakeBar(col, "FUEL", fuelColour);
-        crewText = Label(col, "", 20f, palette.primary, 26f);
-        officerText = Label(col, "", 18f, palette.dim, 24f);
+        // STATUS (top right):  [icon][bar 64/100] x3,  crew / supplies / inventory
+        statusRoot = Panel(root, "ShipStatus", new Vector2(1f, 1f), new Vector2(-screenMargin.x, -screenMargin.y),
+                           new Vector2(300f, 164f));
+        var col = Column(statusRoot, 12f, 6f);
+        hullBar = MakeBar(col, "Hull", hullIcon, hullColour, true);
+        shieldBar = MakeBar(col, "Shields", shieldIcon, shieldColour, false);
+        fuelBar = MakeBar(col, "Fuel", fuelIcon, fuelColour, true);
+
+        RectTransform counts = Row(col, 36f, 6f);
+        crewIconImage = Icon(counts, "CrewIcon", crewIcon, palette.primary, 26f);
+        crewText = Label(counts, "", 18f, palette.primary, 36f, 64f);
+        suppliesIconImage = Icon(counts, "SuppliesIcon", suppliesIcon, palette.primary, 26f);
+        suppliesText = Label(counts, "", 18f, palette.primary, 36f, 56f);
+        Flex(Rect("Gap", counts));
+        inventoryButton = MakeButton(counts, "", PressInventory, 48f, out TMP_Text invLabel, flexible: false);
+        Image invIcon = Img(inventoryButton.transform, "Icon", inventoryIcon, palette.primary, false);
+        invIcon.preserveAspect = true;
+        Stretch(invIcon.rectTransform);
+        invIcon.rectTransform.offsetMin = new Vector2(10f, 7f) * scale;
+        invIcon.rectTransform.offsetMax = new Vector2(-10f, -7f) * scale;
 
         // MOVEMENT + actions (bottom right)
         //   MOVEMENT 5/8  > > > > > > > >
         //   PLOT [1 TURN]        [GO] [CANCEL] [END TURN]
-        RectTransform move = Panel(root, "Movement", new Vector2(1f, 0f), new Vector2(-screenMargin.x, screenMargin.y),
-                                   new Vector2(540f, 118f));
-        var mcol = Column(move, 12f, 10f);
+        RectTransform move = movePanel = Panel(root, "Movement", new Vector2(1f, 0f), new Vector2(-screenMargin.x, screenMargin.y),
+                                   new Vector2(540f, 140f));
+        var mcol = Column(move, 12f, 6f);
         RectTransform moveRow = Row(mcol, 28f, 8f);
-        moveText = Label(moveRow, "MOVEMENT", 16f, palette.primary, 28f, 140f);
+        moveText = Label(moveRow, "MOVE", 16f, palette.primary, 28f, 96f);
         pipRow = Row(moveRow, 24f, 4f);
         Flex(pipRow);
+        turnText = Label(moveRow, "TURN 1", 16f, palette.primary, 28f, 90f);
+        turnText.alignment = TextAlignmentOptions.Right;
+        routeText = Label(mcol, "", 13f, palette.dim, 16f);
 
         RectTransform buttons = Row(mcol, 42f, 6f);
         Label(buttons, plotCaption, 13f, palette.dim, 42f, 40f);
         modeButton = MakeButton(buttons, oneTurnShort, ToggleMode, 96f, out modeLabel, flexible: false);
         Flex(Rect("Gap", buttons));                                        // pushes the actions right
-        goButton = MakeButton(buttons, goLabel, () => planController?.CommitSegment(), 64f, out goText, flexible: false);
+        goButton = MakeButton(buttons, Hint(goLabel, "SPC"), () => planController?.CommitSegment(), 84f, out goText, flexible: false);
         cancelButton = MakeButton(buttons, cancelLabel, () => planController?.Cancel(), 96f, out cancelText, flexible: false);
-        endButton = MakeButton(buttons, endTurnLabel, EndTurn, 116f, out endText, flexible: false);
+        endButton = MakeButton(buttons, Hint(endTurnLabel, "E"), EndTurn, 116f, out endText, flexible: false);
 
         // THREAT (top centre)
         threatRoot = Panel(root, "Threat", new Vector2(0.5f, 1f), new Vector2(0f, -screenMargin.y), new Vector2(640f, 92f));
@@ -238,28 +336,45 @@ public sealed class ShipHud : MonoBehaviour
     }
 
 
-    private Bar MakeBar(RectTransform parent, string title, Color colour)
+    private Bar MakeBar(RectTransform parent, string title, Sprite iconSprite, Color colour, bool warnLow)
     {
-        RectTransform row = Row(parent, 34f, 8f);
-        Label(row, title, 18f, palette.primary, 34f, 96f);
+        RectTransform row = Row(parent, 30f, 8f);
+        var bar = new Bar { colour = colour, warnLow = warnLow };
+        bar.icon = Icon(row, title + "Icon", iconSprite, colour, 26f);
 
-        RectTransform barRoot = Rect(title + "Bar", row);
-        Flex(barRoot);
-        Image back = Img(barRoot, "Back", null, new Color(0f, 0f, 0f, 0.5f), false);
+        bar.root = Rect(title + "Bar", row);
+        Flex(bar.root);
+        Image back = Img(bar.root, "Back", null, new Color(0f, 0f, 0f, 0.5f), false);
         Stretch(back.rectTransform);
-        var bar = new Bar { fill = Rect("Fill", barRoot) };
+        bar.fill = Rect("Fill", bar.root);
         bar.fill.anchorMin = Vector2.zero;
         bar.fill.anchorMax = Vector2.one;
         bar.fill.offsetMin = new Vector2(2f, 2f) * scale;
         bar.fill.offsetMax = new Vector2(-2f, -2f) * scale;
-        Image fill = Img(bar.fill, "Colour", barFill, colour, true);
-        Stretch(fill.rectTransform);
-        Image frame = Img(barRoot, "Frame", barFrame, palette.primary, true);
+        bar.fillImage = Img(bar.fill, "Colour", barFill, colour, true);
+        Stretch(bar.fillImage.rectTransform);
+        Image frame = Img(bar.root, "Frame", barFrame, palette.primary, true);
         Stretch(frame.rectTransform);
 
-        bar.value = Label(row, "", 18f, palette.primary, 34f, 90f);
-        bar.value.alignment = TextAlignmentOptions.Right;
+        // value written over the bar, with a dark copy behind it so it reads on any fill colour
+        bar.valueShadow = Label(bar.root, "", 15f, new Color(0f, 0f, 0f, 0.85f), 0f);
+        Stretch(bar.valueShadow.rectTransform);
+        bar.valueShadow.rectTransform.offsetMin = new Vector2(1.5f, -1.5f) * scale;
+        bar.valueShadow.rectTransform.offsetMax = new Vector2(1.5f, -1.5f) * scale;
+        bar.valueShadow.alignment = TextAlignmentOptions.Center;
+        bar.value = Label(bar.root, "", 15f, Color.white, 0f);
+        Stretch(bar.value.rectTransform);
+        bar.value.alignment = TextAlignmentOptions.Center;
         return bar;
+    }
+
+
+    private Image Icon(RectTransform parent, string name, Sprite sprite, Color colour, float size)
+    {
+        Image icon = Img(parent, name, sprite, colour, false);
+        icon.preserveAspect = true;
+        Size(icon.rectTransform, size, size);
+        return icon;
     }
 
 
@@ -292,36 +407,82 @@ public sealed class ShipHud : MonoBehaviour
     private void UpdateStatus()
     {
         ShipResources r = player != null ? player.Resources : null;
-        if (r != null)
-        {
-            SetBar(hullBar, r.HullIntegrity, r.MaxHullIntegrity);
-            SetBar(shieldBar, r.Shields, r.MaxShields);
-            SetBar(fuelBar, r.Fuel, r.MaxFuel);
-            int supplies = player.EventState != null ? player.EventState.GetCounter(EventKeys.Supplies) : 0;
-            crewText.text = $"CREW {r.Crew}/{r.MaxCrew}     SUPPLIES {supplies}";
-        }
+        if (r == null) return;
 
-        headerText.text = turnManager != null ? $"SHIP STATUS  //  TURN {turnManager.CurrentTurn}" : "SHIP STATUS";
+        SetBar(hullBar, r.HullIntegrity, r.MaxHullIntegrity);
+        SetBar(shieldBar, r.Shields, r.MaxShields);
+        SetBar(fuelBar, r.Fuel, r.MaxFuel);
 
-        if (roster != null && roster.Aboard.Count > 0)
-        {
-            var names = new List<string>();
-            foreach (OfficerDefinition o in roster.Aboard) names.Add(o.DisplayName.ToUpperInvariant());
-            officerText.text = "OFFICERS  " + string.Join(", ", names);
-        }
-        else
-        {
-            officerText.text = "OFFICERS  NONE ABOARD";
-        }
+        int supplies = player.EventState != null ? player.EventState.GetCounter(EventKeys.Supplies) : 0;
+        crewText.text = $"{r.Crew}/{r.MaxCrew}";
+        suppliesText.text = supplies.ToString();
+        if (lastCrew != int.MinValue && r.Crew != lastCrew) Float(crewIconImage.rectTransform, r.Crew - lastCrew);
+        if (lastSupplies != int.MinValue && supplies != lastSupplies) Float(suppliesIconImage.rectTransform, supplies - lastSupplies);
+        lastCrew = r.Crew;
+        lastSupplies = supplies;
     }
 
 
     private void SetBar(Bar bar, float value, float max)
     {
+        float t = Time.unscaledTime;
         float target = max > 0f ? Mathf.Clamp01(value / max) : 0f;
         bar.shown = bar.shown < 0f ? target : Mathf.MoveTowards(bar.shown, target, Time.unscaledDeltaTime * 1.5f);
         bar.fill.anchorMax = new Vector2(bar.shown, 1f);
-        bar.value.text = $"{Mathf.RoundToInt(value)}/{Mathf.RoundToInt(max)}";
+
+        string text = $"{Mathf.RoundToInt(value)}/{Mathf.RoundToInt(max)}";
+        bar.value.text = text;
+        bar.valueShadow.text = text;
+
+        if (!float.IsNaN(bar.last) && Mathf.RoundToInt(value) != Mathf.RoundToInt(bar.last))
+        {
+            Float(bar.root, Mathf.RoundToInt(value) - Mathf.RoundToInt(bar.last));
+            bar.flashUntil = t + 0.25f;
+        }
+        bar.last = value;
+
+        bool low = bar.warnLow && max > 0f && value / max < lowFraction;
+        float pulse = 0.5f + 0.5f * Mathf.Sin(t * 7f);
+        Color c = low ? Color.Lerp(bar.colour, lossColour, pulse) : bar.colour;
+        if (t < bar.flashUntil) c = Color.Lerp(c, Color.white, 0.7f);
+        bar.fillImage.color = c;
+        bar.icon.color = low && pulse > 0.5f ? lossColour : bar.colour;
+    }
+
+
+    // ------------------------------------------------------ change floaters
+    private void Float(RectTransform anchor, int delta)
+    {
+        if (delta == 0 || statusRoot == null) return;
+        TMP_Text t = Label(statusRoot, delta > 0 ? $"+{delta}" : delta.ToString(), 16f,
+                           delta > 0 ? gainColour : lossColour, 0f);
+        t.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        RectTransform rt = t.rectTransform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(80f, 24f) * scale;
+        rt.position = anchor.position;
+        t.alignment = TextAlignmentOptions.Center;
+        floaters.Add(new Floater { text = t, start = rt.anchoredPosition, born = Time.unscaledTime });
+    }
+
+
+    private void UpdateFloaters()
+    {
+        for (int i = floaters.Count - 1; i >= 0; i--)
+        {
+            Floater f = floaters[i];
+            float age = Time.unscaledTime - f.born;
+            if (age > 1.1f)
+            {
+                Destroy(f.text.gameObject);
+                floaters.RemoveAt(i);
+                continue;
+            }
+            f.text.rectTransform.anchoredPosition = f.start + new Vector2(0f, 34f * age) * scale;
+            Color c = f.text.color;
+            c.a = Mathf.Clamp01(1.4f - age * 1.3f);
+            f.text.color = c;
+        }
     }
 
 
@@ -358,10 +519,12 @@ public sealed class ShipHud : MonoBehaviour
             else c = moveColour;                                                                     // left after it
             pips[i].color = c;
         }
-        moveText.text = $"MOVEMENT {current}/{max}";
+        moveText.text = $"MOVE {current}/{max}";
+        turnText.text = turnManager != null ? $"TURN {turnManager.CurrentTurn}" : "";
 
         bool oneTurn = planController == null || planController.Mode == MovementPlanController.PlanningMode.OneTurn;
-        modeLabel.text = oneTurn ? oneTurnShort : multiTurnShort;
+        modeLabel.text = Hint(oneTurn ? oneTurnShort : multiTurnShort, "M");
+        routeText.text = RouteReadout(a, current, oneTurn);
 
         bool canAct = planController != null && planController.CanAcceptPlayerInput;
         bool moving = player != null && player.IsMoving;
@@ -487,6 +650,83 @@ public sealed class ShipHud : MonoBehaviour
         Color d = colours.disabledColor;
         colours.disabledColor = new Color(d.r, d.g, d.b, Mathf.Max(d.a, disabledButtonAlpha));
         button.colors = colours;
+    }
+
+
+    // ------------------------------------------ hide while windows are open
+    /// <summary>Why the panels should be hidden right now, or null if nothing is open.</summary>
+    private string OpenWindowReason()
+    {
+        foreach (EventPanel p in eventPanels) if (p != null && p.IsOpen) return "event panel " + p.name;
+        foreach (PlanetPicker p in planetPickers) if (p != null && p.IsOpen) return "planet picker " + p.name;
+        foreach (DialoguePanelController p in dialoguePanels) if (p != null && p.IsDialogueOpen) return "dialogue " + p.name;
+        foreach (CombatScreenController p in combatScreens) if (p != null && p.IsOpen) return "combat screen " + p.name;
+        foreach (CombatEncounterController c in combatControllers) if (c != null && c.IsEncounterActive) return "combat encounter";
+        foreach (WarpExitController w in warpScreens) if (w != null && w.IsBusy) return "warp / run-end screen";
+        if (turnManager != null && turnManager.CurrentPhase == TurnPhase.Combat) return "combat phase";
+        if (hideWhenInputBlocked && planController != null && turnManager != null &&
+            turnManager.IsPlayerPhase && !planController.CanAcceptPlayerInput)
+        {
+            return "player input blocked (event / dialogue / hold)";
+        }
+        return null;
+    }
+
+
+    private void UpdatePanelVisibility()
+    {
+        float t = Time.unscaledTime;
+        string reason = OpenWindowReason();
+        if (reason != null) lastModalTime = t;
+        bool wasHidden = panelsHidden;
+        panelsHidden = t - lastModalTime < reshowDelaySeconds;
+        if (logVisibility && panelsHidden != wasHidden)
+        {
+            Debug.Log(panelsHidden ? $"ShipHud: hiding panels - {reason}" : "ShipHud: showing panels - nothing open", this);
+        }
+
+        Fade(moveGroup, hideMovementPanel && panelsHidden);
+        Fade(statusGroup, hideStatusPanel && panelsHidden);
+        Fade(threatGroup, hideThreatPanel && panelsHidden);
+    }
+
+
+    private void Fade(CanvasGroup group, bool hidden)
+    {
+        if (group == null) return;
+        float step = Time.unscaledDeltaTime / hideFadeSeconds;
+        group.alpha = Mathf.MoveTowards(group.alpha, hidden ? 0f : 1f, step);
+        bool usable = !hidden && group.alpha > 0.5f;
+        group.interactable = usable;
+        group.blocksRaycasts = usable;
+    }
+
+
+    private string Hint(string label, string key)
+    {
+        return showKeyHints ? $"{label} <size=60%><alpha=#88>{key}</alpha></size>" : label;
+    }
+
+
+    private string RouteReadout(MovementAllowance a, int current, bool oneTurn)
+    {
+        if (a == null || routePlanner == null) return "";
+        if (routePlanner.HasPlannedRoute)
+        {
+            int cost = a.CalculatePathCost(routePlanner.PlannedPath);
+            if (cost <= current) return $"ROUTE COST {cost}  //  {current - cost} LEFT AFTER";
+            int turns = Mathf.Max(1, a.GetTurnSegmentBreakpoints(routePlanner.PlannedPath).Count);
+            return oneTurn ? $"ROUTE COST {cost}  //  OUT OF REACH THIS TURN" : $"ROUTE COST {cost}  //  {turns} TURNS";
+        }
+        if (planController != null && planController.HasQueuedRemainder) return "ROUTE CONTINUES NEXT TURN";
+        return "";
+    }
+
+
+    private void PressInventory()
+    {
+        onInventoryPressed?.Invoke();
+        InventoryPressed?.Invoke();
     }
 
 
