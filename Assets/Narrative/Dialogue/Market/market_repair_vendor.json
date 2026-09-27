@@ -1,0 +1,59 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//PATCH SHOP",
+    "status": "FIELD REPAIRS"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "market_vendor"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "market_vendor",
+      "text": "Hull patches, shield capacitors, dubious warranties. Pick one problem and I can make it less obvious."
+    },
+    {
+      "tick": 10,
+      "speaker": "market_vendor",
+      "text": "Hull is sealed. Do not ask what the patch used to be.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "market_vendor",
+      "text": "Shield bank is charged. If it hums in B-flat, turn it off for a minute.",
+      "nextTick": -1
+    },
+    {
+      "tick": 30,
+      "speaker": "market_vendor",
+      "text": "Suit yourself. The dents will still be there when you come back.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Patch the hull - 5 supplies",
+          "line": "Patch the hull.",
+          "action": "repair_hull",
+          "nextTick": 10
+        },
+        {
+          "text": "Charge the shields - 4 supplies",
+          "line": "Give the shields a charge.",
+          "action": "charge_shields",
+          "nextTick": 20
+        },
+        {
+          "text": "Leave it",
+          "line": "Nothing today.",
+          "nextTick": 30
+        }
+      ]
+    }
+  ]
+}

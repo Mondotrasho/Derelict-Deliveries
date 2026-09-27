@@ -1,0 +1,52 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//FUEL STALL",
+    "status": "DOCKSIDE EXCHANGE"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "market_vendor"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "market_vendor",
+      "text": "Fuel. Filtered twice, labelled once. Twenty units for five crates of supplies."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "That sales pitch did not improve the word filtered."
+    },
+    {
+      "tick": 10,
+      "speaker": "market_vendor",
+      "text": "Transfer is clean. Mostly. Your gauge says twenty, so we are both happy.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "market_vendor",
+      "text": "Then stop blocking the pump. Someone less cautious is behind you.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 2,
+      "options": [
+        {
+          "text": "Buy 20 fuel for 5 supplies",
+          "line": "Five crates. Pump the fuel.",
+          "action": "buy_fuel",
+          "nextTick": 10
+        },
+        {
+          "text": "No deal",
+          "line": "I will keep the crates.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

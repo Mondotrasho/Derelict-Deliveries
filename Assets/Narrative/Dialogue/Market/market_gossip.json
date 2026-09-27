@@ -1,0 +1,47 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//TEA STALL",
+    "status": "LOCAL CHATTER"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "market_vendor"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "market_vendor",
+      "text": "Two crates buys tea for the table. Tea tends to make people remember where patrols are not looking."
+    },
+    {
+      "tick": 10,
+      "speaker": "market_vendor",
+      "text": "North docks are loud tonight. Patrols have been pulled the other way. That should buy you time.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "market_vendor",
+      "text": "Then the table remains tragically thirsty.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Buy the table a round - 2 supplies",
+          "line": "Fine. Two crates. What have you heard?",
+          "action": "buy_gossip",
+          "nextTick": 10
+        },
+        {
+          "text": "Walk on",
+          "line": "I am not paying for rumours.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

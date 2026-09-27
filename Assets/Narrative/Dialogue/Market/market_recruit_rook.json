@@ -1,0 +1,57 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//RACE BOOK",
+    "status": "RED DISTRICT"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "rook"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "rook",
+      "text": "That your ship on pad six? It turns like a warehouse, but I could work with it."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "You are volunteering to fly my warehouse?"
+    },
+    {
+      "tick": 3,
+      "speaker": "rook",
+      "text": "Ten crates buys the answer. I fly, you keep fuel in it, and nobody uses the word brakes."
+    },
+    {
+      "tick": 10,
+      "speaker": "rook",
+      "text": "Done. First rule: if I say hold on, find something structural.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "rook",
+      "text": "Your loss. Probably your hull too, eventually.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Hire Rook - 10 supplies",
+          "line": "Ten crates. You are flying.",
+          "action": "hire_rook",
+          "nextTick": 10
+        },
+        {
+          "text": "Pass",
+          "line": "I like my warehouse intact.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}
