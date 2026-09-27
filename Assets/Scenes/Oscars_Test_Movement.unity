@@ -288,7 +288,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 6.3265076, y: 4.6735}
+  m_AnchoredPosition: {x: 6.3265076, y: 4.6734924}
   m_SizeDelta: {x: -62.1622, y: -44.031}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &81084069
@@ -20431,7 +20431,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -0.26}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -9.9846, y: 28.3772}
+  m_AnchoredPosition: {x: -9.984589, y: 28.377197}
   m_SizeDelta: {x: -82.5076, y: -108.5778}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &7100000113
@@ -22857,7 +22857,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.9713745, y: -8.7425995}
+  m_AnchoredPosition: {x: 0.9713135, y: -8.7425995}
   m_SizeDelta: {x: -48.9132, y: -52.7986}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &7100000250
@@ -23232,9 +23232,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameViewFrame
   targetAspect: {x: 16, y: 9}
   barColour: {r: 0, g: 0, b: 0, a: 1}
-  fitMap: 1
+  fitMap: 0
   gridMap: {fileID: 28316566}
-  paddingCells: 1
+  paddingCells: 0
   uiCanvas: {fileID: 824059744}
   referenceHeight: 1080
 --- !u!1660057539 &9223372036854775807
