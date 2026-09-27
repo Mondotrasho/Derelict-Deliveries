@@ -36,24 +36,28 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 4
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "One of your crew hasn't reported for their shift. The security feed shows the cargo bay: your passengers, kneeling around the sarcophagus, chanting."
+  banner: {fileID: 21300000, guid: 82aef1970a08d3a49869503d59635e49, type: 3}
+  shortDescription: 'One of your crew hasn''t reported for their shift. The security
+    feed shows the cargo bay: your passengers, kneeling around the sarcophagus, chanting.'
   allowLeave: 0
   choices:
   - id: feed
-    text: "Watch the feed"
+    text: Watch the feed
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Feed"
+    - label: Feed
       weight: 1
-      resultText: "You've seen enough. Probably."
+      resultText: You've seen enough. Probably.
       resources: []
       writes:
         tags: []
@@ -62,28 +66,35 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 4900000, guid: 448dafcddee849fa8421063788b9360a, type: 3}
     endsEvent: 0
     hideAfterUse: 1
   - id: ignore
-    text: "Ignore it"
+    text: Ignore it
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Ignore"
+    - label: Ignore
       weight: 1
-      resultText: "You turn the feed off. Paying passengers are paying passengers. The crew member is never found."
+      resultText: You turn the feed off. Paying passengers are paying passengers.
+        The crew member is never found.
       resources:
       - kind: 2
         amount: -1
@@ -100,28 +111,34 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   - id: interfere
-    text: "Send the crew in"
+    text: Send the crew in
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Storm"
+    - label: Storm
       weight: 1
-      resultText: "Your crew grab whatever's heavy and head for the cargo bay."
+      resultText: Your crew grab whatever's heavy and head for the cargo bay.
       resources: []
       writes:
         tags: []
@@ -130,14 +147,18 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 11400000, guid: 544c571b6df9456298cc1dbd92d3f68b, type: 2}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 4, 2 turns after giving passage."
+  debugText: Stage 4, 2 turns after giving passage.
   dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK
