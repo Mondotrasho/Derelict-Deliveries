@@ -70,6 +70,38 @@ public class GridMap : MonoBehaviour
     }
 
 
+    /// <summary>True if the ground Tilemap has a tile here (obstacles ignored).</summary>
+    public bool HasGround(Vector3Int cell)
+    {
+        return groundTilemap != null && groundTilemap.HasTile(cell);
+    }
+
+
+    /// <summary>Cell bounds of the ground Tilemap (the playable area).</summary>
+    public BoundsInt GroundBounds
+    {
+        get { return groundTilemap != null ? groundTilemap.cellBounds : new BoundsInt(); }
+    }
+
+
+    /// <summary>
+    /// A walkable cell on the edge of the map: at least one of its four
+    /// neighbours has no ground at all (an obstacle does not count).
+    /// </summary>
+    public bool IsMapEdgeCell(Vector3Int cell)
+    {
+        if (!IsWalkable(cell))
+        {
+            return false;
+        }
+
+        return !HasGround(cell + Vector3Int.up) ||
+               !HasGround(cell + Vector3Int.down) ||
+               !HasGround(cell + Vector3Int.left) ||
+               !HasGround(cell + Vector3Int.right);
+    }
+
+
     /// <summary>
     /// Returns the grid cell currently occupied by a Transform.
     /// </summary>

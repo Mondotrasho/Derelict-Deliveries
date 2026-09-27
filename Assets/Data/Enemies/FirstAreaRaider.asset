@@ -14,6 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyShipDefinition
   displayName: Raider Scout
   sprite: {fileID: -1982066863, guid: ea02cd62e58956a48a10aa81df7b94aa, type: 3}
+  mapScale: 1
+  combatOnly: 0
+  rotateToHeading: 1
+  fixedMapRotation: 0
+  combatSprite: {fileID: 6674755326810370317, guid: 4b03fe60768973e46b6db2f8f85ce916, type: 3}
+  combatShieldSprite: {fileID: 0}
+  combatOffset: {x: 0, y: 0}
+  combatScale: 1
   fogRevealTier: 1
   movementBudget: 3
   movementSpeed: 4

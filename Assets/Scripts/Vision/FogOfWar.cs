@@ -371,6 +371,18 @@ public class FogOfWar : MonoBehaviour
         get { return initialised; }
     }
 
+    /// <summary>Sorting layer actually used by the generated fog renderers.</summary>
+    public string FogSortingLayerName
+    {
+        get { return ResolveSortingLayerName(sortingLayerName); }
+    }
+
+    /// <summary>Lowest sorting order occupied by settled fog.</summary>
+    public int LowestFogSortingOrder
+    {
+        get { return startingSortingOrder; }
+    }
+
     private void Start()
     {
         BuildGeneratedLayers();

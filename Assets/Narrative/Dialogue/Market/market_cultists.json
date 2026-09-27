@@ -1,0 +1,154 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//BACK ALLEY",
+    "status": "LOW LIGHT"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "You have a ship. We can smell the fuel on you. That is a compliment."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "...Thanks? Can I help you two with something?"
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "Perhaps. We are always interested in ships that travel farther than their owners planned."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "Pilgrims. Travellers. Two humble voices of a very old choir. Nobody important. Please forget our faces.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "The robes are warm, the hoods are practical, and strangers ask fewer questions than you might expect.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "If you are looking for work, courier, ask."
+    },
+    {
+      "tick": 60,
+      "speaker": "cultist",
+      "text": "The taller one smiles. Not work, exactly. A favour. Come, sit.",
+      "nextTick": -1
+    },
+    {
+      "tick": 70,
+      "speaker": "cultist",
+      "text": "A third robe steps out behind you. By the time you reach the docks, four crates are missing.",
+      "nextTick": -1
+    },
+    {
+      "tick": 80,
+      "speaker": "cultist",
+      "text": "A small courier job. Easy money, no questions. Six crates for your trouble.",
+      "nextTick": -1
+    },
+    {
+      "tick": 90,
+      "speaker": "cultist",
+      "text": "The quiet one watches you all the way back to the docks.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Who are you?",
+          "line": "Who exactly are you two?",
+          "nextTick": 10
+        },
+        {
+          "text": "Why the robes?",
+          "line": "Why the robes?",
+          "nextTick": 20
+        },
+        {
+          "text": "Ask about work",
+          "line": "Fine. What kind of work?",
+          "action": "work_cult",
+          "outcomeTicks": [
+            60,
+            70
+          ]
+        },
+        {
+          "text": "Ask about work",
+          "line": "Fine. What kind of work?",
+          "action": "work_existing",
+          "outcomeTicks": [
+            80,
+            70
+          ]
+        },
+        {
+          "text": "Ask about work",
+          "line": "Fine. What kind of work?",
+          "action": "work_grey",
+          "outcomeTicks": [
+            80,
+            70
+          ]
+        },
+        {
+          "text": "Leave",
+          "line": "I think I will keep walking.",
+          "nextTick": 90
+        }
+      ]
+    },
+    {
+      "tick": 30,
+      "options": [
+        {
+          "text": "Ask about work",
+          "line": "All right. What is the job?",
+          "action": "work_cult",
+          "outcomeTicks": [
+            60,
+            70
+          ]
+        },
+        {
+          "text": "Ask about work",
+          "line": "All right. What is the job?",
+          "action": "work_existing",
+          "outcomeTicks": [
+            80,
+            70
+          ]
+        },
+        {
+          "text": "Ask about work",
+          "line": "All right. What is the job?",
+          "action": "work_grey",
+          "outcomeTicks": [
+            80,
+            70
+          ]
+        },
+        {
+          "text": "Leave",
+          "line": "No. I have heard enough.",
+          "nextTick": 90
+        }
+      ]
+    }
+  ]
+}

@@ -62,8 +62,48 @@ public class MovementPlanController : MonoBehaviour
     [SerializeField]
     private TurnManager turnManager;
 
+    [Header("Multi-Turn Routes")]
+    [Tooltip("At the start of each player turn, carry on along a queued remainder by itself instead of waiting for another Commit. Events, hazards and fights still stop the ship as usual.")]
+    [SerializeField]
+    private bool autoContinueRoute = true;
+
+    /// <summary>
+    /// OneTurn: a move never goes further than this turn's movement - plans are
+    /// clamped to the reach area and nothing is queued for later turns. Make as
+    /// many moves as the budget allows, then the turn ends (or press END TURN).
+    /// MultiTurn: routes can run past this turn; the rest is queued and (with
+    /// Auto Continue Route) carries on at the start of each following turn.
+    /// </summary>
+    public enum PlanningMode { OneTurn, MultiTurn }
+
+    [Tooltip("OneTurn: moves are limited to this turn's movement (matches the green reach area). MultiTurn: long routes continue over several turns. The HUD has a toggle for this.")]
+    [SerializeField]
+    private PlanningMode planningMode = PlanningMode.OneTurn;
+
+    /// <summary>Raised when the planning mode changes (HUD toggle, reach overlay, input).</summary>
+    public event Action ModeChanged;
+
+    public PlanningMode Mode
+    {
+        get => planningMode;
+        set
+        {
+            if (planningMode == value) return;
+            planningMode = value;
+            if (planningMode == PlanningMode.OneTurn && HasQueuedRemainder)
+            {
+                SetQueuedRemainder(null);          // a waiting multi-turn route no longer applies
+            }
+            ModeChanged?.Invoke();
+        }
+    }
+
+    /// <summary>The allowance used for budgets and costs (for input clamping and the HUD).</summary>
+    public MovementAllowance Allowance => movementAllowance;
+
 
     private List<Vector3Int> queuedRemainder = new List<Vector3Int>();
+    private Vector3Int? journeyDestination;
 
     // Guards CommitSegment against being re-entered while it is already
     // handing a segment to the physical movement layer.
@@ -79,6 +119,14 @@ public class MovementPlanController : MonoBehaviour
     /// queued after it.
     /// </summary>
     public event Action RouteCommitted;
+
+
+    /// <summary>
+    /// Raised once when a fresh planned route is successfully committed.
+    /// The cell is the final destination of the complete journey, not merely
+    /// the end of the first turn-sized segment.
+    /// </summary>
+    public event Action<Vector3Int> JourneyStarted;
 
 
     /// <summary>
@@ -145,6 +193,11 @@ public class MovementPlanController : MonoBehaviour
             playerController.CellEntered += HandlePlayerCellEntered;
             playerController.RouteCompleted += HandleRouteCompleted;
         }
+
+        if (turnManager != null)
+        {
+            turnManager.PlayerPhaseStarted += HandlePlayerPhaseStartedForAutoContinue;
+        }
     }
 
 
@@ -154,6 +207,11 @@ public class MovementPlanController : MonoBehaviour
         {
             playerController.CellEntered -= HandlePlayerCellEntered;
             playerController.RouteCompleted -= HandleRouteCompleted;
+        }
+
+        if (turnManager != null)
+        {
+            turnManager.PlayerPhaseStarted -= HandlePlayerPhaseStartedForAutoContinue;
         }
 
         isChargingActiveMovement = false;
@@ -255,6 +313,32 @@ public class MovementPlanController : MonoBehaviour
     /// Safe to call re-entrantly; a nested call is ignored rather than
     /// committing the same segment twice.
     /// </summary>
+    /// <summary>
+    /// Auto-continue: a new player turn with a queued remainder commits the
+    /// next segment by itself. Waits one frame so everything else listening to
+    /// the phase change (budget refill, shield regen, quest checks) runs first,
+    /// and does nothing if something else has taken over (an event, combat).
+    /// </summary>
+    private void HandlePlayerPhaseStartedForAutoContinue(int turnNumber)
+    {
+        if (autoContinueRoute && isActiveAndEnabled && HasQueuedRemainder)
+        {
+            StartCoroutine(AutoContinueNextFrame());
+        }
+    }
+
+
+    private System.Collections.IEnumerator AutoContinueNextFrame()
+    {
+        yield return null;
+
+        if (HasQueuedRemainder && CanCommit)
+        {
+            CommitSegment();
+        }
+    }
+
+
     public void CommitSegment()
     {
         if (isCommittingSegment)
@@ -350,6 +434,22 @@ public class MovementPlanController : MonoBehaviour
         lastChargedCell = playerController.CurrentCell;
         isChargingActiveMovement = true;
 
+        Vector3Int? freshJourneyDestination = candidateIsFreshPlan
+            ? candidatePath[candidatePath.Count - 1]
+            : (Vector3Int?)null;
+
+        // One-turn planning: only this turn's segment is ever committed. The
+        // rest is dropped, and the journey's intended destination becomes the
+        // segment's end, so an investigation beyond reach is not "intended".
+        if (planningMode == PlanningMode.OneTurn && remainder.Count > 0)
+        {
+            remainder.Clear();
+            if (candidateIsFreshPlan)
+            {
+                freshJourneyDestination = segment[segment.Count - 1];
+            }
+        }
+
         if (!playerController.TryMoveAlongPath(segment))
         {
             isChargingActiveMovement = false;
@@ -358,7 +458,13 @@ public class MovementPlanController : MonoBehaviour
 
         if (candidateIsFreshPlan)
         {
+            journeyDestination = freshJourneyDestination;
             routePlanner.ClearRoute();
+
+            if (journeyDestination.HasValue)
+            {
+                JourneyStarted?.Invoke(journeyDestination.Value);
+            }
         }
 
         SetQueuedRemainder(remainder.Count > 0 ? remainder : null);
@@ -383,7 +489,8 @@ public class MovementPlanController : MonoBehaviour
 
         bool hadAnything =
             (routePlanner != null && routePlanner.HasPlannedRoute) ||
-            HasQueuedRemainder;
+            HasQueuedRemainder ||
+            journeyDestination.HasValue;
 
         if (!hadAnything)
         {
@@ -396,6 +503,7 @@ public class MovementPlanController : MonoBehaviour
         }
 
         SetQueuedRemainder(null);
+        journeyDestination = null;
 
         RouteCancelled?.Invoke();
     }
@@ -415,6 +523,11 @@ public class MovementPlanController : MonoBehaviour
     private void HandleRouteCompleted()
     {
         isChargingActiveMovement = false;
+
+        if (!HasQueuedRemainder)
+        {
+            journeyDestination = null;
+        }
     }
 
 

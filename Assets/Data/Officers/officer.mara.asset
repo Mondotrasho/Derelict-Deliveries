@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8d6b29423641b8a6e259f33ffd9b74, type: 3}
+  m_Name: officer.mara
+  m_EditorClassIdentifier: Assembly-CSharp::OfficerDefinition
+  id: mara
+  displayName: "Mara Voss"
+  role: Engineer
+  description: "Can fix anything with a wrench, some tape and a bad attitude."
+  portrait: {fileID: 21300000, guid: 35573cdb47adba34389ba74434eb9831, type: 3}
+  bonuses:
+  - stat: engineering
+    amount: 2

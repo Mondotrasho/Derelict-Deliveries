@@ -1,0 +1,47 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//PARTS ROW",
+    "status": "MIXED SALVAGE"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "market_vendor"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "market_vendor",
+      "text": "Mixed repair lot. Plates, sealant, capacitors. Four supply crates and you take the whole box."
+    },
+    {
+      "tick": 10,
+      "speaker": "market_vendor",
+      "text": "There. Enough useful parts to patch the hull and give the shield bank some life.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "market_vendor",
+      "text": "Fair enough. Someone with more dents will buy it.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Buy the parts bundle - 4 supplies",
+          "line": "Four crates. I will take the lot.",
+          "action": "parts_bundle",
+          "nextTick": 10
+        },
+        {
+          "text": "Leave it",
+          "line": "Not today.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

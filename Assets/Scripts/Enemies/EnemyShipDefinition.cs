@@ -12,6 +12,32 @@ public sealed class EnemyShipDefinition : ScriptableObject
     [Header("Identity and Presentation")]
     [SerializeField] private string displayName = "Pursuit Ship";
     [SerializeField] private Sprite sprite;
+
+    [Tooltip("Size of the ship on the map (1 = as the prefab). E.g. 1.5 for a big monster.")]
+    [Min(0.05f)]
+    [SerializeField] private float mapScale = 1f;
+
+    [Tooltip("Exists only for a fight: not drawn on the map, and removed when its fight ends however it ends (fled included). E.g. the life capsule.")]
+    [SerializeField] private bool combatOnly = false;
+
+    [Tooltip("Turn the map sprite to face where it is heading. Off = it always keeps Fixed Map Rotation (e.g. the eldritch monster).")]
+    [SerializeField] private bool rotateToHeading = true;
+
+    [Tooltip("Map sprite rotation in degrees when Rotate To Heading is off.")]
+    [SerializeField] private float fixedMapRotation = 0f;
+
+    [Tooltip("Ship sprite in the combat screen. Empty = the map Sprite above.")]
+    [SerializeField] private Sprite combatSprite;
+
+    [Tooltip("Shield drawn over the ship in the combat screen. Empty = keep the one placed in the combat view.")]
+    [SerializeField] private Sprite combatShieldSprite;
+
+    [Tooltip("Where this enemy sits in the combat view, in pixels from the EnemyShip's placed position (e.g. a monster coming out of a corner).")]
+    [SerializeField] private Vector2 combatOffset = Vector2.zero;
+
+    [Tooltip("Size of this enemy in the combat view (1 = as placed).")]
+    [Min(0.05f)]
+    [SerializeField] private float combatScale = 1f;
     [SerializeField] private FogOfWar.VisibilityTier fogRevealTier =
         FogOfWar.VisibilityTier.Partial;
 
@@ -43,6 +69,14 @@ public sealed class EnemyShipDefinition : ScriptableObject
         ? name
         : displayName.Trim();
     public Sprite Sprite => sprite;
+    public float MapScale => mapScale;
+    public bool CombatOnly => combatOnly;
+    public bool RotateToHeading => rotateToHeading;
+    public float FixedMapRotation => fixedMapRotation;
+    public Sprite CombatSprite => combatSprite;
+    public Sprite CombatShieldSprite => combatShieldSprite;
+    public Vector2 CombatOffset => combatOffset;
+    public float CombatScale => combatScale;
     public FogOfWar.VisibilityTier FogRevealTier => fogRevealTier;
     public int MovementBudget => movementBudget;
     public float MovementSpeed => movementSpeed;

@@ -1,0 +1,72 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET, BACK ALLEY",
+    "status": "LOW LIGHT"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "You have a ship. We can smell the fuel on you. That is a compliment."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "...Thanks? Can I help you two with something?"
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "Perhaps. Perhaps you can help each other. My sister does not speak. She listens."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "Pilgrims. Travellers. Two humble voices of a very old choir. Nobody important. Please forget our faces.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "Everyone stares at the robes. We are used to it. The robes are warm, and the hoods hide the chanting.",
+      "nextTick": 30
+    },
+    {
+      "tick": 25,
+      "speaker": "cultist",
+      "text": "She is not staring at you. She is staring at your ship. There is a difference. A small one.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "If you are looking for work, courier, ask. We always have work. For the right kind of ship."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Who are you?",
+          "line": "So who exactly are you two?",
+          "nextTick": 10
+        },
+        {
+          "text": "Why the robes?",
+          "line": "Why the robes? It's warm in here.",
+          "nextTick": 20
+        },
+        {
+          "text": "Why is she staring?",
+          "line": "Why is your friend staring at me like that?",
+          "nextTick": 25
+        }
+      ]
+    }
+  ]
+}

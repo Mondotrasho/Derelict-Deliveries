@@ -1,0 +1,57 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//WORKBENCH",
+    "status": "GREEN FRONTIER"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "mara"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "mara",
+      "text": "Your port thruster is coughing. Your coolant loop is worse. I can fix both, but I would rather stop watching you mistreat them."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "Is that an offer to join the crew or an insult?"
+    },
+    {
+      "tick": 3,
+      "speaker": "mara",
+      "text": "Ten crates of supplies up front. After that I insult the ship professionally."
+    },
+    {
+      "tick": 10,
+      "speaker": "mara",
+      "text": "Deal. Show me the engine room before something there develops opinions.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "mara",
+      "text": "Then I will pretend I never saw your coolant loop.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Hire Mara - 10 supplies",
+          "line": "Ten crates. You are hired.",
+          "action": "hire_mara",
+          "nextTick": 10
+        },
+        {
+          "text": "Not today",
+          "line": "I cannot make that deal today.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

@@ -127,13 +127,15 @@ public class EnemyTurnController : MonoBehaviour
 
     private IEnumerator RunEnemyPhase()
     {
-        // Other TurnEnded subscribers may start a queued player segment later
-        // in the same event invocation. Waiting one frame makes subscriber
-        // order irrelevant before checking the facade's movement state.
+        // Other turn-ending subscribers may still be finishing movement or a
+        // modal arrival interaction. Waiting one frame makes subscriber order
+        // irrelevant, then the enemy phase waits until the player is fully free.
         yield return null;
 
         while (playerShip != null &&
-               (playerShip.IsMoving || playerShip.HasPausedMovement))
+               (playerShip.IsMoving ||
+                playerShip.HasPausedMovement ||
+                playerShip.IsMovementInterrupted))
         {
             yield return null;
         }
@@ -338,6 +340,23 @@ public class EnemyTurnController : MonoBehaviour
             playerShip.AcquireMovementInterruption("Enemy contact");
 
         PlayerContactedEnemy?.Invoke(enemy, cell);
+    }
+
+    /// <summary>
+    /// Starts an encounter with a specific enemy outside normal contact, for
+    /// scripted fights (e.g. a Point of Interest "Combat" option). Uses the same
+    /// path as contact: BeginCombat, contact interruption, PlayerContactedEnemy.
+    /// Returns true if the encounter is now active with that enemy.
+    /// </summary>
+    public bool TryStartEncounter(EnemyShip enemy)
+    {
+        if (enemy == null)
+        {
+            return false;
+        }
+
+        BeginEncounter(enemy, enemy.CurrentCell);
+        return IsEncounterActive && CurrentEncounterEnemy == enemy;
     }
 
     private bool TryBeginAdjacentEncounter(Vector3Int playerCell)

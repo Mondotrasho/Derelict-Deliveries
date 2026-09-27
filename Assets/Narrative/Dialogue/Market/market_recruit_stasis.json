@@ -1,0 +1,118 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//CRYO BROKER",
+    "status": "YELLOW CORPORATE"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "stasis_broker"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "stasis_broker",
+      "text": "Premium sleepers on the left. Labour batch on the right. All pods are legally acquired in at least one jurisdiction."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "And the woman in the scratched pod?"
+    },
+    {
+      "tick": 3,
+      "speaker": "stasis_broker",
+      "text": "Unknown contract officer. Twelve crates if you want the gamble. Eight buys the ordinary labour batch, three crew guaranteed."
+    },
+    {
+      "tick": 10,
+      "speaker": "stasis_broker",
+      "text": "Tap gently. The glass is worth more than several customers."
+    },
+    {
+      "tick": 11,
+      "speaker": "charlie",
+      "text": "The sleeper moves slightly behind the frost."
+    },
+    {
+      "tick": 20,
+      "speaker": "stasis_broker",
+      "text": "Lucky draw. Her records decrypt cleanly: Sera Vale, logistics officer. The pod is yours.",
+      "nextTick": -1
+    },
+    {
+      "tick": 30,
+      "speaker": "stasis_broker",
+      "text": "The pod opens, but the records are useless. One healthy worker steps out and asks where the galley is.",
+      "nextTick": -1
+    },
+    {
+      "tick": 40,
+      "speaker": "stasis_broker",
+      "text": "Three labour contracts, three warm bodies, no surprises. Sensible choice.",
+      "nextTick": -1
+    },
+    {
+      "tick": 50,
+      "speaker": "stasis_broker",
+      "text": "Window shopping is free. Touching the refrigeration controls is not.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Tap the glass",
+          "line": "I want a closer look.",
+          "nextTick": 10
+        },
+        {
+          "text": "Buy the unusual pod - 12 supplies",
+          "line": "I will take the scratched pod.",
+          "action": "buy_unusual_pod",
+          "outcomeTicks": [
+            20,
+            30
+          ]
+        },
+        {
+          "text": "Buy the labour pods - 8 supplies",
+          "line": "Give me the labour batch.",
+          "action": "buy_labour_pods",
+          "nextTick": 40
+        },
+        {
+          "text": "Leave",
+          "line": "I am not buying frozen strangers today.",
+          "nextTick": 50
+        }
+      ]
+    },
+    {
+      "tick": 11,
+      "options": [
+        {
+          "text": "Buy the unusual pod - 12 supplies",
+          "line": "Fine. I will take her pod.",
+          "action": "buy_unusual_pod",
+          "outcomeTicks": [
+            20,
+            30
+          ]
+        },
+        {
+          "text": "Buy the labour pods - 8 supplies",
+          "line": "I will take the labour batch instead.",
+          "action": "buy_labour_pods",
+          "nextTick": 40
+        },
+        {
+          "text": "Walk away",
+          "line": "No. Keep the pods.",
+          "nextTick": 50
+        }
+      ]
+    }
+  ]
+}

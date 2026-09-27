@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: market.recruit.red
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: market.recruit.red
+  displayName: "Rook at the race book"
+  category: 1
+  tags:
+  - market
+  - recruitment
+  conditions:
+    tags:
+    - scope: 1
+      tag: Red
+      mustHave: 1
+    - scope: 0
+      tag: officer:rook
+      mustHave: 0
+    flags: []
+    counters: []
+  oncePerPlanet: 1
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "A pilot with an alarming amount of confidence has taken an interest in your ship."
+  allowLeave: 1
+  choices:
+  - id: hire_rook
+    text: "Hire Rook"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 0
+        key: res.supplies
+        compare: 0
+        value: 10
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 1
+    lockedReason: "needs 10 supplies"
+    showOdds: 1
+    outcomes:
+    - label: "Hired"
+      weight: 1
+      resultText: "Rook joins the crew."
+      resources:
+      - kind: 3
+        amount: -10
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 11400000, guid: 6208a09dba144222bd8cd472f92c3269, type: 2}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Rare Red market recruitment. Once resolved on this planet."
+  dialogueJson: {fileID: 4900000, guid: d33e03e2681f4030b3663f31fbb17df0, type: 3}
+  dialogueButtonLabel: "Talk to Rook"

@@ -1,0 +1,72 @@
+{
+  "terminal": {
+    "title": "SYS://DISTRESS CHANNEL",
+    "status": "OPEN"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "pilot",
+      "text": "This is the courier vessel answering your beacon. What's the emergency?"
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "Blessed traveller! Our vessel is dying, and our pilgrimage is not yet complete."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "We ask only passage to the grey world. The Faithful pay their debts. In fuel."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "We are the Congregation of the Quiet Dark. Humble pilgrims. Very humble. Extremely normal.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "Fuel enough to fill your tanks, paid the moment our feet touch holy ground.",
+      "nextTick": 30
+    },
+    {
+      "tick": 25,
+      "speaker": "cultist",
+      "text": "A sacred vessel. It travels with us. It is not heavy. Please do not open it.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "Will you carry us, traveller? The dark is patient, but we are not."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Who are you people?",
+          "line": "Who exactly am I talking to?",
+          "nextTick": 10
+        },
+        {
+          "text": "What's the pay?",
+          "line": "Let's talk about this fuel.",
+          "nextTick": 20
+        },
+        {
+          "text": "What's in the big box?",
+          "line": "I can see a very large box behind you.",
+          "nextTick": 25
+        }
+      ]
+    }
+  ]
+}

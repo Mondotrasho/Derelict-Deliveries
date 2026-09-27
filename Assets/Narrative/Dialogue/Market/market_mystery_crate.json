@@ -1,0 +1,63 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//SEALED LOT",
+    "status": "NO RETURNS"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "market_vendor"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "market_vendor",
+      "text": "Three crates of supplies for one sealed salvage lot. No opening it before purchase. That ruins the mystery."
+    },
+    {
+      "tick": 10,
+      "speaker": "market_vendor",
+      "text": "Fuel cells. Old, ugly, and still holding charge. You did well.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "market_vendor",
+      "text": "Armour compound and patch resin. Not exciting, but your hull will appreciate it.",
+      "nextTick": -1
+    },
+    {
+      "tick": 30,
+      "speaker": "market_vendor",
+      "text": "That was not a storage battery. It was an angry storage battery.",
+      "nextTick": -1
+    },
+    {
+      "tick": 40,
+      "speaker": "market_vendor",
+      "text": "A healthy respect for sealed boxes is also valuable.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 1,
+      "options": [
+        {
+          "text": "Buy the sealed lot - 3 supplies",
+          "line": "All right. Give me the box.",
+          "action": "buy_crate",
+          "outcomeTicks": [
+            10,
+            20,
+            30
+          ]
+        },
+        {
+          "text": "Leave the box sealed",
+          "line": "I have enough mysteries aboard already.",
+          "nextTick": 40
+        }
+      ]
+    }
+  ]
+}

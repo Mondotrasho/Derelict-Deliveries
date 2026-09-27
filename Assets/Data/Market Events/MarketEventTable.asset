@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b976d6f2e1b8e29eb108142685bf5e8, type: 3}
+  m_Name: MarketEventTable
+  m_EditorClassIdentifier: Assembly-CSharp::EventTable
+  entries:
+  - definition: {fileID: 11400000, guid: f0547d102a2b4f938d294d3c911e408d, type: 2}
+    weight: 24
+  - definition: {fileID: 11400000, guid: 5b68613d04594e39b7380de32bae431d, type: 2}
+    weight: 20
+  - definition: {fileID: 11400000, guid: f1e05d0a4ffa41b4b467ee8ab9d1d08c, type: 2}
+    weight: 18
+  - definition: {fileID: 11400000, guid: 666d683d97584345a1b67789a66d3e31, type: 2}
+    weight: 14
+  - definition: {fileID: 11400000, guid: f4fe298c43c2475f957b40b43009c5b9, type: 2}
+    weight: 12
+  - definition: {fileID: 11400000, guid: a8739fdcf529486eb3906f692fe4ef02, type: 2}
+    weight: 9
+  - definition: {fileID: 11400000, guid: 6ed44beaddce4cd9bc177fdcb4a1c65c, type: 2}
+    weight: 14
+  - definition: {fileID: 11400000, guid: a2ba264cad13488fafd772049e833d6a, type: 2}
+    weight: 14
+  - definition: {fileID: 11400000, guid: 54a5e16a12cd436b926e976a31a2ac62, type: 2}
+    weight: 14
+  - definition: {fileID: 11400000, guid: c6c25149cfb14aa1ab7800f8496b8750, type: 2}
+    weight: 14

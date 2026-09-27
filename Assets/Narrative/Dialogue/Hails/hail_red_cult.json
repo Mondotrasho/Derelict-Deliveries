@@ -1,0 +1,72 @@
+{
+  "terminal": {
+    "title": "SYS://THE QUIET CHOIR",
+    "status": "NO CARRIER... NO... CARRIER"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "Red planet, courier on approach. Is anyone receiving?"
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "We receive everything, traveller. Every signal. Every whisper. Every thought you think you kept to yourself."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "This is the Quiet Choir. We sing to what sleeps beneath the rock, so that it may keep sleeping. Mostly."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "There is a shrine on the surface. Look, if you must. Do not touch the offerings. We cannot stress this enough.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "Some of our brothers and sisters travel to the grey world. If they ask for passage, be kind. Be very kind.",
+      "nextTick": 30
+    },
+    {
+      "tick": 25,
+      "speaker": "cultist",
+      "text": "Oh, that. The hymn is always playing. You will stop noticing it in a few days. Or you will start singing along.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "Land if you wish, traveller. The Choir is patient. The thing beneath the rock is less so."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "The shrine?",
+          "line": "You mentioned a shrine?",
+          "nextTick": 10
+        },
+        {
+          "text": "Other cultists?",
+          "line": "Are there more of you out there?",
+          "nextTick": 20
+        },
+        {
+          "text": "That humming?",
+          "line": "What is that humming on the channel?",
+          "nextTick": 25
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "terminal": {
+    "title": "SYS://FUN PLANET SECURITY",
+    "status": "CORPORATE ZONE"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "bosscop"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "pilot",
+      "text": "Fun Planet control, courier vessel requesting approach."
+    },
+    {
+      "tick": 2,
+      "speaker": "bosscop",
+      "text": "Lieutenant Leutenbord, Corporate Security. Transponder code, cargo manifest, and a smile. Fun is mandatory."
+    },
+    {
+      "tick": 3,
+      "speaker": "bosscop",
+      "text": "This planet is owned, operated and thoroughly enjoyed by the Company. Please enjoy it within approved limits."
+    },
+    {
+      "tick": 10,
+      "speaker": "bosscop",
+      "text": "Approved fun includes the pools, the casino and the gift shop. Unapproved fun includes everything else.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "bosscop",
+      "text": "All deliveries are inspected. Anything that ticks, hums or looks at my officers funny gets confiscated.",
+      "nextTick": 30
+    },
+    {
+      "tick": 25,
+      "speaker": "bosscop",
+      "text": "Curfew is at 2200. The fireworks are at 2300. Yes, you must watch them from your ship. That is the rule.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "bosscop",
+      "text": "Approach granted. Smile for the cameras, courier. There are a lot of them."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Approved fun?",
+          "line": "What counts as approved fun?",
+          "nextTick": 10
+        },
+        {
+          "text": "Inspections?",
+          "line": "How strict are your inspections?",
+          "nextTick": 20
+        },
+        {
+          "text": "Curfew?",
+          "line": "Is there really a curfew on Fun Planet?",
+          "nextTick": 25
+        }
+      ]
+    }
+  ]
+}

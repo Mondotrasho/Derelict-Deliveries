@@ -37,6 +37,18 @@ public class ShipResources : MonoBehaviour
     private float fuel = 100.0f;
 
 
+    [Header("Shields")]
+
+    [Tooltip("Kept in sync with the player's combat Max Shields by CombatEncounterController.")]
+    [Min(0.0f)]
+    [SerializeField]
+    private float maxShields = 40.0f;
+
+    [Min(0.0f)]
+    [SerializeField]
+    private float shields = 40.0f;
+
+
     [Header("Crew")]
 
     [Min(0)]
@@ -59,6 +71,9 @@ public class ShipResources : MonoBehaviour
 
     /// <summary>Raised after crew changes. Arguments are current, maximum.</summary>
     public event Action<int, int> CrewChanged;
+
+    /// <summary>Raised after shields change. Arguments are current, maximum.</summary>
+    public event Action<float, float> ShieldsChanged;
 
 
     public float HullIntegrity
@@ -104,6 +119,93 @@ public class ShipResources : MonoBehaviour
                 ? fuel / maxFuel
                 : 0.0f;
         }
+    }
+
+
+    public float Shields
+    {
+        get { return shields; }
+    }
+
+
+    public float MaxShields
+    {
+        get { return maxShields; }
+    }
+
+
+    public float ShieldFraction
+    {
+        get
+        {
+            return maxShields > 0.0f
+                ? shields / maxShields
+                : 0.0f;
+        }
+    }
+
+
+    /// <summary>Adds shields up to MaxShields. Returns the amount actually added.</summary>
+    public float AddShields(float amount)
+    {
+        if (amount <= 0.0f)
+        {
+            return 0.0f;
+        }
+
+        float oldValue = shields;
+        shields = Mathf.Clamp(shields + amount, 0.0f, maxShields);
+        if (!Mathf.Approximately(oldValue, shields))
+        {
+            RaiseShieldsChanged();
+        }
+        return shields - oldValue;
+    }
+
+
+    /// <summary>Removes shields down to zero. Returns the amount actually removed.</summary>
+    public float ApplyShieldDamage(float amount)
+    {
+        if (amount <= 0.0f)
+        {
+            return 0.0f;
+        }
+
+        float oldValue = shields;
+        shields = Mathf.Max(0.0f, shields - amount);
+        if (!Mathf.Approximately(oldValue, shields))
+        {
+            RaiseShieldsChanged();
+        }
+        return oldValue - shields;
+    }
+
+
+    public void SetShields(float value)
+    {
+        float clamped = Mathf.Clamp(value, 0.0f, maxShields);
+        if (Mathf.Approximately(clamped, shields))
+        {
+            return;
+        }
+
+        shields = clamped;
+        RaiseShieldsChanged();
+    }
+
+
+    /// <summary>Changes the maximum (e.g. an upgrade). Current shields are clamped, not refilled.</summary>
+    public void SetMaxShields(float value)
+    {
+        float newMax = Mathf.Max(0.0f, value);
+        if (Mathf.Approximately(newMax, maxShields))
+        {
+            return;
+        }
+
+        maxShields = newMax;
+        shields = Mathf.Clamp(shields, 0.0f, maxShields);
+        RaiseShieldsChanged();
     }
 
 
@@ -357,10 +459,12 @@ public class ShipResources : MonoBehaviour
         maxHullIntegrity = Mathf.Max(0.0f, maxHullIntegrity);
         maxFuel = Mathf.Max(0.0f, maxFuel);
         maxCrew = Mathf.Max(0, maxCrew);
+        maxShields = Mathf.Max(0.0f, maxShields);
 
         hullIntegrity = Mathf.Clamp(hullIntegrity, 0.0f, maxHullIntegrity);
         fuel = Mathf.Clamp(fuel, 0.0f, maxFuel);
         crew = Mathf.Clamp(crew, 0, maxCrew);
+        shields = Mathf.Clamp(shields, 0.0f, maxShields);
     }
 
 
@@ -374,6 +478,13 @@ public class ShipResources : MonoBehaviour
     private void RaiseHullChanged()
     {
         HullChanged?.Invoke(hullIntegrity, maxHullIntegrity);
+        ResourcesChanged?.Invoke();
+    }
+
+
+    private void RaiseShieldsChanged()
+    {
+        ShieldsChanged?.Invoke(shields, maxShields);
         ResourcesChanged?.Invoke();
     }
 

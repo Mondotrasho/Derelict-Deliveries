@@ -1,10 +1,22 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// Input for route planning - click-to-destination plus drag-to-draw.
+/// Input for route planning. Two modes (Mode field):
+///
+/// ClickToGo (default): hovering previews the route to the cell under the
+/// cursor; a click goes there straight away. Shift+click adds a waypoint
+/// without going (the next plain click extends the chain and goes). Pressing
+/// and dragging draws the route cell by cell and goes on release. A route
+/// longer than one turn continues by itself on later turns when
+/// MovementPlanController's Auto Continue Route is on. Right-click / Escape
+/// cancel; Enter / the commit button still commit.
+///
+/// PlanThenCommit (the original model, described below): clicks and drags
+/// only plan; Enter or the commit button starts the move.
 ///
 /// A plain click adds a waypoint: it does a normal A* leg to the clicked
 /// cell, chained onto whatever's already planned (or from the player, if
@@ -25,6 +37,21 @@ using UnityEngine.UI;
 /// </summary>
 public class RouteInputController : MonoBehaviour
 {
+    public enum RouteInputMode
+    {
+        ClickToGo,
+        PlanThenCommit
+    }
+
+    [Header("Mode")]
+    [Tooltip("ClickToGo: hover previews, click goes (Shift+click adds a waypoint, drag draws and goes on release). PlanThenCommit: the original plan, then Enter/Commit.")]
+    [SerializeField]
+    private RouteInputMode mode = RouteInputMode.ClickToGo;
+
+    [Tooltip("ClickToGo only: show the route to whatever cell the cursor is over.")]
+    [SerializeField]
+    private bool hoverPreview = true;
+
     [Header("References")]
 
     [Tooltip("Camera used to convert mouse screen coordinates into world coordinates.")]
@@ -62,6 +89,11 @@ public class RouteInputController : MonoBehaviour
     // True from the initial mouse-down until it's released - distinguishes
     // "start a new route" (SetDestination) from "keep drawing" (AppendDraggedCell).
     private bool isDragging;
+
+    // ClickToGo state
+    private bool chaining;          // Shift+click waypoints are waiting for a final click
+    private bool hoverOwnsPlan;     // the current plan is only a hover preview
+    private Vector3Int? lastHoverCell;
 
 
     /// <summary>
@@ -131,6 +163,13 @@ public class RouteInputController : MonoBehaviour
             // mouse resume editing the route when gameplay input unlocks.
             isDragging = false;
             lastCursorCell = null;
+            lastHoverCell = null;
+            return;
+        }
+
+        if (mode == RouteInputMode.ClickToGo)
+        {
+            UpdateClickToGo();
             return;
         }
 
@@ -178,6 +217,180 @@ public class RouteInputController : MonoBehaviour
                 movementPlanController?.Cancel();
             }
         }
+    }
+
+
+    /// <summary>
+    /// ClickToGo: hover previews, click goes, Shift+click chains waypoints,
+    /// drag draws and goes on release.
+    /// </summary>
+    private void UpdateClickToGo()
+    {
+        bool shift = Keyboard.current != null &&
+                     (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+
+        if (Mouse.current != null)
+        {
+            bool overUI =
+                EventSystem.current != null &&
+                EventSystem.current.IsPointerOverGameObject();
+
+            if (!overUI && Mouse.current.leftButton.wasPressedThisFrame &&
+                TryGetCellUnderMouse(out Vector3Int pressed))
+            {
+                lastCursorCell = pressed;
+                isDragging = true;
+
+                if (IsQueuedRemainderEnd(pressed) && !routePlanner.HasPlannedRoute)
+                {
+                    // Clicking the end of a waiting route just carries on along it.
+                }
+                else if (chaining || shift)
+                {
+                    routePlanner.AppendDraggedCell(pressed);   // add / extend a waypoint chain
+                    chaining = true;
+                }
+                else if (!(hoverOwnsPlan && PlanEndsAt(pressed)))
+                {
+                    routePlanner.SetDestination(pressed);      // fresh route from the ship
+                    ClampPlanToThisTurn();
+                }
+
+                hoverOwnsPlan = false;
+            }
+            else if (!overUI && Mouse.current.leftButton.isPressed && isDragging)
+            {
+                ContinueDragAtMousePosition();                  // draw the route cell by cell
+            }
+
+            if (Mouse.current.leftButton.wasReleasedThisFrame && isDragging)
+            {
+                isDragging = false;
+                if (!shift)
+                {
+                    chaining = false;
+                    movementPlanController?.CommitSegment();     // go
+                }
+            }
+
+            if (Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                CancelClickToGo();
+            }
+
+            if (!overUI && !isDragging && hoverPreview && !chaining &&
+                !Mouse.current.leftButton.isPressed)
+            {
+                UpdateHoverPreview();
+            }
+        }
+
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.enterKey.wasPressedThisFrame)
+            {
+                chaining = false;
+                movementPlanController?.CommitSegment();
+            }
+
+            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                CancelClickToGo();
+            }
+        }
+    }
+
+
+    /// <summary>Re-plans to the hovered cell whenever the cursor moves onto a new one.</summary>
+    private void UpdateHoverPreview()
+    {
+        // Never replace a route that is waiting to continue on a later turn.
+        if (movementPlanController != null && movementPlanController.HasQueuedRemainder)
+        {
+            return;
+        }
+
+        if (!TryGetCellUnderMouse(out Vector3Int cell))
+        {
+            return;
+        }
+
+        if (lastHoverCell.HasValue && lastHoverCell.Value == cell && (hoverOwnsPlan || !routePlanner.HasPlannedRoute))
+        {
+            return;
+        }
+
+        lastHoverCell = cell;
+        routePlanner.SetDestination(cell);
+        ClampPlanToThisTurn();
+        hoverOwnsPlan = true;
+    }
+
+
+    /// <summary>
+    /// One-turn planning: cut the plan back to the furthest cell this turn's
+    /// movement reaches along it, so the preview (and the click) never promise
+    /// more than the ship will do. A target outside the green reach area moves
+    /// the ship as far toward it as it can this turn.
+    /// </summary>
+    private void ClampPlanToThisTurn()
+    {
+        if (movementPlanController == null ||
+            movementPlanController.Mode != MovementPlanController.PlanningMode.OneTurn)
+        {
+            return;
+        }
+
+        MovementAllowance allowance = movementPlanController.Allowance;
+        IReadOnlyList<Vector3Int> path = routePlanner.PlannedPath;
+        if (allowance == null || path == null || path.Count == 0)
+        {
+            return;
+        }
+
+        int affordable = allowance.GetAffordableCellCount(path);
+        if (affordable >= path.Count)
+        {
+            return;
+        }
+
+        if (affordable <= 0)
+        {
+            routePlanner.ClearRoute();
+            return;
+        }
+
+        Vector3Int furthest = path[affordable - 1];
+        routePlanner.SetDestination(furthest);
+    }
+
+
+    private void CancelClickToGo()
+    {
+        chaining = false;
+        hoverOwnsPlan = false;
+        isDragging = false;
+        lastHoverCell = null;
+        movementPlanController?.Cancel();
+    }
+
+
+    private bool PlanEndsAt(Vector3Int cell)
+    {
+        IReadOnlyList<Vector3Int> path = routePlanner.PlannedPath;
+        return path != null && path.Count > 0 && path[path.Count - 1] == cell;
+    }
+
+
+    private bool IsQueuedRemainderEnd(Vector3Int cell)
+    {
+        if (movementPlanController == null || !movementPlanController.HasQueuedRemainder)
+        {
+            return false;
+        }
+
+        IReadOnlyList<Vector3Int> rest = movementPlanController.QueuedRemainder;
+        return rest.Count > 0 && rest[rest.Count - 1] == cell;
     }
 
 

@@ -1,0 +1,185 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: planet.shrine
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: planet.shrine
+  displayName: Forgotten shrine
+  category: 1
+  tags:
+  - shrine
+  conditions:
+    tags: []
+    flags:
+    - scope: 0
+      key: quest:shrine:defiled
+      expected: 0
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.9, g: 0.2, b: 0.25, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 21300000, guid: b2259c3a18ca4174e864059736d021db, type: 3}
+  shortDescription: A crumbling shrine to something with too many eyes. Offerings
+    are piled at its base, untouched for centuries.
+  allowLeave: 0
+  choices:
+  - id: defile
+    text: Defile the shrine
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: Defiled
+      weight: 1
+      resultText: You break the little idol at the centre of the shrine and scrawl
+        graffiti across the old stonework. Far out in the dark, something turns towards
+        you.
+      resources:
+      - kind: 3
+        amount: 12
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: quest:shrine:defiled
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: pray
+    text: Kneel and pray
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: Silence
+      weight: 70
+      resultText: Nothing happens. You feel watched.
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    - label: Blessing
+      weight: 30
+      resultText: A strange warmth passes through the ship. Hairline cracks in the
+        hull seal themselves.
+      resources:
+      - kind: 1
+        amount: 10
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: leave
+    text: Back away
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: 
+    showOdds: 1
+    outcomes:
+    - label: Leave
+      weight: 1
+      resultText: Some things are best left alone.
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: Intact Red-planet shrine. Defiling it sets player flag quest:shrine:defiled
+    and spawns the eldritch monster at a map-edge entry cell.
+  dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK

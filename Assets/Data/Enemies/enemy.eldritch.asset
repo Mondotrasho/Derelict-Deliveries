@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cda26313315b465f8b042807dccddb06, type: 3}
+  m_Name: enemy.eldritch
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyShipDefinition
+  displayName: Eldritch horror
+  sprite: {fileID: -112688757935865355, guid: f1197d6f838dd8e4f955805c3c905234, type: 3}
+  mapScale: 4
+  combatOnly: 0
+  rotateToHeading: 0
+  fixedMapRotation: 0
+  combatSprite: {fileID: 21300000, guid: bc00d7b355e9c50478a4d0113fa56726, type: 3}
+  combatShieldSprite: {fileID: 0}
+  combatOffset: {x: 10, y: -20}
+  combatScale: 2.5
+  fogRevealTier: 1
+  movementBudget: 6
+  movementSpeed: 6
+  maxHull: 120
+  capabilities:
+    weaponDamage: 25
+    weaponAccuracy: 55
+    armour: 10
+    maxShields: 0
+    shieldRecharge: 0
+    maneuverability: 30
+  fireWeight: 80
+  defendWeight: 0
+  evadeWeight: 20
+  rewardValue: 25

@@ -1,0 +1,237 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: market.cultists
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: market.cultists
+  displayName: "Two robed strangers"
+  category: 1
+  tags:
+  - market
+  - cult
+  conditions:
+    tags:
+    - scope: 1
+      tag: Cult
+      mustHave: 0
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
+  shortDescription: "Two people in heavy robes are watching ships come and go."
+  allowLeave: 1
+  choices:
+  - id: work_cult
+    text: "Ask about work"
+    availability:
+      tags:
+      - scope: 1
+        tag: Grey
+        mustHave: 0
+      flags:
+      - scope: 0
+        key: cult:started
+        expected: 0
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 0
+    outcomes:
+    - label: "Pilgrims"
+      weight: 70
+      resultText: "They offer you a favour."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: e7a05513b5db442891aa436545e4a0d8, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Mugging"
+      weight: 30
+      resultText: "It was a setup."
+      resources:
+      - kind: 3
+        amount: -4
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: work_existing
+    text: "Ask about work"
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:started
+        expected: 1
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 0
+    outcomes:
+    - label: "Courier job"
+      weight: 70
+      resultText: "A small courier job pays out."
+      resources:
+      - kind: 3
+        amount: 6
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Mugging"
+      weight: 30
+      resultText: "It was a setup."
+      resources:
+      - kind: 3
+        amount: -4
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: work_grey
+    text: "Ask about work"
+    availability:
+      tags:
+      - scope: 1
+        tag: Grey
+        mustHave: 1
+      flags:
+      - scope: 0
+        key: cult:started
+        expected: 0
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 0
+    outcomes:
+    - label: "Courier job"
+      weight: 70
+      resultText: "A small courier job pays out."
+      resources:
+      - kind: 3
+        amount: 6
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Mugging"
+      weight: 30
+      resultText: "It was a setup."
+      resources:
+      - kind: 3
+        amount: -4
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Rare market cultist encounter. Excluded from Cult-tagged planets. Work choices are inside dialogue."
+  dialogueJson: {fileID: 4900000, guid: ef7cd4a97fe849a7aa45c5abe8ee8291, type: 3}
+  dialogueButtonLabel: "Approach the figures"

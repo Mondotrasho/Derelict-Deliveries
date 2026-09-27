@@ -1,0 +1,57 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//SURPLUS LAB",
+    "status": "GREY INDUSTRIAL"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "hollis"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "hollis",
+      "text": "Your sensor mast is broadcasting three kinds of noise and one of them is probably intentional."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "You got all that from looking at the ship?"
+    },
+    {
+      "tick": 3,
+      "speaker": "hollis",
+      "text": "From listening. Ten crates and a berth, and I will make the instruments tell you useful lies instead."
+    },
+    {
+      "tick": 10,
+      "speaker": "hollis",
+      "text": "Excellent. I have instruments, notebooks, and exactly one bag of snacks. We can leave.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "hollis",
+      "text": "A shame. I was curious how long the mast would survive.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Hire Hollis - 10 supplies",
+          "line": "Ten crates and a berth. Welcome aboard.",
+          "action": "hire_hollis",
+          "nextTick": 10
+        },
+        {
+          "text": "Decline",
+          "line": "Maybe next time.",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}
