@@ -3776,6 +3776,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7100000702}
   - {fileID: 1107294072}
   - {fileID: 1971338029}
   - {fileID: 449378688}
@@ -23103,6 +23104,77 @@ MonoBehaviour:
   - {fileID: 473045948}
   - {fileID: 1486303014}
   autoFix: 1
+--- !u!1 &7100000701
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7100000702}
+  - component: {fileID: 7100000703}
+  m_Layer: 5
+  m_Name: ShipHud
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &7100000702
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000701}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 824059745}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7100000703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d5e5b91e4e6479aa06fc11e8e6af7ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipHud
+  style: {fileID: 11400000, guid: e2fa03d164984edfa08c97362373abd6, type: 2}
+  player: {fileID: 2078833601}
+  planController: {fileID: 1705402918}
+  routePlanner: {fileID: 1705402917}
+  turnManager: {fileID: 651697407}
+  enemySpawner: {fileID: 1878988782}
+  roster: {fileID: 0}
+  barFrame: {fileID: 21300000, guid: 7586eb0bdc2447aa8f5ed51839ce747a, type: 3}
+  barFill: {fileID: 21300000, guid: f9055c96c15047439ba634117cc35f66, type: 3}
+  buttonSprite: {fileID: 21300000, guid: 95c8ecdd4f614a96b8d3b5473b185dbb, type: 3}
+  pipSprite: {fileID: 21300000, guid: d3df20a9ed4a40acb021aa73b1940b85, type: 3}
+  threatFrame: {fileID: 21300000, guid: e2c6a305ee4349c6a42e09a0f70798fd, type: 3}
+  threatIcon: {fileID: 21300000, guid: 022307e49a5f4ba69dfa98952fd7a12e, type: 3}
+  threatStripes: {fileID: 2800000, guid: ca96510fc55f48fda7bf5d9a1312dfc8, type: 3}
+  scale: 1
+  hideOnStart:
+  - {fileID: 1698562350}
+  - {fileID: 1421736845}
+  - {fileID: 1529226712}
+  - {fileID: 7100000021}
+  - {fileID: 1971338026}
+  - {fileID: 1107294069}
+  - {fileID: 449378687}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

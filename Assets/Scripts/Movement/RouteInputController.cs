@@ -252,6 +252,7 @@ public class RouteInputController : MonoBehaviour
                 else if (!(hoverOwnsPlan && PlanEndsAt(pressed)))
                 {
                     routePlanner.SetDestination(pressed);      // fresh route from the ship
+                    ClampPlanToThisTurn();
                 }
 
                 hoverOwnsPlan = false;
@@ -320,7 +321,46 @@ public class RouteInputController : MonoBehaviour
 
         lastHoverCell = cell;
         routePlanner.SetDestination(cell);
+        ClampPlanToThisTurn();
         hoverOwnsPlan = true;
+    }
+
+
+    /// <summary>
+    /// One-turn planning: cut the plan back to the furthest cell this turn's
+    /// movement reaches along it, so the preview (and the click) never promise
+    /// more than the ship will do. A target outside the green reach area moves
+    /// the ship as far toward it as it can this turn.
+    /// </summary>
+    private void ClampPlanToThisTurn()
+    {
+        if (movementPlanController == null ||
+            movementPlanController.Mode != MovementPlanController.PlanningMode.OneTurn)
+        {
+            return;
+        }
+
+        MovementAllowance allowance = movementPlanController.Allowance;
+        IReadOnlyList<Vector3Int> path = routePlanner.PlannedPath;
+        if (allowance == null || path == null || path.Count == 0)
+        {
+            return;
+        }
+
+        int affordable = allowance.GetAffordableCellCount(path);
+        if (affordable >= path.Count)
+        {
+            return;
+        }
+
+        if (affordable <= 0)
+        {
+            routePlanner.ClearRoute();
+            return;
+        }
+
+        Vector3Int furthest = path[affordable - 1];
+        routePlanner.SetDestination(furthest);
     }
 
 

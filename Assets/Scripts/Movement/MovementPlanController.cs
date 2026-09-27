@@ -67,6 +67,40 @@ public class MovementPlanController : MonoBehaviour
     [SerializeField]
     private bool autoContinueRoute = true;
 
+    /// <summary>
+    /// OneTurn: a move never goes further than this turn's movement - plans are
+    /// clamped to the reach area and nothing is queued for later turns. Make as
+    /// many moves as the budget allows, then the turn ends (or press END TURN).
+    /// MultiTurn: routes can run past this turn; the rest is queued and (with
+    /// Auto Continue Route) carries on at the start of each following turn.
+    /// </summary>
+    public enum PlanningMode { OneTurn, MultiTurn }
+
+    [Tooltip("OneTurn: moves are limited to this turn's movement (matches the green reach area). MultiTurn: long routes continue over several turns. The HUD has a toggle for this.")]
+    [SerializeField]
+    private PlanningMode planningMode = PlanningMode.OneTurn;
+
+    /// <summary>Raised when the planning mode changes (HUD toggle, reach overlay, input).</summary>
+    public event Action ModeChanged;
+
+    public PlanningMode Mode
+    {
+        get => planningMode;
+        set
+        {
+            if (planningMode == value) return;
+            planningMode = value;
+            if (planningMode == PlanningMode.OneTurn && HasQueuedRemainder)
+            {
+                SetQueuedRemainder(null);          // a waiting multi-turn route no longer applies
+            }
+            ModeChanged?.Invoke();
+        }
+    }
+
+    /// <summary>The allowance used for budgets and costs (for input clamping and the HUD).</summary>
+    public MovementAllowance Allowance => movementAllowance;
+
 
     private List<Vector3Int> queuedRemainder = new List<Vector3Int>();
     private Vector3Int? journeyDestination;
@@ -403,6 +437,18 @@ public class MovementPlanController : MonoBehaviour
         Vector3Int? freshJourneyDestination = candidateIsFreshPlan
             ? candidatePath[candidatePath.Count - 1]
             : (Vector3Int?)null;
+
+        // One-turn planning: only this turn's segment is ever committed. The
+        // rest is dropped, and the journey's intended destination becomes the
+        // segment's end, so an investigation beyond reach is not "intended".
+        if (planningMode == PlanningMode.OneTurn && remainder.Count > 0)
+        {
+            remainder.Clear();
+            if (candidateIsFreshPlan)
+            {
+                freshJourneyDestination = segment[segment.Count - 1];
+            }
+        }
 
         if (!playerController.TryMoveAlongPath(segment))
         {

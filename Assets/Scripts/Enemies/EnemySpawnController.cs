@@ -97,6 +97,12 @@ public class EnemySpawnController : MonoBehaviour
     public event Action<EnemyShip> EnemySpawned;
     public event Action<int, int> ReinforcementWaveSpawned;
 
+    /// <summary>Turns from the start of a run until the hunt begins (the threat bar's full length).</summary>
+    public int DetectionDelayTurns => detectionDelayTurns;
+
+    /// <summary>Turns between hunter waves once detected.</summary>
+    public int TurnsBetweenWaves => turnsBetweenWaves;
+
     public int TurnsUntilDetection { get; private set; }
     public int TurnsUntilNextWave { get; private set; }
     public int ReinforcementWaveIndex { get; private set; }
