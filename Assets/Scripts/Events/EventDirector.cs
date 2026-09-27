@@ -13,7 +13,7 @@ public struct EventDiscoveryTuning
     [Tooltip("Hard square limit on the scan. Vision decides the real area.")]
     [Min(0)] public int scanRadiusCap;
 
-    [Tooltip("0 = enter the site's cell. 1 = adjacent also triggers.")]
+    [Tooltip("Fly-over radius for automatic marked sites such as pickups. Intentional mining and derelict investigations require their exact cell.")]
     [Min(0)] public int triggerRadius;
 
     [Tooltip("No new site within this many cells (square) of an existing one.")]
@@ -43,9 +43,10 @@ public struct EventDiscoveryTuning
 /// <summary>
 /// Owns Event Discovery's arrival ordering. It is the ONLY event-system
 /// subscriber to PlayerShipState.CellEntered:
-///   1. not the player phase, or an event/POI/hazard is already open -> stop;
+///   1. outside player movement, or an event/POI/hazard is already open -> stop;
 ///   2. a planet with options opens the Point of Interest picker;
-///   3. else try to trigger a live marked site on the entered cell;
+///   3. pickups may resolve on fly-over, while mining/derelict sites only open
+///      if that exact site was the destination of the committed journey;
 ///   4. else roll an unmarked hazard for the cell (asteroids);
 ///   5. if any of those claimed the arrival, do not scan;
 ///   6. otherwise roll visible candidate cells around the new location.
@@ -62,6 +63,7 @@ public class EventDirector : MonoBehaviour
     [SerializeField] private TurnManager turnManager;
     [SerializeField] private VisionManager visionManager;
     [SerializeField] private FogOfWar fogOfWar;
+    [SerializeField] private MovementPlanController movementPlanController;
 
     [Header("Event Discovery")]
     [SerializeField] private EventSiteRegistry registry;
@@ -98,6 +100,8 @@ public class EventDirector : MonoBehaviour
     private FogOfWar subscribedFog;
     private TurnManager subscribedTurns;
     private EventSiteRegistry subscribedRegistry;
+    private MovementPlanController subscribedMovementPlan;
+    private EventSite targetedInvestigationSite;
 
     public PlayerShipState Player => player;
     public TurnManager TurnManager => turnManager;
@@ -139,6 +143,9 @@ public class EventDirector : MonoBehaviour
         if (visionManager == null) visionManager = GetComponent<VisionManager>();
         if (visionManager == null) visionManager = FindFirstObjectByType<VisionManager>();
         if (fogOfWar == null) fogOfWar = FindFirstObjectByType<FogOfWar>();
+        if (movementPlanController == null && player != null)
+            movementPlanController = player.GetComponentInChildren<MovementPlanController>(true);
+        if (movementPlanController == null) movementPlanController = FindFirstObjectByType<MovementPlanController>();
         if (registry == null) registry = FindFirstObjectByType<EventSiteRegistry>();
         if (trigger == null) trigger = GetComponent<EventTriggerHandler>();
         if (pointsOfInterest == null) pointsOfInterest = FindFirstObjectByType<PointOfInterestController>();
@@ -184,6 +191,14 @@ public class EventDirector : MonoBehaviour
 
         subscribedRegistry = registry;
         subscribedRegistry.SiteAdded += HandleSiteAdded;
+        subscribedRegistry.SiteRemoved += HandleSiteRemoved;
+
+        subscribedMovementPlan = movementPlanController;
+        if (subscribedMovementPlan != null)
+        {
+            subscribedMovementPlan.JourneyStarted += HandleJourneyStarted;
+            subscribedMovementPlan.RouteCancelled += HandleRouteCancelled;
+        }
     }
 
 
@@ -196,12 +211,64 @@ public class EventDirector : MonoBehaviour
             subscribedTurns.PlayerPhaseStarted -= HandlePlayerPhaseStarted;
             subscribedTurns.ClockReset -= HandleClockReset;
         }
-        if (subscribedRegistry != null) subscribedRegistry.SiteAdded -= HandleSiteAdded;
+        if (subscribedRegistry != null)
+        {
+            subscribedRegistry.SiteAdded -= HandleSiteAdded;
+            subscribedRegistry.SiteRemoved -= HandleSiteRemoved;
+        }
+        if (subscribedMovementPlan != null)
+        {
+            subscribedMovementPlan.JourneyStarted -= HandleJourneyStarted;
+            subscribedMovementPlan.RouteCancelled -= HandleRouteCancelled;
+        }
 
+        targetedInvestigationSite = null;
         subscribedPlayer = null;
         subscribedFog = null;
         subscribedTurns = null;
         subscribedRegistry = null;
+        subscribedMovementPlan = null;
+    }
+
+
+    // ==================== Intentional destinations ====================
+
+    private void HandleJourneyStarted(Vector3Int destination)
+    {
+        targetedInvestigationSite = null;
+
+        if (registry == null ||
+            !registry.TryGetSiteAtCell(destination, out EventSite site) ||
+            !site.IsLive ||
+            !RequiresIntentionalInteraction(site))
+        {
+            return;
+        }
+
+        targetedInvestigationSite = site;
+    }
+
+
+    private void HandleRouteCancelled()
+    {
+        targetedInvestigationSite = null;
+    }
+
+
+    private void HandleSiteRemoved(EventSite site)
+    {
+        if (object.ReferenceEquals(targetedInvestigationSite, site))
+        {
+            targetedInvestigationSite = null;
+        }
+    }
+
+
+    private static bool RequiresIntentionalInteraction(EventSite site)
+    {
+        return site != null &&
+               (site.Category == EventCategory.Asteroid ||
+                site.Category == EventCategory.Derelict);
     }
 
 
@@ -209,16 +276,30 @@ public class EventDirector : MonoBehaviour
 
     private void HandleCellEntered(Vector3Int cell)
     {
-        if (turnManager != null && !turnManager.IsPlayerPhase) return;
+        if (turnManager != null &&
+            turnManager.CurrentPhase != TurnPhase.Player &&
+            turnManager.CurrentPhase != TurnPhase.WaitingForPlayerMovement) return;
         if (trigger != null && trigger.IsBusy) return;
         if (pointsOfInterest != null && pointsOfInterest.IsBusy) return;
         if (hazards != null && hazards.IsBusy) return;
         if (warpExit != null && (warpExit.IsBusy || warpExit.RunOver)) return;
 
-        if (warpExit != null && warpExit.TryOpen(cell)) return;                           // map edge, fuel full
-        if (pointsOfInterest != null && pointsOfInterest.TryOpen(cell)) return;           // planets
-        if (trigger != null && trigger.TryTrigger(cell, tuning.triggerRadius)) return;   // marked sites
-        if (hazards != null && hazards.TryTrigger(cell)) return;                          // unmarked hazards
+        if (warpExit != null && warpExit.TryOpen(cell)) return;                                // map edge, fuel full
+        if (pointsOfInterest != null && pointsOfInterest.TryOpen(cell)) return;                // planets
+
+        bool reachedTargetedSite =
+            targetedInvestigationSite != null &&
+            targetedInvestigationSite.Cell == cell;
+
+        if (trigger != null &&
+            trigger.TryTriggerArrival(cell, tuning.triggerRadius, targetedInvestigationSite))
+        {
+            targetedInvestigationSite = null;
+            return;
+        }
+
+        if (reachedTargetedSite) targetedInvestigationSite = null;
+        if (hazards != null && hazards.TryTrigger(cell)) return;                               // unmarked hazards
 
         int created = scanner.Scan(sourceList, cell, tuning.scanRadiusCap, CurrentTurn, CanRollCell);
         if (logScans)

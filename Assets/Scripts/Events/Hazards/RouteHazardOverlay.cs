@@ -2,11 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Marks the risky cells along the player's route with a tile sprite, drawn
-/// over the map but UNDER the dotted route line (keep Sorting Order below
-/// RoutePathRenderer's). Covers the fresh plan, the part of the current segment
-/// still to fly, and the queued remainder - the same cells RoutePathRenderer draws.
-/// Presentation only: it never decides whether a hazard fires.
+/// Marks the risky cells along the player's route with a tile sprite. Hazard
+/// tiles are always drawn UNDER FogOfWar, while the normal dotted route remains
+/// free to draw above the fog. Covers the fresh plan, the part of the current
+/// segment still to fly, and the queued remainder - the same cells
+/// RoutePathRenderer draws. Presentation only: it never decides whether a
+/// hazard fires.
 ///
 /// No sprite asset is needed: leave Hazard Sprite empty and a pixel tile is
 /// generated from the Generated Tile settings (pattern, size, spacing). Assign a
@@ -31,6 +32,9 @@ public class RouteHazardOverlay : MonoBehaviour
     [SerializeField] private GridMap gridMap;
     [SerializeField] private HazardEventController hazards;
 
+    [Tooltip("Used to keep hazard stripes below the generated fog. Found automatically if empty.")]
+    [SerializeField] private FogOfWar fogOfWar;
+
     [Header("Look")]
     [Tooltip("Optional tile sprite drawn on hazard cells. Empty = use the Generated Tile below. Scaled to fit one tile.")]
     [SerializeField] private Sprite hazardSprite;
@@ -51,11 +55,12 @@ public class RouteHazardOverlay : MonoBehaviour
     [SerializeField] private int borderPixels = 1;
     [SerializeField] private Color tint = new Color(1f, 0.45f, 0.25f, 0.55f);
 
+    [Header("Fallback Sorting (only used if FogOfWar is unavailable)")]
     [SortingLayerName]
     [SerializeField] private string sortingLayerName = "Foreground";
 
-    [Tooltip("Keep below RoutePathRenderer's sorting order so the dotted line draws on top.")]
-    [SerializeField] private int sortingOrder = 121;
+    [Tooltip("Fallback sorting order only. With FogOfWar available, hazards are forced to one order below its lowest fog layer.")]
+    [SerializeField] private int sortingOrder = 9;
 
     private const string RootName = "Route Hazards (Generated)";
 
@@ -73,6 +78,7 @@ public class RouteHazardOverlay : MonoBehaviour
         if (playerController == null) playerController = FindFirstObjectByType<PlayerGridController>();
         if (gridMap == null) gridMap = FindFirstObjectByType<GridMap>();
         if (hazards == null) hazards = FindFirstObjectByType<HazardEventController>();
+        if (fogOfWar == null) fogOfWar = FindFirstObjectByType<FogOfWar>();
     }
 
 
@@ -86,14 +92,17 @@ public class RouteHazardOverlay : MonoBehaviour
     private void LateUpdate()
     {
         CollectHazardCells();
+        GetSorting(out string layer, out int order);
 
         int signature = 17;
         foreach (Vector3Int c in cells) signature = signature * 31 + c.GetHashCode();
         signature = signature * 31 + cells.Count;
+        signature = signature * 31 + layer.GetHashCode();
+        signature = signature * 31 + order;
         if (signature == lastSignature) return;
         lastSignature = signature;
 
-        Redraw();
+        Redraw(layer, order);
     }
 
 
@@ -119,7 +128,7 @@ public class RouteHazardOverlay : MonoBehaviour
     }
 
 
-    private void Redraw()
+    private void Redraw(string layer, int order)
     {
         if (gridMap == null) return;
         if (root == null) root = new GameObject(RootName).transform;
@@ -134,13 +143,32 @@ public class RouteHazardOverlay : MonoBehaviour
             SpriteRenderer sr = Get(i);
             sr.sprite = sprite;
             sr.color = tint;
-            sr.sortingLayerName = sortingLayerName;
-            sr.sortingOrder = sortingOrder;
+            sr.sortingLayerName = layer;
+            sr.sortingOrder = order;
             sr.transform.position = gridMap.CellToWorld(cells[i]);
             sr.transform.localScale = new Vector3(scale, scale, 1f);
         }
 
         Show(cells.Count);
+    }
+
+
+    /// <summary>
+    /// Fog owns the final sorting decision. Matching its sorting layer is
+    /// important because Unity resolves Sorting Layers before sorting order;
+    /// simply choosing a low order on a later layer can still draw over fog.
+    /// </summary>
+    private void GetSorting(out string layer, out int order)
+    {
+        if (fogOfWar != null)
+        {
+            layer = fogOfWar.FogSortingLayerName;
+            order = fogOfWar.LowestFogSortingOrder - 1;
+            return;
+        }
+
+        layer = sortingLayerName;
+        order = sortingOrder;
     }
 
 

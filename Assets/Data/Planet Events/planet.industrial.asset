@@ -36,10 +36,11 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 6
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
+  banner: {fileID: 21300000, guid: f5c7958a05708ee46acacd43ba346809, type: 3}
   shortDescription: 
   allowLeave: 1
   choices: []
+  pickupResources: []
   debugText: Placeholder planet event. Only eligible on planets tagged Industrial,
     once per planet.
   dialogueJson: {fileID: 0}

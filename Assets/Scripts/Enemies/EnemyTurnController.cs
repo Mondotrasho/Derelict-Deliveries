@@ -127,13 +127,15 @@ public class EnemyTurnController : MonoBehaviour
 
     private IEnumerator RunEnemyPhase()
     {
-        // Other TurnEnded subscribers may start a queued player segment later
-        // in the same event invocation. Waiting one frame makes subscriber
-        // order irrelevant before checking the facade's movement state.
+        // Other turn-ending subscribers may still be finishing movement or a
+        // modal arrival interaction. Waiting one frame makes subscriber order
+        // irrelevant, then the enemy phase waits until the player is fully free.
         yield return null;
 
         while (playerShip != null &&
-               (playerShip.IsMoving || playerShip.HasPausedMovement))
+               (playerShip.IsMoving ||
+                playerShip.HasPausedMovement ||
+                playerShip.IsMovementInterrupted))
         {
             yield return null;
         }

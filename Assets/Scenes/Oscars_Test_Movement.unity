@@ -17471,6 +17471,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1704211998}
   - component: {fileID: 1704211999}
+  - component: {fileID: 7100000602}
   m_Layer: 0
   m_Name: FogManager
   m_TagString: Untagged
@@ -17601,6 +17602,7 @@ GameObject:
   - component: {fileID: 2100000014}
   - component: {fileID: 2100000015}
   - component: {fileID: 2100000016}
+  - component: {fileID: 7100000601}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -17758,6 +17760,7 @@ MonoBehaviour:
   playerController: {fileID: 1705402913}
   movementAllowance: {fileID: 1705402921}
   turnManager: {fileID: 651697407}
+  autoContinueRoute: 1
 --- !u!114 &1705402919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17810,6 +17813,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b4fb0335d97e14d9b9674ddb759f7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RouteInputController
+  mode: 0
+  hoverPreview: 1
   mainCamera: {fileID: 0}
   gridMap: {fileID: 28316566}
   routePlanner: {fileID: 1705402917}
@@ -17831,7 +17836,7 @@ MonoBehaviour:
   playerController: {fileID: 1705402913}
   turnManager: {fileID: 651697407}
   pathfinder: {fileID: 1705402912}
-  autoEndTurnWhenBudgetExhausted: 0
+  autoEndTurnWhenBudgetExhausted: 1
   maxMovementPoints: 8
   costPerOrthogonalCell: 1
   costPerDiagonalCell: 2
@@ -18913,7 +18918,7 @@ MonoBehaviour:
   maxHullIntegrity: 100
   hullIntegrity: 100
   maxFuel: 100
-  fuel: 80
+  fuel: 20
   maxShields: 40
   shields: 40
   maxCrew: 10
@@ -19105,6 +19110,7 @@ MonoBehaviour:
   playerController: {fileID: 1705402913}
   gridMap: {fileID: 28316566}
   hazards: {fileID: 2100000006}
+  fogOfWar: {fileID: 0}
   hazardSprite: {fileID: 0}
   pattern: 3
   tilePixels: 8
@@ -20105,7 +20111,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7100000102
 RectTransform:
   m_ObjectHideFlags: 0
@@ -22945,6 +22951,49 @@ MonoBehaviour:
   - definition: {fileID: 11400000, guid: 447e126e10834007857856fb3c2d7155, type: 2}
     fromTurn: 8
   logSchedule: 0
+--- !u!114 &7100000601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24ed55cdeb674164ae64b54dc6322dfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReachOverlay
+  player: {fileID: 2078833601}
+  gridMap: {fileID: 28316566}
+  pathfinder: {fileID: 1705402912}
+  movementAllowance: {fileID: 1705402921}
+  turnManager: {fileID: 651697407}
+  ditherPattern: 0
+  fillColour: {r: 0.17885001, g: 0.511, b: 0.28105, a: 0.011764706}
+  edgeColour: {r: 0.106451, g: 0.305, b: 0.16745102, a: 0.08627451}
+  rippleCellsPerSecond: 200
+  fadeSeconds: 0.15
+  sortingLayerName: Foreground
+  sortingOrder: 41
+  showWhileMoving: 0
+--- !u!114 &7100000602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704211997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7afee998c1e4cd197bb8fa710b95615, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FogLayerCheck
+  fogSortingLayer: Foreground
+  fogStartingOrder: 10
+  keepUnderFog:
+  - {fileID: 473045948}
+  - {fileID: 1486303014}
+  autoFix: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
