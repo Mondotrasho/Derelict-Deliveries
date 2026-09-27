@@ -6,9 +6,13 @@ using UnityEngine.UI;
 /// with black bars filling the rest, and frames the whole map in it.
 ///
 /// Put it on the Main Camera. Every time the window size changes it:
-///   1. sets the camera's viewport to the largest 16:9 rectangle that fits,
-///      centred - bars left/right on wide screens, top/bottom on tall ones.
-///      A background camera clears the bars to Bar Colour.
+///   1. works out the largest 16:9 rectangle that fits, centred - bars
+///      left/right on wide screens, top/bottom on tall ones - and covers the
+///      rest with solid bars on a top-most overlay canvas (they also block
+///      clicks, so no routes get plotted into the black). The camera itself
+///      stays full-screen - URP's 2D renderer mis-draws some sprites (the
+///      starfield) with a reduced camera viewport - and its zoom is adjusted so
+///      the 16:9 area always shows the same slice of the world.
 ///   2. (Fit Map) centres the camera on the ground tilemap and zooms so the
 ///      whole map fits, plus Padding Cells.
 ///   3. keeps the UI inside the picture: at start everything under the Canvas
@@ -42,7 +46,8 @@ public sealed class GameViewFrame : MonoBehaviour
     [Min(1f)] [SerializeField] private float referenceHeight = 1080f;
 
     private Camera cam;
-    private Camera barCamera;
+    private float baseOrthoSize;
+    private RectTransform barLeft, barRight, barTop, barBottom;
     private RectTransform frame;
     private CanvasScaler scaler;
     private int lastWidth = -1, lastHeight = -1;
@@ -60,7 +65,9 @@ public sealed class GameViewFrame : MonoBehaviour
             }
         }
 
-        CreateBarCamera();
+        baseOrthoSize = cam.orthographicSize;      // the 16:9 view as set up in the scene
+        cam.rect = new Rect(0f, 0f, 1f, 1f);
+        CreateBars();
         CreateUiFrame();
         Apply();
     }
@@ -74,17 +81,39 @@ public sealed class GameViewFrame : MonoBehaviour
 
 
     // ------------------------------------------------------------------ bars
-    private void CreateBarCamera()
+    private void CreateBars()
     {
-        var go = new GameObject("Letterbox Bars (Generated)");
-        go.transform.SetParent(transform, false);
-        barCamera = go.AddComponent<Camera>();
-        barCamera.clearFlags = CameraClearFlags.SolidColor;
-        barCamera.backgroundColor = barColour;
-        barCamera.cullingMask = 0;                   // draws nothing, only clears
-        barCamera.orthographic = true;
-        barCamera.depth = cam.depth - 100f;          // renders before the main camera
-        barCamera.rect = new Rect(0f, 0f, 1f, 1f);
+        var go = new GameObject("Letterbox Bars (Generated)", typeof(RectTransform), typeof(Canvas));
+        var canvas = go.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 32000;                   // above every other UI
+        go.AddComponent<GraphicRaycaster>();           // so the bars swallow clicks
+        barLeft = Bar(go.transform, "Left");
+        barRight = Bar(go.transform, "Right");
+        barTop = Bar(go.transform, "Top");
+        barBottom = Bar(go.transform, "Bottom");
+    }
+
+
+    private RectTransform Bar(Transform parent, string name)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(parent, false);
+        var img = go.GetComponent<Image>();
+        img.color = barColour;
+        img.raycastTarget = true;
+        var rt = (RectTransform)go.transform;
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        return rt;
+    }
+
+
+    private static void Place(RectTransform rt, float xMin, float yMin, float xMax, float yMax)
+    {
+        rt.anchorMin = new Vector2(xMin, yMin);
+        rt.anchorMax = new Vector2(xMax, yMax);
+        rt.offsetMin = rt.offsetMax = Vector2.zero;
+        rt.gameObject.SetActive(xMax > xMin && yMax > yMin);
     }
 
 
@@ -135,9 +164,18 @@ public sealed class GameViewFrame : MonoBehaviour
             float h = screen / target;                   // bars top and bottom
             r = new Rect(0f, (1f - h) * 0.5f, 1f, h);
         }
-        cam.rect = r;
-
         if (fitMap) FitMap(target);
+
+        // Full-screen camera; on screens taller than 16:9 zoom out so the 16:9
+        // band still spans the same world width. Wider screens keep the zoom -
+        // the bars simply cover the extra width.
+        cam.rect = new Rect(0f, 0f, 1f, 1f);
+        cam.orthographicSize = screen < target ? baseOrthoSize * target / screen : baseOrthoSize;
+
+        Place(barLeft, 0f, 0f, r.xMin, 1f);
+        Place(barRight, r.xMax, 0f, 1f, 1f);
+        Place(barBottom, r.xMin, 0f, r.xMax, r.yMin);
+        Place(barTop, r.xMin, r.yMax, r.xMax, 1f);
 
         if (frame != null)
         {
@@ -172,7 +210,7 @@ public sealed class GameViewFrame : MonoBehaviour
 
         float halfHeight = (maxY - minY) * 0.5f;
         float halfWidth = (maxX - minX) * 0.5f;
-        cam.orthographicSize = Mathf.Max(halfHeight, halfWidth / aspect);
+        baseOrthoSize = Mathf.Max(halfHeight, halfWidth / aspect);
 
         Vector3 p = transform.position;
         transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, p.z);
