@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: cult.sabotage
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: cult.sabotage
+  displayName: The Ex-Cultist
+  category: 2
+  tags:
+  - cult
+  conditions:
+    tags: []
+    flags:
+    - scope: 0
+      key: cult:defector
+      expected: 1
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 4
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "Screams from the engine room. You find your newest crew member kneeling inside a chalk circle, humming, next to two of your crew who will not be getting up again."
+  allowLeave: 0
+  choices:
+  - id: eject
+    text: "Throw them off the ship"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Eject"
+      weight: 1
+      resultText: "You drag them to the airlock. They're still humming when it opens. That's two good crew gone.\n\nEVENT END 2: SABOTEUR"
+      resources:
+      - kind: 2
+        amount: -2
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:defector
+          expected: 0
+        - scope: 0
+          key: cult:end:saboteur
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Stage 3, 3 turns after taking the defector on."
+  dialogueJson: {fileID: 0}

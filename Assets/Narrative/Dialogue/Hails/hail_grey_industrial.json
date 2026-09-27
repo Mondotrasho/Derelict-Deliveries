@@ -1,0 +1,72 @@
+{
+  "terminal": {
+    "title": "SYS://ANVIL YARD",
+    "status": "ORE DOCK 4 OPEN"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "engineer"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "pilot",
+      "text": "Anvil Yard, this is the courier requesting a berth."
+    },
+    {
+      "tick": 2,
+      "speaker": "engineer",
+      "text": "Berth four. Mind the slag chutes, they don't stop for anybody."
+    },
+    {
+      "tick": 3,
+      "speaker": "engineer",
+      "text": "You've reached the only refinery for three systems that still pays on time. Mostly on time."
+    },
+    {
+      "tick": 10,
+      "speaker": "engineer",
+      "text": "Ore in, alloy out. Everything that sparkles on this rock gets melted, stamped and shipped.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "engineer",
+      "text": "Welders, drillers, anyone who can read a pressure gauge. Contracts go up on the board when the foreman remembers.",
+      "nextTick": 30
+    },
+    {
+      "tick": 25,
+      "speaker": "engineer",
+      "text": "That noise? Crusher three. Or the reactor. Honestly they sound the same until one of them explodes.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "engineer",
+      "text": "Keep your hands inside the ship and your hull away from the magnets. Welcome to the Yard."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "What do you make?",
+          "line": "What actually comes out of this place?",
+          "nextTick": 10
+        },
+        {
+          "text": "Any work?",
+          "line": "Is anyone hiring down there?",
+          "nextTick": 20
+        },
+        {
+          "text": "What's that noise?",
+          "line": "What is that awful grinding noise?",
+          "nextTick": 25
+        }
+      ]
+    }
+  ]
+}

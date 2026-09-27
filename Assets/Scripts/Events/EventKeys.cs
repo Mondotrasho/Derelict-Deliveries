@@ -14,6 +14,12 @@ public static class EventKeys
     /// <summary>Player counter: supplies (a resource until it gets a real home on ShipResources).</summary>
     public const string Supplies = "res.supplies";
 
+    /// <summary>Player tag while this officer is aboard (written by OfficerRoster).</summary>
+    public static string Officer(string officerId) => "officer:" + (officerId ?? "").Trim();
+
+    /// <summary>Player counter: total of a stat across officers aboard (written by OfficerRoster).</summary>
+    public static string Bonus(string stat) => "bonus:" + (stat ?? "").Trim().ToLowerInvariant();
+
     /// <summary>Planet flag: a once-per-planet event definition has been resolved here.</summary>
     public static string Done(string definitionId)
     {

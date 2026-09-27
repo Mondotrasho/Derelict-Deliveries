@@ -1,0 +1,143 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: cult.missing
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: cult.missing
+  displayName: Missing Crew
+  category: 2
+  tags:
+  - cult
+  conditions:
+    tags: []
+    flags:
+    - scope: 0
+      key: cult:passengers
+      expected: 1
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 4
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "One of your crew hasn't reported for their shift. The security feed shows the cargo bay: your passengers, kneeling around the sarcophagus, chanting."
+  allowLeave: 0
+  choices:
+  - id: feed
+    text: "Watch the feed"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Feed"
+      weight: 1
+      resultText: "You've seen enough. Probably."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 4900000, guid: 448dafcddee849fa8421063788b9360a, type: 3}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: ignore
+    text: "Ignore it"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Ignore"
+      weight: 1
+      resultText: "You turn the feed off. Paying passengers are paying passengers. The crew member is never found."
+      resources:
+      - kind: 2
+        amount: -1
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:ritual_allowed
+          expected: 1
+        - scope: 0
+          key: cult:ritual_done
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: interfere
+    text: "Send the crew in"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Storm"
+      weight: 1
+      resultText: "Your crew grab whatever's heavy and head for the cargo bay."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: 544c571b6df9456298cc1dbd92d3f68b, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Stage 4, 2 turns after giving passage."
+  dialogueJson: {fileID: 0}

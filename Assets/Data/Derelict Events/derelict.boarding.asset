@@ -114,6 +114,9 @@ MonoBehaviour:
         compare: 0
         value: 1
     minCrew: 0
+    bonusStat: scanning
+    chancePerPoint: 0.1
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
     showOdds: 1
@@ -180,6 +183,9 @@ MonoBehaviour:
         compare: 0
         value: 1
     minCrew: 0
+    bonusStat: engineering
+    chancePerPoint: 0.1
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
     showOdds: 1

@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: cult.distress
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: cult.distress
+  displayName: Distress Call
+  category: 2
+  tags:
+  - derelict
+  - cult
+  conditions:
+    tags: []
+    flags:
+    - scope: 0
+      key: cult:started
+      expected: 0
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 4
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "A battered transport drifts on the edge of your scanner, its beacon screaming for help. Through the viewport, a crowd of robed figures waves at you. Enthusiastically."
+  allowLeave: 0
+  choices:
+  - id: hail
+    text: "Hail them"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Hail"
+      weight: 1
+      resultText: "They wave harder. One of them holds up a hand-written sign: PLEASE."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 4900000, guid: d0666eb88f6d4285a38cbe99ad8e8f4b, type: 3}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: accept
+    text: "Give them passage"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Passage"
+      weight: 1
+      resultText: "The robed figures file aboard, singing softly. Last on is a stone sarcophagus the size of a person, carried by six of them. Nobody explains it. They're headed for the Grey planet."
+      resources: []
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:started
+          expected: 1
+        - scope: 0
+          key: cult:passengers
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 11400000, guid: b4ad2fd289d04e3399606d6d27f612d4, type: 2}
+      scheduleInTurns: 2
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: refuse
+    text: "Refuse"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Refuse"
+      weight: 1
+      resultText: "You tell them you're not a taxi. The waving stops."
+      resources: []
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:started
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: 26b845a553d54f1392a296d1fa8e9c9a, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Stage 1. Derelict site (add to DerelictEventTable) or QuestScheduler start event from turn 8."
+  dialogueJson: {fileID: 0}

@@ -63,6 +63,21 @@ public sealed class ChoiceOutcome
 
     [Tooltip("Spawn this enemy type at a map-edge entry cell (it then hunts the player like any enemy). E.g. defiling the shrine brings the eldritch monster.")]
     public EnemyShipDefinition spawnOnMapEdge;
+
+    [Tooltip("Show this event later, through the QuestScheduler (quests: '2 turns later...'). Its Conditions are checked again when it comes due.")]
+    public EventDefinition scheduleEvent;
+
+    [Tooltip("How many turns later Schedule Event appears (at least 1).")]
+    [Min(1)] public int scheduleInTurns = 1;
+
+    [Tooltip("An officer joins (N4).")]
+    public OfficerDefinition recruitOfficer;
+
+    [Tooltip("This officer leaves or dies, if aboard.")]
+    public OfficerDefinition loseOfficer;
+
+    [Tooltip("Lose whichever officer has the most of this stat (e.g. 'engineering': the engineer who tried). Empty = none.")]
+    public string loseOfficerBestAt = "";
 }
 
 
@@ -78,6 +93,16 @@ public sealed class EventChoice
 
     [Tooltip("Needs at least this much crew aboard (e.g. boarding: 4). 0 = no requirement.")]
     [Min(0)] public int minCrew;
+
+    [Header("Officer Bonus (N4)")]
+    [Tooltip("Officer stat that helps, e.g. engineering. The button shows [Engineering] and the first outcome's chance rises with it.")]
+    public string bonusStat = "";
+
+    [Tooltip("Added to the first outcome's chance per point of the stat aboard (0.05 = +5% per point, capped at 95%).")]
+    [Range(0f, 0.5f)] public float chancePerPoint = 0.05f;
+
+    [Tooltip("Needs at least this much of the stat aboard to be picked at all (0 = anyone can try).")]
+    [Min(0)] public int minBonus;
 
     [Tooltip("Unmet: show greyed out with the reason instead of hiding it.")]
     public bool showWhenLocked;

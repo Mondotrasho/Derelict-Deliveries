@@ -236,6 +236,15 @@ public sealed class WarpExitController : MonoBehaviour
         if (state != null) sb.Append($"   SUPPLIES {state.GetCounter(EventKeys.Supplies)}");
         sb.Append('\n');
 
+        OfficerRoster roster = player != null ? player.GetComponent<OfficerRoster>() : null;
+        if (roster == null) roster = FindFirstObjectByType<OfficerRoster>();
+        if (roster != null && roster.Aboard.Count > 0)
+        {
+            var names = new List<string>();
+            foreach (OfficerDefinition o in roster.Aboard) names.Add($"{o.DisplayName} ({o.Role})");
+            sb.Append($"OFFICERS  {string.Join(", ", names)}\n");
+        }
+
         if (state != null)
         {
             foreach (SummaryLine line in summaryLines)

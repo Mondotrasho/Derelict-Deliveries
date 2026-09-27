@@ -16,6 +16,8 @@ public sealed class ResourceReadout : MonoBehaviour
     [SerializeField] private PlayerShipState player;
     [Tooltip("Found automatically if empty.")]
     [SerializeField] private EnemySpawnController enemySpawner;
+    [Tooltip("Found automatically if empty.")]
+    [SerializeField] private OfficerRoster roster;
 
     [Min(1f)] [SerializeField] private float fontSize = 22f;
     [Min(0.05f)] [SerializeField] private float refreshSeconds = 0.25f;
@@ -27,6 +29,7 @@ public sealed class ResourceReadout : MonoBehaviour
     [SerializeField] private bool showCrew = true;
     [SerializeField] private bool showSupplies = true;
     [SerializeField] private bool showHunt = true;
+    [SerializeField] private bool showOfficers = true;
     [SerializeField] private string detectionLabel = "DETECTION IN";
     [SerializeField] private string waveLabel = "NEXT WAVE IN";
 
@@ -38,6 +41,7 @@ public sealed class ResourceReadout : MonoBehaviour
     {
         if (player == null) player = FindFirstObjectByType<PlayerShipState>();
         if (enemySpawner == null) enemySpawner = FindFirstObjectByType<EnemySpawnController>();
+        if (roster == null) roster = FindFirstObjectByType<OfficerRoster>();
 
         GameObject obj = new GameObject("__ReadoutText", typeof(RectTransform), typeof(TextMeshProUGUI));
         obj.transform.SetParent(transform, false);
@@ -89,6 +93,12 @@ public sealed class ResourceReadout : MonoBehaviour
         if (showSupplies && player != null && player.EventState != null)
         {
             sb.Append($"SUPPLIES {player.EventState.GetCounter(EventKeys.Supplies)}\n");
+        }
+        if (showOfficers && roster != null && roster.Aboard.Count > 0)
+        {
+            var names = new System.Collections.Generic.List<string>();
+            foreach (OfficerDefinition o in roster.Aboard) names.Add(o.DisplayName.ToUpperInvariant());
+            sb.Append($"OFFICERS {string.Join(", ", names)}\n");
         }
         if (showHunt && enemySpawner != null)
         {

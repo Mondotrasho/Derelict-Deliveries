@@ -1,0 +1,56 @@
+{
+  "terminal": {
+    "title": "SYS://AIRLOCK CAM",
+    "status": "ONE LIFE SIGN"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "Wait! Please. Not all of us want to go where they are going."
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "I can cook. I can weld. I can stop chanting. Mostly."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "The grey world is not a destination. It is an appointment. I do not wish to keep it.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "Nothing! I carry nothing. Only regret, and a small ceremonial knife. For fruit.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "Take me with you, and I will work for my passage. You will not regret it."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 2,
+      "options": [
+        {
+          "text": "Why leave them?",
+          "line": "Why are you running from your own people?",
+          "nextTick": 10
+        },
+        {
+          "text": "What are you hiding?",
+          "line": "What's under the robe?",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "terminal": {
+    "title": "SYS://CARGO BAY CAM 2",
+    "status": "RECORDING"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "...o sleeper in the dark, we bring you warmth, we bring you breath..."
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "...one given freely, one given gladly, one given whether they like it or not..."
+    },
+    {
+      "tick": 3,
+      "speaker": "pilot",
+      "text": "Is that... one of my crew's boots sticking out of the sarcophagus?"
+    },
+    {
+      "tick": 4,
+      "speaker": "cultist",
+      "text": "...the vessel hungers, the vessel is fed, soon the vessel shall wake..."
+    },
+    {
+      "tick": 5,
+      "speaker": "pilot",
+      "text": "Right. Okay. I have some decisions to make."
+    }
+  ],
+  "choices": []
+}

@@ -27,30 +27,33 @@ MonoBehaviour:
     flags: []
     counters: []
   useMarkerColour: 1
-  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
   identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
-  shortDescription: Two people lean against a stall in the market, watching the docks.
-    One of them nods at you.
+  banner: {fileID: 0}
+  shortDescription: "Two people in heavy robes lean against a stall in the market, watching the docks. One of them nods at you. The other one doesn't blink."
   allowLeave: 0
   choices:
   - id: talk
-    text: Talk to them
+    text: "Talk to them"
     availability:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: 
+    lockedReason: ""
     showOdds: 1
     outcomes:
-    - label: Talk
+    - label: "Talk"
       weight: 1
-      resultText: They wave you over.
+      resultText: "They lean in close. One of them smells faintly of incense and engine grease."
       resources: []
       writes:
         tags: []
@@ -59,27 +62,109 @@ MonoBehaviour:
           key: street:talked
           expected: 1
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-    dialogue: {fileID: 4900000, guid: 412fc1db5764ab549a4d59c3ca7c6605, type: 3}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 4900000, guid: c2295173caac4cd2b18531290fd6ff10, type: 3}
     endsEvent: 0
     hideAfterUse: 1
+  - id: work_cult
+    text: "Ask about work"
+    availability:
+      tags:
+      - scope: 1
+        tag: Grey
+        mustHave: 0
+      flags:
+      - scope: 2
+        key: street:talked
+        expected: 1
+      - scope: 0
+        key: cult:started
+        expected: 0
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Pilgrims"
+      weight: 70
+      resultText: "The taller one smiles. \"Not work, exactly. A favour. Come, sit.\""
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: e7a05513b5db442891aa436545e4a0d8, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Mugging"
+      weight: 30
+      resultText: "It was a setup. A third robe steps out of the alley behind you, and you leave a few crates lighter."
+      resources:
+      - kind: 3
+        amount: -4
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
   - id: work
-    text: Ask about work
+    text: "Ask about work"
     availability:
       tags: []
       flags:
       - scope: 2
         key: street:talked
         expected: 1
+      - scope: 0
+        key: cult:started
+        expected: 1
       counters: []
-    showWhenLocked: 1
-    lockedReason: talk to them first
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
     showOdds: 1
     outcomes:
-    - label: Courier job
+    - label: "Courier job"
       weight: 70
-      resultText: They slip you a small courier job. Easy money.
+      resultText: "They slip you a small courier job. Easy money, no questions asked."
       resources:
       - kind: 3
         amount: 6
@@ -87,46 +172,145 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-    - label: Setup
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Mugging"
       weight: 30
-      resultText: It was a setup. You lose a few supplies getting out of there.
+      resultText: "It was a setup. A third robe steps out of the alley behind you, and you leave a few crates lighter."
       resources:
       - kind: 3
-        amount: -2
+        amount: -4
       writes:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: work_grey
+    text: "Ask about work"
+    availability:
+      tags:
+      - scope: 1
+        tag: Grey
+        mustHave: 1
+      flags:
+      - scope: 2
+        key: street:talked
+        expected: 1
+      - scope: 0
+        key: cult:started
+        expected: 0
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Courier job"
+      weight: 70
+      resultText: "They slip you a small courier job. Easy money, no questions asked."
+      resources:
+      - kind: 3
+        amount: 6
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Mugging"
+      weight: 30
+      resultText: "It was a setup. A third robe steps out of the alley behind you, and you leave a few crates lighter."
+      resources:
+      - kind: 3
+        amount: -4
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   - id: walk
-    text: Walk past
+    text: "Walk past"
     availability:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: 
+    lockedReason: ""
     showOdds: 1
     outcomes:
-    - label: Walk past
+    - label: "Walk past"
       weight: 1
-      resultText: You keep your head down and move on.
+      resultText: "You keep your head down and move on. The quiet one watches you all the way to the docks."
       resources: []
       writes:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
-  debugText: Test event for the dialogue hand-off. Talk opens a dialogue and returns;
-    Ask about work unlocks after talking (site flag).
+  pickupResources: []
+  debugText: "Market stall (shared planet option 'Wander the market', not on Cult planets). The two robed strangers are cultists: after talking, 'Ask about work' can start the cult quest (70%, via cult.market_offer) unless it's the mugging (30%). Only one 'Ask about work' variant is ever visible: cult not started & not Grey -> cult offer; cult started -> courier job; on Grey -> courier job."
   dialogueJson: {fileID: 0}

@@ -38,6 +38,10 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
     [Tooltip("Used by outcomes with Start Combat With.")]
     [SerializeField] private EnemySpawnController enemySpawner;
     [SerializeField] private EnemyTurnController enemyTurnController;
+    [Tooltip("Used by outcomes with Schedule Event (quests).")]
+    [SerializeField] private QuestScheduler questScheduler;
+    [Tooltip("Officers aboard (N4): bonus odds, requirements, recruit / lose.")]
+    [SerializeField] private OfficerRoster roster;
 
     [Header("Header Text")]
     [SerializeField] private string titlePrefix = "SYS://";
@@ -71,6 +75,8 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
         if (dialoguePanel == null) dialoguePanel = FindFirstObjectByType<DialoguePanelController>(FindObjectsInactive.Include);
         if (enemySpawner == null) enemySpawner = FindFirstObjectByType<EnemySpawnController>();
         if (enemyTurnController == null) enemyTurnController = FindFirstObjectByType<EnemyTurnController>();
+        if (questScheduler == null) questScheduler = FindFirstObjectByType<QuestScheduler>();
+        if (roster == null) roster = FindFirstObjectByType<OfficerRoster>();
         if (view == null) Debug.LogWarning("EventPanel has no BannerChoiceView; events will be left for later.", this);
     }
 
@@ -126,10 +132,11 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             if (choice == null) continue;
 
             // Roll and apply one outcome now, so later choices see its writes.
-            int index = EventChoiceResolver.RollOutcome(choice, rng);
+            int index = EventChoiceResolver.RollOutcome(choice, rng, context.Player);
             ChoiceOutcome outcome = index >= 0 ? choice.outcomes[index] : null;
             string summary = EventChoiceResolver.Apply(outcome, site, context, player, asteroidField);
             if (outcome != null) summary = EventChoiceResolver.Join(summary, EventChoiceResolver.ApplyDetection(outcome.detectionTurns, enemySpawner));
+            if (outcome != null) summary = EventChoiceResolver.Join(summary, EventChoiceResolver.ApplyOfficers(outcome, roster));
             if (outcome != null && !string.IsNullOrWhiteSpace(outcome.returnCrewFromSiteCounter) && context.Site != null)
             {
                 int back = Mathf.Max(0, context.Site.GetCounter(outcome.returnCrewFromSiteCounter));
@@ -138,6 +145,12 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
                 summary = EventChoiceResolver.Join(summary, $"CREW +{back} BACK ABOARD ({(player != null && player.Resources != null ? player.Resources.Crew : 0)})");
             }
             somethingHappened = true;
+
+            if (outcome != null && outcome.scheduleEvent != null)
+            {
+                if (questScheduler != null) questScheduler.Schedule(outcome.scheduleEvent, outcome.scheduleInTurns);
+                else Debug.LogWarning($"EventPanel: no QuestScheduler in the scene for {outcome.scheduleEvent.Id}.", this);
+            }
 
             if (outcome != null && outcome.spawnOnMapEdge != null)
             {
@@ -258,25 +271,38 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             if (usedChoices.Contains(choice.id)) continue;
 
             bool crewOk = choice.minCrew <= 0 || (player != null && player.Resources != null && player.Resources.Crew >= choice.minCrew);
-            bool met = crewOk && (choice.availability == null || choice.availability.IsMet(context));
+            bool hasStat = !string.IsNullOrWhiteSpace(choice.bonusStat);
+            bool bonusOk = !hasStat || choice.minBonus <= 0 || EventChoiceResolver.BonusPoints(choice, context.Player) >= choice.minBonus;
+            bool met = crewOk && bonusOk && (choice.availability == null || choice.availability.IsMet(context));
             if (!met && !choice.showWhenLocked) continue;
 
-            string label = choice.text;
+            string statName = hasStat ? Title(choice.bonusStat) : "";
+            string label = (hasStat ? $"[{statName}] " : "") + choice.text;
             if (met && choice.showOdds && choice.outcomes != null && choice.outcomes.Count > 1)
             {
-                int percent = Mathf.RoundToInt(EventChoiceResolver.FirstOutcomeChance(choice) * 100f);
+                int percent = Mathf.RoundToInt(EventChoiceResolver.EffectiveFirstChance(choice, context.Player) * 100f);
                 label += $" ({percent}%)";
             }
             if (!met)
             {
-                string reason = !crewOk && string.IsNullOrWhiteSpace(choice.lockedReason)
-                    ? $"needs {choice.minCrew} crew"
-                    : choice.lockedReason;
+                string reason = choice.lockedReason;
+                if (string.IsNullOrWhiteSpace(reason))
+                {
+                    if (!crewOk) reason = $"needs {choice.minCrew} crew";
+                    else if (!bonusOk) reason = $"needs {statName} {choice.minBonus}";
+                }
                 if (!string.IsNullOrWhiteSpace(reason)) label += $" [{reason}]";
             }
 
             buttons.Add(new BannerChoiceView.Choice(choice.id, label, met));
         }
+    }
+
+
+    private static string Title(string stat)
+    {
+        stat = stat.Trim();
+        return stat.Length == 0 ? stat : char.ToUpperInvariant(stat[0]) + stat.Substring(1).ToLowerInvariant();
     }
 
 

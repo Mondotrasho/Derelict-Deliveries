@@ -1,0 +1,66 @@
+{
+  "terminal": {
+    "title": "SYS://LANDING PAD",
+    "status": "GREY WORLD"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "The pilgrimage is complete. As promised, traveller: fuel."
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "You did not disturb our rites. That shows wisdom. We have another task for wise ones."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "An egg. Warm. Precious. It must reach the golden world, the one they call Fun Planet."
+    },
+    {
+      "tick": 4,
+      "speaker": "cultist",
+      "text": "We pay up front. Fuel and supplies, enough for a long and comfortable journey."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "What hatches is not your concern. Deliver it and your concern ends.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "Warm is how it likes to be. Keep it warm. Do not sing to it. It sings back.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "Well, traveller? Will you carry our egg?"
+    }
+  ],
+  "choices": [
+    {
+      "tick": 4,
+      "options": [
+        {
+          "text": "What's in the egg?",
+          "line": "What exactly is inside this egg?",
+          "nextTick": 10
+        },
+        {
+          "text": "Why is it warm?",
+          "line": "Why is it... warm?",
+          "nextTick": 20
+        }
+      ]
+    }
+  ]
+}

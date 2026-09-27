@@ -1,0 +1,72 @@
+{
+  "terminal": {
+    "title": "SYS://GREENHOLLOW CO-OP",
+    "status": "CUSTOMS: RELAXED"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "clerk"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "Greenhollow, courier inbound. Anything we need to declare?"
+    },
+    {
+      "tick": 2,
+      "speaker": "clerk",
+      "text": "Oh, hello! Only if it's alive, on fire, or both. Pad two is free, next to the melon stall."
+    },
+    {
+      "tick": 3,
+      "speaker": "clerk",
+      "text": "We're a co-op out here. Farmers, fixers, a few people hiding from their families. No corporate stamps needed."
+    },
+    {
+      "tick": 10,
+      "speaker": "clerk",
+      "text": "Fresh food, second-hand parts, fuel if the tanker's been. Prices are fair because I set them and I'm lovely.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "clerk",
+      "text": "The bar by the silo doubles as a hiring hall. Good people, mostly. Don't let Rook near your controls.",
+      "nextTick": 30
+    },
+    {
+      "tick": 25,
+      "speaker": "clerk",
+      "text": "Every week someone asks. The answer is still no, the cows are not for sale.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "clerk",
+      "text": "Take your time, courier. Nobody here's in a hurry, except the melons. They go off fast."
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "What's for trade?",
+          "line": "What can we pick up here?",
+          "nextTick": 10
+        },
+        {
+          "text": "Who's hiring?",
+          "line": "Any spare hands looking for work?",
+          "nextTick": 20
+        },
+        {
+          "text": "The cows?",
+          "line": "I have to ask about the cows.",
+          "nextTick": 25
+        }
+      ]
+    }
+  ]
+}

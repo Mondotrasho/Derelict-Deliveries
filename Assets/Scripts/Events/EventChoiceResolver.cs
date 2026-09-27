@@ -10,6 +10,44 @@ using UnityEngine;
 /// </summary>
 public static class EventChoiceResolver
 {
+    /// <summary>Stat points aboard for this choice's Bonus Stat (0 if none).</summary>
+    public static int BonusPoints(EventChoice choice, IEventState player)
+    {
+        if (choice == null || string.IsNullOrWhiteSpace(choice.bonusStat) || player == null) return 0;
+        return Mathf.Max(0, player.GetCounter(EventKeys.Bonus(choice.bonusStat)));
+    }
+
+
+    /// <summary>First outcome's chance including the officer bonus (capped at 95%, never below its base).</summary>
+    public static float EffectiveFirstChance(EventChoice choice, IEventState player)
+    {
+        float baseChance = FirstOutcomeChance(choice);
+        int points = BonusPoints(choice, player);
+        if (points <= 0 || choice.outcomes == null || choice.outcomes.Count < 2) return baseChance;
+        return Mathf.Max(baseChance, Mathf.Min(0.95f, baseChance + points * choice.chancePerPoint));
+    }
+
+
+    /// <summary>Rolls with the officer bonus applied to the first outcome; the rest share what is left by weight.</summary>
+    public static int RollOutcome(EventChoice choice, System.Random rng, IEventState player)
+    {
+        if (BonusPoints(choice, player) <= 0) return RollOutcome(choice, rng);
+        float first = EffectiveFirstChance(choice, player);
+        if (rng.NextDouble() < first) return 0;
+
+        float rest = 0f;
+        for (int i = 1; i < choice.outcomes.Count; i++) rest += choice.outcomes[i] != null ? Mathf.Max(0f, choice.outcomes[i].weight) : 0f;
+        if (rest <= 0f) return 0;
+        double roll = rng.NextDouble() * rest;
+        for (int i = 1; i < choice.outcomes.Count; i++)
+        {
+            roll -= choice.outcomes[i] != null ? Mathf.Max(0f, choice.outcomes[i].weight) : 0f;
+            if (roll < 0.0) return i;
+        }
+        return choice.outcomes.Count - 1;
+    }
+
+
     /// <summary>Index of the rolled outcome, or -1 if the choice has none.</summary>
     public static int RollOutcome(EventChoice choice, System.Random rng)
     {
@@ -131,6 +169,24 @@ public static class EventChoiceResolver
             if (o != null) total += Mathf.Max(0f, o.weight);
         }
         return total;
+    }
+
+
+    /// <summary>Recruits / loses officers for an outcome and returns its summary part.</summary>
+    public static string ApplyOfficers(ChoiceOutcome outcome, OfficerRoster roster)
+    {
+        if (outcome == null || roster == null) return "";
+        string summary = "";
+        if (outcome.recruitOfficer != null && roster.Recruit(outcome.recruitOfficer))
+            summary = Join(summary, $"{outcome.recruitOfficer.DisplayName.ToUpperInvariant()} JOINS ({outcome.recruitOfficer.Role})");
+        if (outcome.loseOfficer != null && roster.Lose(outcome.loseOfficer))
+            summary = Join(summary, $"LOST {outcome.loseOfficer.DisplayName.ToUpperInvariant()}");
+        if (!string.IsNullOrWhiteSpace(outcome.loseOfficerBestAt))
+        {
+            OfficerDefinition lost = roster.LoseBestAt(outcome.loseOfficerBestAt);
+            if (lost != null) summary = Join(summary, $"LOST {lost.DisplayName.ToUpperInvariant()}");
+        }
+        return summary;
     }
 
 

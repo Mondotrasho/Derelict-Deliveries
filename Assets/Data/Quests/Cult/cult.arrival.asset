@@ -1,0 +1,200 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: cult.arrival
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: cult.arrival
+  displayName: Journey's End
+  category: 1
+  tags:
+  - cult
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 4
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "Your robed passengers file down the ramp onto the Grey planet, humming the same three notes they have hummed for the entire trip."
+  allowLeave: 0
+  choices:
+  - id: takeoff
+    text: "Take off"
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:interfered
+        expected: 1
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Paid"
+      weight: 1
+      resultText: "Their leader presses a fuel chit into your hand without a word. As you take off, you see them talking to the captain of another ship.\n\nEVENT END 4: PAID IN FULL"
+      resources:
+      - kind: 0
+        amount: 50
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:passengers
+          expected: 0
+        - scope: 0
+          key: cult:end:paid
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: listen
+    text: "Hear the leader out"
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:ritual_allowed
+        expected: 1
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Payment"
+      weight: 1
+      resultText: "The leader pays you in full, and then some. They have another job for you."
+      resources:
+      - kind: 0
+        amount: 50
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:passengers
+          expected: 0
+        - scope: 0
+          key: cult:offered
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 4900000, guid: 95b6e37a5d1f4defb45f4aa009b5ca6c, type: 3}
+    endsEvent: 0
+    hideAfterUse: 1
+  - id: egg
+    text: "Take the egg job"
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:offered
+        expected: 1
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Egg"
+      weight: 1
+      resultText: "They load a warm, heavy, slightly pulsing egg into your hold, and pay up front. Deliver it to Fun Planet, the Yellow one."
+      resources:
+      - kind: 0
+        amount: 50
+      - kind: 3
+        amount: 50
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:egg
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 11400000, guid: 7c65f65fa35c4b1c909941a8456b16a6, type: 2}
+      scheduleInTurns: 3
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: decline
+    text: "Turn them down"
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:offered
+        expected: 1
+      counters: []
+    minCrew: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Decline"
+      weight: 1
+      resultText: "You've had enough of robes for one lifetime. As you take off, you see them talking to the captain of another ship.\n\nEVENT END 4: PAID IN FULL"
+      resources: []
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:end:paid
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Stage 6. Planet option cult.dropoff on the Grey planet while cult:passengers is set."
+  dialogueJson: {fileID: 0}
