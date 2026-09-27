@@ -18737,9 +18737,64 @@ MonoBehaviour:
     portraitScale: 1
     overrideTextColour: 1
     textColour: {r: 0.83137256, g: 0.54901963, b: 1, a: 1}
+  - characterId: market_vendor
+    displayName: Sales Clerk
+    sprite: {fileID: 21300000, guid: c4076a4e68a429842af417778bffe15c, type: 3}
+    fontName: Kenney High
+    fontSize: 0
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 0
+    portraitScale: 1
+    overrideTextColour: 0
+    textColour: {r: 1, g: 1, b: 1, a: 1}
+  - characterId: mara
+    displayName: MARA VOSS
+    sprite: {fileID: 21300000, guid: 35573cdb47adba34389ba74434eb9831, type: 3}
+    fontName: Kenney Future
+    fontSize: 0
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 0
+    portraitScale: 1
+    overrideTextColour: 0
+    textColour: {r: 1, g: 1, b: 1, a: 1}
+  - characterId: hollis
+    displayName: DR. HOLLIS CRANE
+    sprite: {fileID: 21300000, guid: d165b8a0717cf364f99e5948539ff764, type: 3}
+    fontName: Kenney Rocket
+    fontSize: 0
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 1
+    portraitScale: 1
+    overrideTextColour: 0
+    textColour: {r: 1, g: 1, b: 1, a: 1}
+  - characterId: rook
+    displayName: ROOK
+    sprite: {fileID: -7169610267031536943, guid: 167c81228c4bb0f40bbb369954976cf0, type: 3}
+    fontName: Kenney Pixel
+    fontSize: 0
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 1
+    portraitScale: 1
+    overrideTextColour: 0
+    textColour: {r: 1, g: 1, b: 1, a: 1}
+  - characterId: stasis_broker
+    displayName: CRYO BROKER
+    sprite: {fileID: 21300000, guid: 4025d2bed62c7dd4c99679a9b24fb605, type: 3}
+    fontName: Kenney Mini Square Mono
+    fontSize: 0
+    verticalAlignment: 2
+    flipWhenLeft: 0
+    flipWhenRight: 1
+    portraitScale: 1
+    overrideTextColour: 0
+    textColour: {r: 1, g: 1, b: 1, a: 1}
   hidePortraitWhenNoSprite: 1
   sideAreaFraction: 0.2
-  controlsHeightFraction: 0.2
+  controlsHeightFraction: 0.2478
   outerInsetFraction: 0.018
   portraitPaddingFraction: 0.018
   topInsetFraction: 0.0589
@@ -18793,7 +18848,7 @@ MonoBehaviour:
   autoScrollToNewest: 1
   showDebugResetButton: 0
   continueButtonText: CONTINUE
-  choiceAreaFraction: 0.62
+  choiceAreaFraction: 0.7
   showCloseButton: 1
   closeButtonText: QUIT
   bringToFrontOnOpen: 1
@@ -19165,6 +19220,8 @@ MonoBehaviour:
       dialogueJson: {fileID: 4900000, guid: a06df33003614e12b832163169e3fa76, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
+      eventTable: {fileID: 0}
+      eventTags: []
   - planetId: Grey_Planet
     options:
     - id: hail.grey_planet
@@ -19186,6 +19243,8 @@ MonoBehaviour:
       dialogueJson: {fileID: 4900000, guid: bd288fe65dda4ccc9512a97e33193fdc, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
+      eventTable: {fileID: 0}
+      eventTags: []
   - planetId: Red_planet
     options:
     - id: hail.red_planet
@@ -19207,6 +19266,8 @@ MonoBehaviour:
       dialogueJson: {fileID: 4900000, guid: 31ba0ebd796640b4b3769a6838cd7979, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
+      eventTable: {fileID: 0}
+      eventTags: []
   - planetId: Red_planet_moon
     options:
     - id: hail.red_planet_moon
@@ -19228,6 +19289,8 @@ MonoBehaviour:
       dialogueJson: {fileID: 4900000, guid: af0fe1383701e0f4f8de96c5fba928c3, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
+      eventTable: {fileID: 0}
+      eventTags: []
   - planetId: Green_Planet
     options:
     - id: hail.green_planet
@@ -19249,6 +19312,8 @@ MonoBehaviour:
       dialogueJson: {fileID: 4900000, guid: 851b21d2a02a48ca831bc226e498d35a, type: 3}
       runBootSequence: 0
       eventDefinition: {fileID: 0}
+      eventTable: {fileID: 0}
+      eventTags: []
   sharedOptions:
   - id: survey.mining
     title: Survey for ore
@@ -19269,6 +19334,8 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: d46e8425af8da2964e3db431470cb289, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
   - id: provoke.patrol
     title: Provoke the local patrol
     description: 
@@ -19288,9 +19355,11 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 0}
+    eventTable: {fileID: 0}
+    eventTags: []
   - id: street.market
     title: Wander the market
-    description: Two locals by a stall.
+    description: Browse the local market.
     kind: 2
     conditions:
       tags: []
@@ -19306,7 +19375,10 @@ MonoBehaviour:
     returnToPicker: 1
     dialogueJson: {fileID: 0}
     runBootSequence: 0
-    eventDefinition: {fileID: 11400000, guid: 09c2f664e09f44e58d890ae54e9300db, type: 2}
+    eventDefinition: {fileID: 0}
+    eventTable: {fileID: 11400000, guid: 63f669bca90049f3a8c8868ad6607cc3, type: 2}
+    eventTags:
+    - market
   - id: shrine.red
     title: Visit the shrine
     description: Ruins on the surface.
@@ -19332,6 +19404,8 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: aff449803ee04d01b19e0f654d3c9eb9, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
   - id: trade.fuel
     title: Visit the fuel depot
     description: Wanna buy some fuel?
@@ -19357,6 +19431,8 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: 97c04eb8928441ca88c2c30fc612b440, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
   - id: cult.dropoff
     title: Drop off the robed passengers
     description: Your passengers are very keen to get off.
@@ -19385,6 +19461,8 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: 4b1504f6e00146d79db836dc8bfc9d91, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
   - id: cult.deliver
     title: Deliver the egg
     description: The customer is waiting. The egg is humming.
@@ -19410,6 +19488,8 @@ MonoBehaviour:
     dialogueJson: {fileID: 0}
     runBootSequence: 0
     eventDefinition: {fileID: 11400000, guid: b2309cfa2edf4b1ba8e906058a9f74e3, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
 --- !u!114 &2100000009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19445,6 +19525,7 @@ MonoBehaviour:
   turnManager: {fileID: 651697407}
   visionManager: {fileID: 1705402916}
   fogOfWar: {fileID: 1704211999}
+  movementPlanController: {fileID: 0}
   registry: {fileID: 1330772293}
   trigger: {fileID: 2100000012}
   pointsOfInterest: {fileID: 2100000008}
@@ -19481,6 +19562,7 @@ MonoBehaviour:
   player: {fileID: 2078833601}
   turnManager: {fileID: 651697407}
   registry: {fileID: 1330772293}
+  movementAllowance: {fileID: 0}
   presenterBehaviour: {fileID: 7100000003}
   dialoguePanel: {fileID: 2031162150}
   pickupTextColour: {r: 1, g: 0.85, b: 0.3, a: 1}
@@ -20111,7 +20193,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7100000102
 RectTransform:
   m_ObjectHideFlags: 0
@@ -22773,7 +22855,7 @@ MonoBehaviour:
   - CombatView
   - RadarPanel
   - FacePanel
-  crtFlicker: 0.08
+  crtFlicker: 0.164
   clipCombatView: 1
   buttonFontSize: 26
   statsFontSize: 18

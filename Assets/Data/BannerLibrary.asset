@@ -24,4 +24,21 @@ MonoBehaviour:
   - tag: Red
     banner: {fileID: 21300000, guid: 6065ff95fbb59ac4693c77ac686240f3, type: 3}
   planetFallback: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
-  definitionOverrides: []
+  eventPlanetOverrides: []
+  eventPlanetTagOverrides: []
+  eventTagPlanetTagOverrides:
+  - eventTag: market
+    planetTag: Green
+    banner: {fileID: 21300000, guid: 042cf1fecbc3b1e4c92e8c511ac63865, type: 3}
+  - eventTag: market
+    planetTag: Grey
+    banner: {fileID: 21300000, guid: b3ddaca9dd564944c93d558836ae94f6, type: 3}
+  - eventTag: market
+    planetTag: Yellow
+    banner: {fileID: 21300000, guid: f777efa53f9494040ae3ab643c4a1acc, type: 3}
+  - eventTag: market
+    planetTag: Red
+    banner: {fileID: 21300000, guid: f5c7958a05708ee46acacd43ba346809, type: 3}
+  definitionOverrides:
+  - definition: {fileID: 0}
+    banner: {fileID: 0}

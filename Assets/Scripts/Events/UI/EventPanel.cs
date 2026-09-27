@@ -12,7 +12,9 @@ using UnityEngine;
 /// (EventChoiceResolver) and shown as result text. Then, depending on the
 /// choice: the dialogue UI opens, a follow-up event is shown in the same
 /// window, the event ends, or the choices come back re-checked against the
-/// new state. Definitions with no choices get placeholder Resolve / Leave.
+/// new state. Definitions with a root dialogue still show their event card first,
+/// then open the conversation from one explicit interaction button. Definitions
+/// with no choices get placeholder Resolve / Leave.
 ///
 /// Presentation plus choice outcomes only: the controllers still own movement
 /// interruption, the definition's On Resolve writes, site removal and route
@@ -23,6 +25,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
     private const string ResolveId = "__resolve";
     private const string LeaveId = "__leave";
     private const string ContinueId = "__continue";
+    private const string DialogueId = "__dialogue";
 
     [Header("References")]
     [Tooltip("The window this panel drives. Empty = a BannerChoiceView on this object or its children.")]
@@ -33,7 +36,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
     [Header("Outcome Targets (found automatically if empty)")]
     [SerializeField] private PlayerShipState player;
     [SerializeField] private AsteroidFieldPainter asteroidField;
-    [Tooltip("Opened by choices that have a Dialogue. Assign it: the panel starts inactive, so it cannot always be found.")]
+    [Tooltip("Opened by choice dialogues and root event dialogues. Assign it: the panel starts inactive, so it cannot always be found.")]
     [SerializeField] private DialoguePanelController dialoguePanel;
     [Tooltip("Used by outcomes with Start Combat With.")]
     [SerializeField] private EnemySpawnController enemySpawner;
@@ -103,6 +106,96 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
 
         while (true)
         {
+            // Root dialogue events still begin as normal event cards. The player explicitly
+            // enters the conversation from the banner window, then the dialogue owns the detailed
+            // decisions. JSON options reference EventChoice ids through their "action" field, so
+            // gameplay effects and conditions remain in the EventDefinition rather than narrative text.
+            if (shown.DialogueJson != null && dialoguePanel != null)
+            {
+                bool canLeaveDialogueEvent = !hazard && shown.AllowLeave;
+
+                buttons.Clear();
+                buttons.Add(new BannerChoiceView.Choice(DialogueId, shown.DialogueButtonLabel));
+                if (canLeaveDialogueEvent) buttons.Add(new BannerChoiceView.Choice(LeaveId, leaveLabel));
+                view.SetChoices(buttons);
+
+                string dialoguePick = null;
+                yield return view.WaitForChoice(id => dialoguePick = id);
+                if (cancelled || dialoguePick == null) break;
+
+                if (dialoguePick == LeaveId)
+                {
+                    resolved = somethingHappened;
+                    break;
+                }
+
+                if (dialoguePick != DialogueId) continue;
+
+                bool dialogueResolved = false;
+                EventDefinition followUpAfterDialogue = null;
+
+                dialoguePanel.SetChoiceActionResolver(
+                    actionId =>
+                    {
+                        if (dialogueResolved) return new DialogueActionAvailability(false, false);
+
+                        EventChoice actionChoice = shown.FindChoice(actionId);
+                        if (actionChoice == null) return new DialogueActionAvailability(false, false);
+
+                        bool available = IsChoiceAvailable(actionChoice, context, out string reason);
+                        return new DialogueActionAvailability(
+                            available || actionChoice.showWhenLocked,
+                            available,
+                            reason);
+                    },
+                    actionId =>
+                    {
+                        if (dialogueResolved) return new DialogueActionResult(false);
+
+                        EventChoice actionChoice = shown.FindChoice(actionId);
+                        if (actionChoice == null || !IsChoiceAvailable(actionChoice, context, out _))
+                        {
+                            return new DialogueActionResult(false);
+                        }
+
+                        ChoiceResolution action = ResolveChoice(actionChoice, site, context);
+                        somethingHappened = true;
+
+                        if (actionChoice.hideAfterUse) usedChoices.Add(actionChoice.id);
+                        if (action.outcome != null && action.outcome.startCombatWith != null)
+                            combatAfter = action.outcome.startCombatWith;
+                        if (action.outcome != null && action.outcome.followUp != null)
+                            followUpAfterDialogue = action.outcome.followUp;
+                        if (actionChoice.endsEvent) dialogueResolved = true;
+
+                        return new DialogueActionResult(true, action.outcomeIndex);
+                    });
+
+                // The event card is deliberately visible until the player chooses to interact.
+                // Once dialogue starts, hide it so the two UIs never overlap or flash through.
+                view.Hide();
+                yield return dialoguePanel.OpenDialogueAndWait(shown.DialogueJson);
+                dialoguePanel.ClearChoiceActionResolver();
+                if (cancelled) break;
+
+                if (followUpAfterDialogue != null)
+                {
+                    shown = followUpAfterDialogue;
+                    usedChoices.Clear();
+                    ShowDefinition(shown, site, planet, hazard);
+                    continue;
+                }
+
+                if (combatAfter != null)
+                {
+                    resolved = true;
+                    break;
+                }
+
+                resolved = dialogueResolved;
+                break;
+            }
+
             bool canLeave = !hazard && shown.AllowLeave;
             bool hasChoices = shown.Choices != null && shown.Choices.Count > 0;
 
@@ -132,33 +225,10 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             if (choice == null) continue;
 
             // Roll and apply one outcome now, so later choices see its writes.
-            int index = EventChoiceResolver.RollOutcome(choice, rng, context.Player);
-            ChoiceOutcome outcome = index >= 0 ? choice.outcomes[index] : null;
-            string summary = EventChoiceResolver.Apply(outcome, site, context, player, asteroidField);
-            if (outcome != null) summary = EventChoiceResolver.Join(summary, EventChoiceResolver.ApplyDetection(outcome.detectionTurns, enemySpawner));
-            if (outcome != null) summary = EventChoiceResolver.Join(summary, EventChoiceResolver.ApplyOfficers(outcome, roster));
-            if (outcome != null && !string.IsNullOrWhiteSpace(outcome.returnCrewFromSiteCounter) && context.Site != null)
-            {
-                int back = Mathf.Max(0, context.Site.GetCounter(outcome.returnCrewFromSiteCounter));
-                context.Site.SetCounter(outcome.returnCrewFromSiteCounter, 0);
-                if (back > 0 && player != null && player.Resources != null) player.Resources.AddCrew(back);
-                summary = EventChoiceResolver.Join(summary, $"CREW +{back} BACK ABOARD ({(player != null && player.Resources != null ? player.Resources.Crew : 0)})");
-            }
+            ChoiceResolution resolution = ResolveChoice(choice, site, context);
+            ChoiceOutcome outcome = resolution.outcome;
+            string summary = resolution.summary;
             somethingHappened = true;
-
-            if (outcome != null && outcome.scheduleEvent != null)
-            {
-                if (questScheduler != null) questScheduler.Schedule(outcome.scheduleEvent, outcome.scheduleInTurns);
-                else Debug.LogWarning($"EventPanel: no QuestScheduler in the scene for {outcome.scheduleEvent.Id}.", this);
-            }
-
-            if (outcome != null && outcome.spawnOnMapEdge != null)
-            {
-                if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
-                {
-                    Debug.LogWarning($"EventPanel: could not spawn {outcome.spawnOnMapEdge.DisplayName} at the map edge (no free entry cell?).", this);
-                }
-            }
 
             view.ShowResult(JoinResult(outcome != null ? outcome.resultText : "", summary));
             view.SetChoices(new[] { new BannerChoiceView.Choice(ContinueId, continueLabel) });
@@ -263,6 +333,84 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
     }
 
 
+    private sealed class ChoiceResolution
+    {
+        public int outcomeIndex = -1;
+        public ChoiceOutcome outcome;
+        public string summary = "";
+    }
+
+
+    private bool IsChoiceAvailable(EventChoice choice, EventContext context, out string reason)
+    {
+        reason = "";
+        if (choice == null || string.IsNullOrEmpty(choice.id) || usedChoices.Contains(choice.id)) return false;
+
+        bool crewOk = choice.minCrew <= 0 ||
+            (player != null && player.Resources != null && player.Resources.Crew >= choice.minCrew);
+        bool hasStat = !string.IsNullOrWhiteSpace(choice.bonusStat);
+        bool bonusOk = !hasStat || choice.minBonus <= 0 ||
+            EventChoiceResolver.BonusPoints(choice, context.Player) >= choice.minBonus;
+        bool conditionsOk = choice.availability == null || choice.availability.IsMet(context);
+
+        if (crewOk && bonusOk && conditionsOk) return true;
+
+        reason = choice.lockedReason;
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            if (!crewOk) reason = $"needs {choice.minCrew} crew";
+            else if (!bonusOk) reason = $"needs {Title(choice.bonusStat)} {choice.minBonus}";
+        }
+
+        return false;
+    }
+
+
+    private ChoiceResolution ResolveChoice(EventChoice choice, EventSite site, EventContext context)
+    {
+        ChoiceResolution result = new ChoiceResolution();
+        if (choice == null) return result;
+
+        result.outcomeIndex = EventChoiceResolver.RollOutcome(choice, rng, context.Player);
+        result.outcome = result.outcomeIndex >= 0 && choice.outcomes != null && result.outcomeIndex < choice.outcomes.Count
+            ? choice.outcomes[result.outcomeIndex]
+            : null;
+
+        ChoiceOutcome outcome = result.outcome;
+        result.summary = EventChoiceResolver.Apply(outcome, site, context, player, asteroidField);
+        if (outcome != null)
+            result.summary = EventChoiceResolver.Join(result.summary, EventChoiceResolver.ApplyDetection(outcome.detectionTurns, enemySpawner));
+        if (outcome != null)
+            result.summary = EventChoiceResolver.Join(result.summary, EventChoiceResolver.ApplyOfficers(outcome, roster));
+
+        if (outcome != null && !string.IsNullOrWhiteSpace(outcome.returnCrewFromSiteCounter) && context.Site != null)
+        {
+            int back = Mathf.Max(0, context.Site.GetCounter(outcome.returnCrewFromSiteCounter));
+            context.Site.SetCounter(outcome.returnCrewFromSiteCounter, 0);
+            if (back > 0 && player != null && player.Resources != null) player.Resources.AddCrew(back);
+            result.summary = EventChoiceResolver.Join(
+                result.summary,
+                $"CREW +{back} BACK ABOARD ({(player != null && player.Resources != null ? player.Resources.Crew : 0)})");
+        }
+
+        if (outcome != null && outcome.scheduleEvent != null)
+        {
+            if (questScheduler != null) questScheduler.Schedule(outcome.scheduleEvent, outcome.scheduleInTurns);
+            else Debug.LogWarning($"EventPanel: no QuestScheduler in the scene for {outcome.scheduleEvent.Id}.", this);
+        }
+
+        if (outcome != null && outcome.spawnOnMapEdge != null)
+        {
+            if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
+            {
+                Debug.LogWarning($"EventPanel: could not spawn {outcome.spawnOnMapEdge.DisplayName} at the map edge (no free entry cell?).", this);
+            }
+        }
+
+        return result;
+    }
+
+
     private void AddChoiceButtons(EventDefinition definition, EventContext context)
     {
         foreach (EventChoice choice in definition.Choices)
@@ -270,12 +418,10 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             if (choice == null || string.IsNullOrEmpty(choice.id)) continue;
             if (usedChoices.Contains(choice.id)) continue;
 
-            bool crewOk = choice.minCrew <= 0 || (player != null && player.Resources != null && player.Resources.Crew >= choice.minCrew);
-            bool hasStat = !string.IsNullOrWhiteSpace(choice.bonusStat);
-            bool bonusOk = !hasStat || choice.minBonus <= 0 || EventChoiceResolver.BonusPoints(choice, context.Player) >= choice.minBonus;
-            bool met = crewOk && bonusOk && (choice.availability == null || choice.availability.IsMet(context));
+            bool met = IsChoiceAvailable(choice, context, out string reason);
             if (!met && !choice.showWhenLocked) continue;
 
+            bool hasStat = !string.IsNullOrWhiteSpace(choice.bonusStat);
             string statName = hasStat ? Title(choice.bonusStat) : "";
             string label = (hasStat ? $"[{statName}] " : "") + choice.text;
             if (met && choice.showOdds && choice.outcomes != null && choice.outcomes.Count > 1)
@@ -283,16 +429,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
                 int percent = Mathf.RoundToInt(EventChoiceResolver.EffectiveFirstChance(choice, context.Player) * 100f);
                 label += $" ({percent}%)";
             }
-            if (!met)
-            {
-                string reason = choice.lockedReason;
-                if (string.IsNullOrWhiteSpace(reason))
-                {
-                    if (!crewOk) reason = $"needs {choice.minCrew} crew";
-                    else if (!bonusOk) reason = $"needs {statName} {choice.minBonus}";
-                }
-                if (!string.IsNullOrWhiteSpace(reason)) label += $" [{reason}]";
-            }
+            if (!met && !string.IsNullOrWhiteSpace(reason)) label += $" [{reason}]";
 
             buttons.Add(new BannerChoiceView.Choice(choice.id, label, met));
         }

@@ -63,6 +63,7 @@ public class PointOfInterestController : MonoBehaviour
     private IPoiPicker picker;
     private IEventPresenter eventPresenter;
     private readonly List<PoiChoice> choices = new List<PoiChoice>();
+    private readonly System.Random rng = new System.Random();
     private int serial;
 
 
@@ -225,8 +226,20 @@ public class PointOfInterestController : MonoBehaviour
             yield break;
         }
 
-        serial++;
         EventDefinition def = option.eventDefinition;
+        if (def == null && option.eventTable != null)
+        {
+            def = option.eventTable.PickWeighted(option.eventTags, context, rng);
+        }
+
+        if (def == null)
+        {
+            Debug.LogWarning($"{name}: event option '{option.id}' has no eligible event to open.", this);
+            completed(false);
+            yield break;
+        }
+
+        serial++;
         EventSite site = new EventSite($"poi:{option.id}:{cell.x},{cell.y}:{serial}", cell, def, null, context.Turn);
         site.Knowledge = PlanetKnowledgeState.Identified;
         EventContext siteContext = context.WithSite(site.State);
@@ -237,6 +250,8 @@ public class PointOfInterestController : MonoBehaviour
         if (outcome.resolved)
         {
             def.OnResolve?.Apply(siteContext);
+            if (def.OncePerPlanet && siteContext.Planet != null)
+                siteContext.Planet.SetFlag(EventKeys.Done(def.Id), true);
             siteContext.Player?.IncrementCounter(EventKeys.Resolved(def.Category));
         }
         if (outcome.stopJourney && player != null) player.CancelCurrentJourney();

@@ -73,8 +73,11 @@ public sealed class EventDefinition : ScriptableObject
     [Header("Debug")]
     [TextArea(2, 6)]
     [SerializeField] private string debugText = "Placeholder event.";
-    [Tooltip("Not used by the event UI: dialogue lives on the choice that opens it.")]
+    [Tooltip("Optional root dialogue for this event. When assigned, EventPanel first shows the event card and then opens this dialogue when the player chooses to interact. JSON choice options use action: <EventChoice id> to trigger gameplay outcomes.")]
     [SerializeField] private TextAsset dialogueJson;
+
+    [Tooltip("Button shown on the event card before opening Dialogue Json. Empty = TALK.")]
+    [SerializeField] private string dialogueButtonLabel = "TALK";
 
 
     public string Id => string.IsNullOrWhiteSpace(id) ? name : id.Trim();
@@ -93,6 +96,7 @@ public sealed class EventDefinition : ScriptableObject
     public int LifetimeTurns => lifetimeTurns;
     public string DebugText => debugText;
     public TextAsset DialogueJson => dialogueJson;
+    public string DialogueButtonLabel => string.IsNullOrWhiteSpace(dialogueButtonLabel) ? "TALK" : dialogueButtonLabel.Trim();
     public Sprite Banner => banner;
     public string ShortDescription => shortDescription;
     public bool AllowLeave => allowLeave;

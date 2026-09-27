@@ -10,6 +10,34 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 #endif
 
+/// <summary>Result returned when a dialogue choice triggers a gameplay action.</summary>
+public sealed class DialogueActionResult
+{
+    public bool Accepted { get; }
+    public int OutcomeIndex { get; }
+
+    public DialogueActionResult(bool accepted, int outcomeIndex = -1)
+    {
+        Accepted = accepted;
+        OutcomeIndex = outcomeIndex;
+    }
+}
+
+/// <summary>Visibility and enabled state for a dialogue option backed by a gameplay action.</summary>
+public sealed class DialogueActionAvailability
+{
+    public bool Visible { get; }
+    public bool Enabled { get; }
+    public string LockedReason { get; }
+
+    public DialogueActionAvailability(bool visible, bool enabled, string lockedReason = "")
+    {
+        Visible = visible;
+        Enabled = enabled;
+        LockedReason = lockedReason ?? "";
+    }
+}
+
 public class DialoguePanelController : MonoBehaviour
 {
     public enum TerminalColourPreset
@@ -129,6 +157,13 @@ public class DialoguePanelController : MonoBehaviour
 
         // 0 means use the normal next tick. Any other existing tick can be targeted.
         public int nextTick;
+
+        // Optional gameplay action supplied by the caller. EventPanel uses EventChoice ids here.
+        public string action;
+
+        // Optional branch per rolled outcome. Index 0 maps to the first EventChoice outcome, etc.
+        // A zero/missing entry falls back to nextTick.
+        public List<int> outcomeTicks;
     }
 
     [Serializable]
@@ -487,6 +522,9 @@ public class DialoguePanelController : MonoBehaviour
     private bool dialogueOpen;
     private bool windowOpening;
 
+    private Func<string, DialogueActionAvailability> choiceActionAvailability;
+    private Func<string, DialogueActionResult> choiceActionHandler;
+
     private CanvasGroup windowCanvasGroup;
     private Vector3 authoredPanelScale = Vector3.one;
     private Coroutine windowOpenCoroutine;
@@ -701,6 +739,25 @@ public class DialoguePanelController : MonoBehaviour
     // ---------------------------------------------------------------------
 
     /// <summary>
+    /// Supplies optional gameplay actions for JSON choice options that contain an "action" field.
+    /// The availability callback decides whether the option is hidden, enabled, or shown locked;
+    /// the handler performs the action and returns the rolled outcome index for outcomeTicks branching.
+    /// </summary>
+    public void SetChoiceActionResolver(
+        Func<string, DialogueActionAvailability> actionAvailability,
+        Func<string, DialogueActionResult> actionHandler)
+    {
+        choiceActionAvailability = actionAvailability;
+        choiceActionHandler = actionHandler;
+    }
+
+    public void ClearChoiceActionResolver()
+    {
+        choiceActionAvailability = null;
+        choiceActionHandler = null;
+    }
+
+    /// <summary>
     /// Activates this existing dialogue panel, loads the supplied TextAsset and starts it.
     /// The panel can safely begin inactive in the scene as long as the caller holds a reference to it.
     /// </summary>
@@ -795,6 +852,7 @@ public class DialoguePanelController : MonoBehaviour
         fontTestMode = false;
         activeSpeakingSide = null;
         dialogueOpen = false;
+        ClearChoiceActionResolver();
         gameObject.SetActive(false);
         DialogueClosed?.Invoke();
     }
@@ -2405,6 +2463,7 @@ public class DialoguePanelController : MonoBehaviour
         int nextTick = FindNextDialogueTick(currentTick);
         if (nextTick < 0)
         {
+            CloseDialogue();
             return;
         }
 
@@ -2545,6 +2604,11 @@ public class DialoguePanelController : MonoBehaviour
             {
                 if (line.tick == afterTick && line.nextTick != 0)
                 {
+                    if (line.nextTick < 0)
+                    {
+                        return -1;
+                    }
+
                     if (TickExists(line.nextTick))
                     {
                         return line.nextTick;
@@ -2645,6 +2709,7 @@ public class DialoguePanelController : MonoBehaviour
 
         HideChoices();
         typingCoroutine = StartCoroutine(TypeCurrentTick());
+        UpdateContinueInteractivity();
     }
 
     private IEnumerator TypeCurrentTick()
@@ -3289,18 +3354,54 @@ public class DialoguePanelController : MonoBehaviour
                 continue;
             }
 
+            DialogueActionAvailability actionState = null;
+            if (!string.IsNullOrWhiteSpace(option.action))
+            {
+                if (choiceActionHandler == null)
+                {
+                    continue;
+                }
+
+                actionState = choiceActionAvailability != null
+                    ? choiceActionAvailability(option.action)
+                    : new DialogueActionAvailability(true, true);
+
+                if (actionState == null || !actionState.Visible)
+                {
+                    continue;
+                }
+            }
+
             int capturedIndex = i;
+            string labelText = option.text;
+            bool enabled = actionState == null || actionState.Enabled;
+            if (!enabled && !string.IsNullOrWhiteSpace(actionState.LockedReason))
+            {
+                labelText += $" [{actionState.LockedReason}]";
+            }
+
             Button button = CreateGeneratedButton(
                 $"ChoiceButton_{i}",
                 choiceAreaRect,
-                option.text,
+                labelText,
                 out TextMeshProUGUI label);
 
             ConfigureButtonVisual(button, label);
+            button.interactable = enabled;
+            if (!enabled) label.color = resolvedDimColour;
             label.textWrappingMode = TextWrappingModes.Normal;
             label.overflowMode = TextOverflowModes.Truncate;
-            button.onClick.AddListener(() => SelectChoice(capturedIndex));
+            if (enabled)
+            {
+                button.onClick.AddListener(() => SelectChoice(capturedIndex));
+            }
             generatedChoiceButtons.Add(button);
+        }
+
+        if (generatedChoiceButtons.Count == 0)
+        {
+            waitingForChoice = false;
+            activeChoiceSet = null;
         }
 
         UpdateContinueInteractivity();
@@ -3339,9 +3440,30 @@ public class DialoguePanelController : MonoBehaviour
             return;
         }
 
+        int actionOutcomeIndex = -1;
+        if (!string.IsNullOrWhiteSpace(option.action))
+        {
+            if (choiceActionHandler == null) return;
+
+            DialogueActionAvailability actionState = choiceActionAvailability != null
+                ? choiceActionAvailability(option.action)
+                : new DialogueActionAvailability(true, true);
+            if (actionState == null || !actionState.Visible || !actionState.Enabled) return;
+
+            DialogueActionResult result = choiceActionHandler(option.action);
+            if (result == null || !result.Accepted) return;
+            actionOutcomeIndex = result.OutcomeIndex;
+        }
+
         int sourceTick = currentTick;
         string spokenLine = !string.IsNullOrWhiteSpace(option.line) ? option.line : option.text;
         int requestedTarget = option.nextTick;
+
+        if (actionOutcomeIndex >= 0 && option.outcomeTicks != null && actionOutcomeIndex < option.outcomeTicks.Count)
+        {
+            int outcomeTarget = option.outcomeTicks[actionOutcomeIndex];
+            if (outcomeTarget != 0) requestedTarget = outcomeTarget;
+        }
 
         HideChoices();
 
@@ -3379,13 +3501,28 @@ public class DialoguePanelController : MonoBehaviour
         {
             generatedNextButton.interactable = ready && !isBooting && !fontTestMode && !waitingForChoice;
         }
+
+        UpdateContinueButtonLabel();
+    }
+
+    private bool IsDialogueComplete()
+    {
+        return ready &&
+               !isBooting &&
+               !fontTestMode &&
+               !isTyping &&
+               !waitingForChoice &&
+               currentTick >= 0 &&
+               FindNextDialogueTick(currentTick) < 0;
     }
 
     private void UpdateContinueButtonLabel()
     {
         if (generatedNextLabel != null)
         {
-            generatedNextLabel.text = string.IsNullOrWhiteSpace(continueButtonText) ? "CONTINUE" : continueButtonText;
+            generatedNextLabel.text = IsDialogueComplete()
+                ? (string.IsNullOrWhiteSpace(closeButtonText) ? "QUIT" : closeButtonText)
+                : (string.IsNullOrWhiteSpace(continueButtonText) ? "CONTINUE" : continueButtonText);
         }
     }
 

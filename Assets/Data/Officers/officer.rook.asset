@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "Rook"
   role: Pilot
   description: "Has never lost a race. Has lost several ships."
-  portrait: {fileID: 0}
+  portrait: {fileID: -7169610267031536943, guid: 167c81228c4bb0f40bbb369954976cf0, type: 3}
   bonuses:
   - stat: piloting
     amount: 2

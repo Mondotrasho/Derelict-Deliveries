@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "Mara Voss"
   role: Engineer
   description: "Can fix anything with a wrench, some tape and a bad attitude."
-  portrait: {fileID: 0}
+  portrait: {fileID: 21300000, guid: 35573cdb47adba34389ba74434eb9831, type: 3}
   bonuses:
   - stat: engineering
     amount: 2

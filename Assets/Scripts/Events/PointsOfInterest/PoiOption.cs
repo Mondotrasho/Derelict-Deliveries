@@ -54,8 +54,15 @@ public sealed class PoiOption
     public TextAsset dialogueJson;
     public bool runBootSequence = false;
 
-    [Header("Event (mining etc.)")]
+    [Header("Event")]
+    [Tooltip("Fixed event to open. If assigned, this takes priority over Event Table.")]
     public EventDefinition eventDefinition;
+
+    [Tooltip("Optional weighted pool. Used when Event Definition is empty.")]
+    public EventTable eventTable;
+
+    [Tooltip("Event-family tags used when choosing from Event Table, e.g. market.")]
+    public List<string> eventTags = new List<string>();
 
     public string DoneFlag => "poi:" + (string.IsNullOrWhiteSpace(id) ? title : id.Trim()) + ":done";
 
@@ -70,7 +77,9 @@ public sealed class PoiOption
         switch (kind)
         {
             case PoiActionKind.Dialogue: return dialogueJson != null;
-            case PoiActionKind.Event: return eventDefinition != null;
+            case PoiActionKind.Event:
+                if (eventDefinition != null) return true;
+                return eventTable != null && eventTable.HasEligible(eventTags, context);
             default: return true;
         }
     }

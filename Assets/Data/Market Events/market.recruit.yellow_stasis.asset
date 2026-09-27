@@ -1,0 +1,160 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: market.recruit.yellow_stasis
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: market.recruit.yellow_stasis
+  displayName: "Cryogenic broker"
+  category: 1
+  tags:
+  - market
+  - recruitment
+  - stasis
+  conditions:
+    tags:
+    - scope: 1
+      tag: Yellow
+      mustHave: 1
+    - scope: 0
+      tag: officer:sera
+      mustHave: 0
+    flags: []
+    counters: []
+  oncePerPlanet: 1
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 0}
+  shortDescription: "A broker is selling sealed cryogenic contracts, including one scratched unlabelled pod."
+  allowLeave: 1
+  choices:
+  - id: buy_unusual_pod
+    text: "Buy the unusual pod"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 0
+        key: res.supplies
+        compare: 0
+        value: 12
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 1
+    lockedReason: "needs 12 supplies"
+    showOdds: 0
+    outcomes:
+    - label: "Officer"
+      weight: 65
+      resultText: "The sleeper is a trained officer."
+      resources:
+      - kind: 3
+        amount: -12
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 11400000, guid: 59fbe839cff648f89c7c0cc3e22dc8b2, type: 2}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    - label: "Worker"
+      weight: 35
+      resultText: "The records are useless, but the sleeper is healthy."
+      resources:
+      - kind: 3
+        amount: -12
+      - kind: 2
+        amount: 1
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: buy_labour_pods
+    text: "Buy the labour pods"
+    availability:
+      tags: []
+      flags: []
+      counters:
+      - scope: 0
+        key: res.supplies
+        compare: 0
+        value: 8
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 1
+    lockedReason: "needs 8 supplies"
+    showOdds: 1
+    outcomes:
+    - label: "Labourers"
+      weight: 1
+      resultText: "Three labourers join the ship."
+      resources:
+      - kind: 3
+        amount: -8
+      - kind: 2
+        amount: 3
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ""
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Rare Yellow market recruitment. Assign the stasis-pod banner directly to this definition if desired."
+  dialogueJson: {fileID: 4900000, guid: 50d1fcc86ebe4fcca8e8ec5f36a19b0a, type: 3}
+  dialogueButtonLabel: "Inspect the pods"

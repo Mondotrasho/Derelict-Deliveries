@@ -24,6 +24,19 @@ public sealed class EventTable : ScriptableObject
     private readonly List<Entry> eligible = new List<Entry>();
 
 
+    /// <summary>True when at least one table entry can currently be chosen.</summary>
+    public bool HasEligible(IReadOnlyList<string> sourceTags, EventContext context)
+    {
+        foreach (Entry e in entries)
+        {
+            if (e == null || e.definition == null || e.weight <= 0f) continue;
+            if (e.definition.IsEligible(sourceTags, context)) return true;
+        }
+
+        return false;
+    }
+
+
     /// <summary>
     /// Picks one eligible definition by weight, or null if none qualifies.
     /// Eligible = has at least one of the source's tags, conditions pass for the
