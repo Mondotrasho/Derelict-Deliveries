@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: market.recruit.yellow_stasis
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: market.recruit.yellow_stasis
-  displayName: "Cryogenic broker"
+  displayName: Cryogenic broker
   category: 1
   tags:
   - market
@@ -41,12 +41,13 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "A broker is selling sealed cryogenic contracts, including one scratched unlabelled pod."
+  banner: {fileID: 21300000, guid: 91c0bb8a994bd424cab44c55e64f5a1b, type: 3}
+  shortDescription: A broker is selling sealed cryogenic contracts, including one
+    scratched unlabelled pod.
   allowLeave: 1
   choices:
   - id: buy_unusual_pod
-    text: "Buy the unusual pod"
+    text: Buy the unusual pod
     availability:
       tags: []
       flags: []
@@ -56,16 +57,16 @@ MonoBehaviour:
         compare: 0
         value: 12
     minCrew: 0
-    bonusStat: ""
+    bonusStat: 
     chancePerPoint: 0.05
     minBonus: 0
     showWhenLocked: 1
-    lockedReason: "needs 12 supplies"
+    lockedReason: needs 12 supplies
     showOdds: 0
     outcomes:
-    - label: "Officer"
+    - label: Officer
       weight: 65
-      resultText: "The sleeper is a trained officer."
+      resultText: The sleeper is a trained officer.
       resources:
       - kind: 3
         amount: -12
@@ -76,17 +77,17 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 11400000, guid: 59fbe839cff648f89c7c0cc3e22dc8b2, type: 2}
       loseOfficer: {fileID: 0}
-      loseOfficerBestAt: ""
-    - label: "Worker"
+      loseOfficerBestAt: 
+    - label: Worker
       weight: 35
-      resultText: "The records are useless, but the sleeper is healthy."
+      resultText: The records are useless, but the sleeper is healthy.
       resources:
       - kind: 3
         amount: -12
@@ -99,19 +100,19 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 0}
       loseOfficer: {fileID: 0}
-      loseOfficerBestAt: ""
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   - id: buy_labour_pods
-    text: "Buy the labour pods"
+    text: Buy the labour pods
     availability:
       tags: []
       flags: []
@@ -121,16 +122,16 @@ MonoBehaviour:
         compare: 0
         value: 8
     minCrew: 0
-    bonusStat: ""
+    bonusStat: 
     chancePerPoint: 0.05
     minBonus: 0
     showWhenLocked: 1
-    lockedReason: "needs 8 supplies"
+    lockedReason: needs 8 supplies
     showOdds: 1
     outcomes:
-    - label: "Labourers"
+    - label: Labourers
       weight: 1
-      resultText: "Three labourers join the ship."
+      resultText: Three labourers join the ship.
       resources:
       - kind: 3
         amount: -8
@@ -143,18 +144,19 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 0}
       loseOfficer: {fileID: 0}
-      loseOfficerBestAt: ""
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Rare Yellow market recruitment. Assign the stasis-pod banner directly to this definition if desired."
+  debugText: Rare Yellow market recruitment. Assign the stasis-pod banner directly
+    to this definition if desired.
   dialogueJson: {fileID: 4900000, guid: 50d1fcc86ebe4fcca8e8ec5f36a19b0a, type: 3}
-  dialogueButtonLabel: "Inspect the pods"
+  dialogueButtonLabel: Inspect the pods

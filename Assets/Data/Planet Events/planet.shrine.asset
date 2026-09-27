@@ -19,7 +19,10 @@ MonoBehaviour:
   - shrine
   conditions:
     tags: []
-    flags: []
+    flags:
+    - scope: 0
+      key: quest:shrine:defiled
+      expected: 0
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -49,7 +52,7 @@ MonoBehaviour:
     outcomes:
     - label: "Defiled"
       weight: 1
-      resultText: "You smash the idol and pry the offerings loose. Far out in the dark, something turns towards you."
+      resultText: "You break the little idol at the centre of the shrine and scrawl graffiti across the old stonework. Far out in the dark, something turns towards you."
       resources:
       - kind: 3
         amount: 12
@@ -131,5 +134,5 @@ MonoBehaviour:
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
-  debugText: Red planet quest. Defile spawns the eldritch monster at a map-edge entry cell and sets player flag quest:shrine:defiled.
+  debugText: Intact Red-planet shrine. Defiling it sets player flag quest:shrine:defiled and spawns the eldritch monster at a map-edge entry cell.
   dialogueJson: {fileID: 0}

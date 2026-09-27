@@ -43,7 +43,7 @@ public sealed class BannerChoiceView : MonoBehaviour
     [SerializeField] private bool bringToFrontOnOpen = true;
 
     [Header("Layout")]
-    [Tooltip("Banner width / height. The event banners are about 1916 x 648, i.e. ~2.96.")]
+    [Tooltip("Fallback banner width / height used only when the assigned sprite has no usable dimensions.")]
     [Min(0.5f)] [SerializeField] private float bannerAspect = 2.96f;
     [Tooltip("The banner never takes more than this share of the window height.")]
     [Range(0.1f, 0.7f)] [SerializeField] private float maxBannerHeightFraction = 0.42f;
@@ -60,6 +60,8 @@ public sealed class BannerChoiceView : MonoBehaviour
     [Min(6f)] [SerializeField] private float minButtonFontSize = 14f;
     [Tooltip("The banner shrinks before the buttons do, down to this share of its normal height.")]
     [Range(0f, 1f)] [SerializeField] private float minBannerFraction = 0.35f;
+    [Tooltip("On result screens, protect more of the banner height before shrinking it. This keeps the artwork stable when result text appears.")]
+    [Range(0f, 1f)] [SerializeField] private float minResultBannerFraction = 0.78f;
     [Tooltip("Body text always keeps at least this many lines.")]
     [Min(0)] [SerializeField] private int minBodyLines = 2;
 
@@ -402,7 +404,7 @@ public sealed class BannerChoiceView : MonoBehaviour
 
         float contentWidth = Mathf.Max(1f, size.x - inset * 2f);
 
-        // --- fit: choices first, then the banner gives way, then buttons shrink ---
+        // --- fit: normal screens may give banner space to choices; result screens protect it ---
         int count = 0;
         foreach (Button b in buttons) if (b.gameObject.activeSelf) count++;
         int columns = count > twoColumnsAbove ? 2 : 1;
@@ -411,7 +413,8 @@ public sealed class BannerChoiceView : MonoBehaviour
 
         float bodySize = style != null ? style.BodyFontSize : 28f;
         float minBody = bodyText.gameObject.activeSelf ? bodySize * 1.25f * minBodyLines : 0f;
-        float resultHeight = resultText.gameObject.activeSelf ? resultText.preferredHeight : 0f;
+        bool showingResult = resultText.gameObject.activeSelf;
+        float resultHeight = showingResult ? resultText.preferredHeight : 0f;
         int visibleChildren = 0;
         foreach (Transform child in contentRect) if (child.gameObject.activeSelf) visibleChildren++;
         float fixedHeight = column.padding.top + column.padding.bottom + headerHeight + border
@@ -420,14 +423,50 @@ public sealed class BannerChoiceView : MonoBehaviour
 
         float idealButton = buttonSize * buttonHeightScale;
         float idealChoices = count > 0 ? rows * idealButton + (rows - 1) * gap : 0f;
+        float actualBannerAspect = GetBannerAspect();
         float idealBanner = bannerImage.gameObject.activeSelf
-            ? Mathf.Min(contentWidth / Mathf.Max(0.5f, bannerAspect), size.y * maxBannerHeightFraction)
+            ? Mathf.Min(contentWidth / actualBannerAspect, size.y * maxBannerHeightFraction)
             : 0f;
 
-        float bannerHeight = Mathf.Clamp(available - idealChoices, idealBanner * minBannerFraction, idealBanner);
-        float buttonHeight = count > 0
-            ? Mathf.Clamp((available - bannerHeight - (rows - 1) * gap) / rows, minButtonHeight, idealButton)
-            : idealButton;
+        float bannerHeight;
+        float buttonHeight;
+
+        if (showingResult && idealBanner > 0f)
+        {
+            // Results normally replace many choices with one Continue button. Shrink that
+            // button first and keep most of the artwork at the same height as the event card.
+            float protectedFraction = Mathf.Max(minBannerFraction, minResultBannerFraction);
+            float protectedBanner = idealBanner * protectedFraction;
+            float choiceGaps = count > 0 ? (rows - 1) * gap : 0f;
+            float roomForButtons = available - protectedBanner - choiceGaps;
+
+            if (count == 0)
+            {
+                bannerHeight = Mathf.Clamp(available, 0f, idealBanner);
+                buttonHeight = idealButton;
+            }
+            else if (roomForButtons >= rows * minButtonHeight)
+            {
+                buttonHeight = Mathf.Clamp(roomForButtons / rows, minButtonHeight, idealButton);
+                float usedChoices = rows * buttonHeight + choiceGaps;
+                bannerHeight = Mathf.Clamp(available - usedChoices, protectedBanner, idealBanner);
+            }
+            else
+            {
+                // Extremely small windows still have to fit. Keep buttons usable and only
+                // let the banner fall below the protected result height when there is no room.
+                buttonHeight = minButtonHeight;
+                float usedChoices = rows * buttonHeight + choiceGaps;
+                bannerHeight = Mathf.Clamp(available - usedChoices, 0f, idealBanner);
+            }
+        }
+        else
+        {
+            bannerHeight = Mathf.Clamp(available - idealChoices, idealBanner * minBannerFraction, idealBanner);
+            buttonHeight = count > 0
+                ? Mathf.Clamp((available - bannerHeight - (rows - 1) * gap) / rows, minButtonHeight, idealButton)
+                : idealButton;
+        }
 
         bannerLayout.minHeight = bannerHeight;
         bannerLayout.preferredHeight = bannerHeight;
@@ -444,6 +483,19 @@ public sealed class BannerChoiceView : MonoBehaviour
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+    }
+
+
+    /// <summary>Use the assigned sprite's real aspect ratio so differently-shaped banners do not get an incorrectly-sized slot.</summary>
+    private float GetBannerAspect()
+    {
+        Sprite sprite = bannerImage != null ? bannerImage.sprite : null;
+        if (sprite != null && sprite.rect.height > 0.01f)
+        {
+            return Mathf.Max(0.5f, sprite.rect.width / sprite.rect.height);
+        }
+
+        return Mathf.Max(0.5f, bannerAspect);
     }
 
 
