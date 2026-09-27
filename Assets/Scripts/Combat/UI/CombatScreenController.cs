@@ -48,6 +48,9 @@ public sealed class CombatScreenController : MonoBehaviour
     [Header("Layout (found by name under Window if empty)")]
     [Tooltip("Everything visible. Shown during a fight, hidden otherwise.")]
     [SerializeField] private GameObject window;
+
+    [Tooltip("Lets you leave this panel disabled in the editor (to keep the scene view clear). After each scene load it switches itself on so it can hear fights starting; the Window stays hidden until a fight.")]
+    [SerializeField] private bool wakeIfStartedDisabled = true;
     [SerializeField] private RectTransform statsArea;
     [SerializeField] private RectTransform buttonArea;
     [SerializeField] private CombatShipView playerShip;
@@ -131,6 +134,54 @@ public sealed class CombatScreenController : MonoBehaviour
 
 
     // ================================================================ lifecycle
+
+    // ------------------------------------------------ starting disabled
+    // Fight events are subscribed in OnEnable, which Unity never runs on an
+    // object that starts disabled - so a panel left off in the editor would
+    // never see a fight begin. After every scene load (the first one, and
+    // RESTART reloads) any combat screen left disabled is switched on here;
+    // its Awake then hides the Window at once, so it is listening but unseen.
+    private static bool sceneHookInstalled;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void InstallWakeUp()
+    {
+        WakeDisabledScreens();
+        if (!sceneHookInstalled)
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += (scene, mode) => WakeDisabledScreens();
+            sceneHookInstalled = true;
+        }
+    }
+
+    private static void WakeDisabledScreens()
+    {
+        CombatScreenController[] all = FindObjectsByType<CombatScreenController>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (CombatScreenController screen in all)
+        {
+            if (screen == null || screen.gameObject.activeSelf || !screen.wakeIfStartedDisabled)
+            {
+                continue;
+            }
+            Transform parent = screen.transform.parent;
+            if (parent != null && !parent.gameObject.activeInHierarchy)
+            {
+                continue;       // its parent is off too - leave that decision alone
+            }
+            if (screen.window == null || screen.window == screen.gameObject)
+            {
+                // No separate Window child: waking the root would show the whole panel.
+                if (screen.transform.Find("Window") == null)
+                {
+                    Debug.LogWarning($"{screen.name}: CombatScreenController started disabled but has no Window child to keep hidden, so it was left off (fights won't show). Enable it in the scene or give it a Window child.", screen);
+                    continue;
+                }
+            }
+            screen.gameObject.SetActive(true);      // runs Awake (hides the Window) and OnEnable (subscribes)
+        }
+    }
+
 
     private void Awake()
     {
