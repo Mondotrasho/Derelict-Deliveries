@@ -36,23 +36,30 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "A crumbling shrine to something with too many eyes. Offerings are piled at its base, untouched for centuries."
+  banner: {fileID: 21300000, guid: b2259c3a18ca4174e864059736d021db, type: 3}
+  shortDescription: A crumbling shrine to something with too many eyes. Offerings
+    are piled at its base, untouched for centuries.
   allowLeave: 0
   choices:
   - id: defile
-    text: "Defile the shrine"
+    text: Defile the shrine
     availability:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Defiled"
+    - label: Defiled
       weight: 1
-      resultText: "You break the little idol at the centre of the shrine and scrawl graffiti across the old stonework. Far out in the dark, something turns towards you."
+      resultText: You break the little idol at the centre of the shrine and scrawl
+        graffiti across the old stonework. Far out in the dark, something turns towards
+        you.
       resources:
       - kind: 3
         amount: 12
@@ -63,38 +70,57 @@ MonoBehaviour:
           key: quest:shrine:defiled
           expected: 1
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   - id: pray
-    text: "Kneel and pray"
+    text: Kneel and pray
     availability:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Silence"
+    - label: Silence
       weight: 70
-      resultText: "Nothing happens. You feel watched."
+      resultText: Nothing happens. You feel watched.
       resources: []
       writes:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-    - label: "Blessing"
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    - label: Blessing
       weight: 30
-      resultText: "A strange warmth passes through the ship. Hairline cracks in the hull seal themselves."
+      resultText: A strange warmth passes through the ship. Hairline cracks in the
+        hull seal themselves.
       resources:
       - kind: 1
         amount: 10
@@ -102,37 +128,58 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   - id: leave
-    text: "Back away"
+    text: Back away
     availability:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Leave"
+    - label: Leave
       weight: 1
-      resultText: "Some things are best left alone."
+      resultText: Some things are best left alone.
       resources: []
       writes:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
-  debugText: Intact Red-planet shrine. Defiling it sets player flag quest:shrine:defiled and spawns the eldritch monster at a map-edge entry cell.
+  pickupResources: []
+  debugText: Intact Red-planet shrine. Defiling it sets player flag quest:shrine:defiled
+    and spawns the eldritch monster at a map-edge entry cell.
   dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK
