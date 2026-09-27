@@ -23,7 +23,7 @@ public class GridPlayerInput : MonoBehaviour
 {
     [Header("References")]
 
-    [Tooltip("Camera used to convert mouse screen coordinates into world coordinates.")]
+    [Tooltip("Camera used to convert mouse or touch screen coordinates into world coordinates.")]
     [SerializeField]
     private Camera mainCamera;
 
@@ -31,7 +31,7 @@ public class GridPlayerInput : MonoBehaviour
     [SerializeField]
     private GridMap gridMap;
 
-    [Tooltip("Owns the route being previewed by mouse input.")]
+    [Tooltip("Owns the route being previewed by pointer input.")]
     [SerializeField]
     private RoutePlanner routePlanner;
 
@@ -54,6 +54,11 @@ public class GridPlayerInput : MonoBehaviour
     // Tracks the last cell a preview was requested for, so a stationary
     // held mouse button doesn't re-run pathfinding every single frame.
     private Vector3Int? lastPreviewedCell;
+
+    // Remember whether the current touch began over UI. A finger that starts
+    // on a button must not begin route planning if it later drags onto the map.
+    private bool touchGestureActive;
+    private bool touchStartedOverUI;
 
 
     /// <summary>
@@ -120,10 +125,16 @@ public class GridPlayerInput : MonoBehaviour
         if (IsRouteInputBlocked())
         {
             lastPreviewedCell = null;
+            touchGestureActive = false;
+            touchStartedOverUI = false;
             return;
         }
 
-        if (Mouse.current != null)
+        // Touch gets first chance to handle the frame so a touchscreen that
+        // also exposes/simulates a mouse cannot preview the route twice.
+        bool touchHandled = UpdateTouch();
+
+        if (!touchHandled && Mouse.current != null)
         {
             bool overUI =
                 EventSystem.current != null &&
@@ -164,6 +175,56 @@ public class GridPlayerInput : MonoBehaviour
 
 
     /// <summary>
+    /// Touch mirrors the held-left-mouse preview behaviour. It plans while
+    /// the primary finger is down; committing remains the job of the normal
+    /// Commit button in this input controller.
+    /// </summary>
+    private bool UpdateTouch()
+    {
+        if (Touchscreen.current == null)
+        {
+            return false;
+        }
+
+        var touch = Touchscreen.current.primaryTouch;
+        bool pressedThisFrame = touch.press.wasPressedThisFrame;
+        bool isPressed = touch.press.isPressed;
+        bool releasedThisFrame = touch.press.wasReleasedThisFrame;
+
+        if (!pressedThisFrame && !isPressed && !releasedThisFrame && !touchGestureActive)
+        {
+            return false;
+        }
+
+        if (pressedThisFrame)
+        {
+            touchGestureActive = true;
+            touchStartedOverUI =
+                EventSystem.current != null &&
+                EventSystem.current.IsPointerOverGameObject(touch.touchId.ReadValue());
+
+            if (!touchStartedOverUI)
+            {
+                lastPreviewedCell = null;
+                PreviewRouteToScreenPosition(touch.position.ReadValue());
+            }
+        }
+        else if (isPressed && touchGestureActive && !touchStartedOverUI)
+        {
+            PreviewRouteToScreenPosition(touch.position.ReadValue());
+        }
+
+        if (releasedThisFrame)
+        {
+            touchGestureActive = false;
+            touchStartedOverUI = false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
     /// Shared with commitButton.onClick - same call as the Enter key.
     /// </summary>
     private void HandleCommitButtonClicked()
@@ -200,14 +261,27 @@ public class GridPlayerInput : MonoBehaviour
 
 
     /// <summary>
-    /// Converts the current mouse position into a grid cell and asks
-    /// RoutePlanner to build a preview route toward it - but only when
-    /// that cell has actually changed since the last preview, so dragging
-    /// across a stationary cell doesn't re-run pathfinding every frame.
-    /// This no longer moves the player directly - that only happens once
-    /// the route is committed through MovementPlanController.
+    /// Reads the current mouse position and forwards it to the shared pointer
+    /// preview path.
     /// </summary>
     private void PreviewRouteToMousePosition()
+    {
+        if (Mouse.current == null)
+        {
+            return;
+        }
+
+        PreviewRouteToScreenPosition(Mouse.current.position.ReadValue());
+    }
+
+
+    /// <summary>
+    /// Converts a mouse or touch screen position into a grid cell and asks
+    /// RoutePlanner to build a preview route toward it. Repeated samples in
+    /// the same cell are ignored so held/dragged input does not rerun
+    /// pathfinding unnecessarily.
+    /// </summary>
+    private void PreviewRouteToScreenPosition(Vector2 screenPosition)
     {
         if (mainCamera == null)
         {
@@ -237,37 +311,32 @@ public class GridPlayerInput : MonoBehaviour
         }
 
 
-        // Read the mouse position using Unity's new Input System.
-        Vector2 mouseScreenPosition =
-            Mouse.current.position.ReadValue();
-
-
-        // Convert the screen position into a world position.
-        Vector3 mouseWorldPosition =
+        // Convert the pointer position into a world position.
+        Vector3 pointerWorldPosition =
             mainCamera.ScreenToWorldPoint(
                 new Vector3(
-                    mouseScreenPosition.x,
-                    mouseScreenPosition.y,
+                    screenPosition.x,
+                    screenPosition.y,
                     0.0f
                 )
             );
 
 
         // This is a 2D game, so movement stays on the Z = 0 plane.
-        mouseWorldPosition.z = 0.0f;
+        pointerWorldPosition.z = 0.0f;
 
 
         // Convert the world position into a Unity Grid cell.
         Vector3Int destinationCell =
             gridMap.WorldToCell(
-                mouseWorldPosition
+                pointerWorldPosition
             );
 
 
         if (lastPreviewedCell.HasValue &&
             lastPreviewedCell.Value == destinationCell)
         {
-            // Still hovering the same cell as last frame - nothing changed.
+            // Still on the same cell as the last sample - nothing changed.
             return;
         }
 
@@ -279,4 +348,5 @@ public class GridPlayerInput : MonoBehaviour
             destinationCell
         );
     }
+
 }
