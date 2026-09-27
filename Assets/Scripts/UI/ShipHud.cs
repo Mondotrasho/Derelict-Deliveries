@@ -64,11 +64,19 @@ public sealed class ShipHud : MonoBehaviour
     [Min(0)] [SerializeField] private int dangerTurns = 2;
 
     [Header("Labels")]
-    [SerializeField] private string oneTurnLabel = "PLOT: THIS TURN";
-    [SerializeField] private string multiTurnLabel = "PLOT: MULTI-TURN";
+    [SerializeField] private string plotCaption = "PLOT";
+    [SerializeField] private string oneTurnShort = "1 TURN";
+    [SerializeField] private string multiTurnShort = "MULTI";
     [SerializeField] private string goLabel = "GO";
     [SerializeField] private string cancelLabel = "CANCEL";
     [SerializeField] private string endTurnLabel = "END TURN";
+
+    [Header("Buttons")]
+    [Tooltip("Largest button text size; labels shrink automatically to fit their button.")]
+    [Min(6f)] [SerializeField] private float buttonTextSize = 16f;
+    [Min(4f)] [SerializeField] private float buttonTextMinSize = 10f;
+    [Tooltip("How visible a disabled button's art stays (0 = invisible).")]
+    [Range(0f, 1f)] [SerializeField] private float disabledButtonAlpha = 0.35f;
 
     [Header("Old UI")]
     [Tooltip("Switched off when the HUD starts (the temp buttons and text readouts it replaces).")]
@@ -158,19 +166,23 @@ public sealed class ShipHud : MonoBehaviour
         officerText = Label(col, "", 18f, palette.dim, 24f);
 
         // MOVEMENT + actions (bottom right)
+        //   MOVEMENT 5/8  > > > > > > > >
+        //   PLOT [1 TURN]        [GO] [CANCEL] [END TURN]
         RectTransform move = Panel(root, "Movement", new Vector2(1f, 0f), new Vector2(-screenMargin.x, screenMargin.y),
-                                   new Vector2(600f, 150f));
-        var mcol = Column(move, 14f, 8f);
-        RectTransform moveRow = Row(mcol, 30f, 8f);
-        moveText = Label(moveRow, "MOVEMENT", 20f, palette.primary, 30f, 170f);
-        pipRow = Row(moveRow, 26f, 4f);
+                                   new Vector2(540f, 118f));
+        var mcol = Column(move, 12f, 10f);
+        RectTransform moveRow = Row(mcol, 28f, 8f);
+        moveText = Label(moveRow, "MOVEMENT", 16f, palette.primary, 28f, 140f);
+        pipRow = Row(moveRow, 24f, 4f);
         Flex(pipRow);
 
-        RectTransform buttons = Row(mcol, 58f, 8f);
-        modeButton = MakeButton(buttons, oneTurnLabel, ToggleMode, 220f, out modeLabel);
-        goButton = MakeButton(buttons, goLabel, () => planController?.CommitSegment(), 90f, out goText);
-        cancelButton = MakeButton(buttons, cancelLabel, () => planController?.Cancel(), 110f, out cancelText);
-        endButton = MakeButton(buttons, endTurnLabel, EndTurn, 120f, out endText);
+        RectTransform buttons = Row(mcol, 42f, 6f);
+        Label(buttons, plotCaption, 13f, palette.dim, 42f, 40f);
+        modeButton = MakeButton(buttons, oneTurnShort, ToggleMode, 96f, out modeLabel, flexible: false);
+        Flex(Rect("Gap", buttons));                                        // pushes the actions right
+        goButton = MakeButton(buttons, goLabel, () => planController?.CommitSegment(), 64f, out goText, flexible: false);
+        cancelButton = MakeButton(buttons, cancelLabel, () => planController?.Cancel(), 96f, out cancelText, flexible: false);
+        endButton = MakeButton(buttons, endTurnLabel, EndTurn, 116f, out endText, flexible: false);
 
         // THREAT (top centre)
         threatRoot = Panel(root, "Threat", new Vector2(0.5f, 1f), new Vector2(0f, -screenMargin.y), new Vector2(640f, 92f));
@@ -251,13 +263,13 @@ public sealed class ShipHud : MonoBehaviour
     }
 
 
-    private Button MakeButton(RectTransform parent, string text, UnityEngine.Events.UnityAction onClick, float width, out TMP_Text label)
+    private Button MakeButton(RectTransform parent, string text, UnityEngine.Events.UnityAction onClick, float width, out TMP_Text label, bool flexible = true)
     {
         RectTransform rt = Rect(text, parent);
         Size(rt, width, 0f);
         var le = rt.gameObject.AddComponent<LayoutElement>();
         le.preferredWidth = width * scale;
-        le.flexibleWidth = 1f;
+        le.flexibleWidth = flexible ? 1f : 0f;
         Image bg = rt.gameObject.AddComponent<Image>();
         if (buttonSprite != null)
         {
@@ -349,7 +361,7 @@ public sealed class ShipHud : MonoBehaviour
         moveText.text = $"MOVEMENT {current}/{max}";
 
         bool oneTurn = planController == null || planController.Mode == MovementPlanController.PlanningMode.OneTurn;
-        modeLabel.text = oneTurn ? oneTurnLabel : multiTurnLabel;
+        modeLabel.text = oneTurn ? oneTurnShort : multiTurnShort;
 
         bool canAct = planController != null && planController.CanAcceptPlayerInput;
         bool moving = player != null && player.IsMoving;
@@ -461,6 +473,20 @@ public sealed class ShipHud : MonoBehaviour
             img.sprite = buttonSprite;
             img.type = Image.Type.Sliced;
         }
+
+        // The terminal style sizes button text for the big dialogue buttons -
+        // far too large here. Shrink-to-fit within the HUD's own limits.
+        label.enableAutoSizing = true;
+        label.fontSizeMax = buttonTextSize * scale;
+        label.fontSizeMin = buttonTextMinSize * scale;
+        label.fontSize = buttonTextSize * scale;
+        label.margin = new Vector4(6f, 2f, 6f, 2f) * scale;
+
+        // Keep a disabled button's art visible (dimmed) instead of fading it out.
+        ColorBlock colours = button.colors;
+        Color d = colours.disabledColor;
+        colours.disabledColor = new Color(d.r, d.g, d.b, Mathf.Max(d.a, disabledButtonAlpha));
+        button.colors = colours;
     }
 
 
