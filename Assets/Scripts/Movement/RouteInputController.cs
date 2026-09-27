@@ -54,7 +54,7 @@ public class RouteInputController : MonoBehaviour
 
     [Header("References")]
 
-    [Tooltip("Camera used to convert mouse screen coordinates into world coordinates.")]
+    [Tooltip("Camera used to convert mouse or touch screen coordinates into world coordinates.")]
     [SerializeField]
     private Camera mainCamera;
 
@@ -62,7 +62,7 @@ public class RouteInputController : MonoBehaviour
     [SerializeField]
     private GridMap gridMap;
 
-    [Tooltip("Owns the route being previewed/drawn by mouse input.")]
+    [Tooltip("Owns the route being previewed/drawn by pointer input.")]
     [SerializeField]
     private RoutePlanner routePlanner;
 
@@ -94,6 +94,12 @@ public class RouteInputController : MonoBehaviour
     private bool chaining;          // Shift+click waypoints are waiting for a final click
     private bool hoverOwnsPlan;     // the current plan is only a hover preview
     private Vector3Int? lastHoverCell;
+
+    // Touch has no hover state, so a finger press is treated as the same
+    // route gesture as a left mouse press. Remember whether that gesture
+    // began over UI so dragging off a button cannot start a route underneath it.
+    private bool touchGestureActive;
+    private bool touchStartedOverUI;
 
 
     /// <summary>
@@ -159,11 +165,13 @@ public class RouteInputController : MonoBehaviour
     {
         if (IsRouteInputBlocked())
         {
-            // If an interruption begins mid-drag, do not let the held
-            // mouse resume editing the route when gameplay input unlocks.
+            // If an interruption begins mid-gesture, do not let the held
+            // pointer resume editing the route when gameplay input unlocks.
             isDragging = false;
             lastCursorCell = null;
             lastHoverCell = null;
+            touchGestureActive = false;
+            touchStartedOverUI = false;
             return;
         }
 
@@ -173,7 +181,12 @@ public class RouteInputController : MonoBehaviour
             return;
         }
 
-        if (Mouse.current != null)
+        // Touch gets first chance to handle the frame. This prevents a
+        // touchscreen that also exposes/simulates a mouse from processing
+        // the same finger gesture twice.
+        bool touchHandled = UpdatePlanThenCommitTouch();
+
+        if (!touchHandled && Mouse.current != null)
         {
             bool overUI =
                 EventSystem.current != null &&
@@ -221,6 +234,55 @@ public class RouteInputController : MonoBehaviour
 
 
     /// <summary>
+    /// PlanThenCommit touch input mirrors the left-mouse gesture: touch down
+    /// starts a route, dragging edits it cell by cell, and lifting the finger
+    /// leaves the route planned for the normal Commit button.
+    /// </summary>
+    private bool UpdatePlanThenCommitTouch()
+    {
+        if (Touchscreen.current == null)
+        {
+            return false;
+        }
+
+        var touch = Touchscreen.current.primaryTouch;
+        bool pressedThisFrame = touch.press.wasPressedThisFrame;
+        bool isPressed = touch.press.isPressed;
+        bool releasedThisFrame = touch.press.wasReleasedThisFrame;
+
+        if (!pressedThisFrame && !isPressed && !releasedThisFrame && !touchGestureActive)
+        {
+            return false;
+        }
+
+        if (pressedThisFrame)
+        {
+            touchGestureActive = true;
+            touchStartedOverUI = IsTouchOverUI(touch.touchId.ReadValue());
+
+            if (!touchStartedOverUI)
+            {
+                BeginRouteAtScreenPosition(touch.position.ReadValue());
+            }
+        }
+        else if (isPressed && touchGestureActive &&
+                 !touchStartedOverUI && isDragging)
+        {
+            ContinueDragAtScreenPosition(touch.position.ReadValue());
+        }
+
+        if (releasedThisFrame)
+        {
+            isDragging = false;
+            touchGestureActive = false;
+            touchStartedOverUI = false;
+        }
+
+        return true;
+    }
+
+
+    /// <summary>
     /// ClickToGo: hover previews, click goes, Shift+click chains waypoints,
     /// drag draws and goes on release.
     /// </summary>
@@ -229,7 +291,11 @@ public class RouteInputController : MonoBehaviour
         bool shift = Keyboard.current != null &&
                      (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
 
-        if (Mouse.current != null)
+        // Touch is handled before mouse input so a finger cannot also arrive
+        // as a simulated mouse click on platforms that expose both devices.
+        bool touchHandled = UpdateClickToGoTouch();
+
+        if (!touchHandled && Mouse.current != null)
         {
             bool overUI =
                 EventSystem.current != null &&
@@ -278,6 +344,8 @@ public class RouteInputController : MonoBehaviour
                 CancelClickToGo();
             }
 
+            // Hover preview is deliberately mouse-only. A touchscreen has no
+            // stable hover position between gestures.
             if (!overUI && !isDragging && hoverPreview && !chaining &&
                 !Mouse.current.leftButton.isPressed)
             {
@@ -298,6 +366,85 @@ public class RouteInputController : MonoBehaviour
                 CancelClickToGo();
             }
         }
+    }
+
+
+    /// <summary>
+    /// ClickToGo touch input behaves like a plain left-mouse gesture:
+    /// touching a cell plans to it, dragging edits the path, and lifting the
+    /// finger commits it. Shift-waypoint chaining remains a desktop feature.
+    /// </summary>
+    private bool UpdateClickToGoTouch()
+    {
+        if (Touchscreen.current == null)
+        {
+            return false;
+        }
+
+        var touch = Touchscreen.current.primaryTouch;
+        bool pressedThisFrame = touch.press.wasPressedThisFrame;
+        bool isPressed = touch.press.isPressed;
+        bool releasedThisFrame = touch.press.wasReleasedThisFrame;
+
+        if (!pressedThisFrame && !isPressed && !releasedThisFrame && !touchGestureActive)
+        {
+            return false;
+        }
+
+        if (pressedThisFrame)
+        {
+            touchGestureActive = true;
+            touchStartedOverUI = IsTouchOverUI(touch.touchId.ReadValue());
+
+            if (!touchStartedOverUI &&
+                TryGetCellAtScreenPosition(touch.position.ReadValue(), out Vector3Int pressed))
+            {
+                lastCursorCell = pressed;
+                isDragging = true;
+
+                if (IsQueuedRemainderEnd(pressed) && !routePlanner.HasPlannedRoute)
+                {
+                    // Tapping the end of a waiting route carries on along it.
+                }
+                else if (chaining)
+                {
+                    // A touch can finish a waypoint chain that was started
+                    // with Shift+click on desktop.
+                    routePlanner.AppendDraggedCell(pressed);
+                }
+                else if (!(hoverOwnsPlan && PlanEndsAt(pressed)))
+                {
+                    routePlanner.SetDestination(pressed);
+                    ClampPlanToThisTurn();
+                }
+
+                hoverOwnsPlan = false;
+            }
+        }
+        else if (isPressed && touchGestureActive &&
+                 !touchStartedOverUI && isDragging)
+        {
+            ContinueDragAtScreenPosition(touch.position.ReadValue());
+        }
+
+        if (releasedThisFrame)
+        {
+            if (isDragging && !touchStartedOverUI)
+            {
+                isDragging = false;
+                chaining = false;
+                movementPlanController?.CommitSegment();
+            }
+            else
+            {
+                isDragging = false;
+            }
+
+            touchGestureActive = false;
+            touchStartedOverUI = false;
+        }
+
+        return true;
     }
 
 
@@ -432,20 +579,27 @@ public class RouteInputController : MonoBehaviour
 
 
     /// <summary>
-    /// Starts or extends the route toward the clicked cell, then arms drag
-    /// mode so subsequent movement manually extends/trims it further.
-    ///
-    /// If nothing is planned yet, this is a fresh A* route from the
-    /// player. If a route is already planned (from an earlier click this
-    /// hasn't been committed yet), this instead chains a new leg onto the
-    /// end of it via RoutePlanner.AppendDraggedCell - so repeated plain
-    /// clicks build up a multi-waypoint route rather than each one
-    /// discarding the last. Clicking back onto the existing route trims
-    /// it via the same backtracking rule dragging uses.
+    /// Starts or extends the route toward the current mouse cell.
     /// </summary>
     private void BeginRouteAtMousePosition()
     {
-        if (!TryGetCellUnderMouse(out Vector3Int cell))
+        if (Mouse.current == null)
+        {
+            return;
+        }
+
+        BeginRouteAtScreenPosition(Mouse.current.position.ReadValue());
+    }
+
+
+    /// <summary>
+    /// Starts or extends a route at a screen position, then arms drag mode.
+    /// Shared by mouse and touch so both input types feed the same planning
+    /// behaviour after the pointer position has been read.
+    /// </summary>
+    private void BeginRouteAtScreenPosition(Vector2 screenPosition)
+    {
+        if (!TryGetCellAtScreenPosition(screenPosition, out Vector3Int cell))
         {
             return;
         }
@@ -458,12 +612,26 @@ public class RouteInputController : MonoBehaviour
 
 
     /// <summary>
-    /// Extends or trims the route toward wherever the cursor has moved to,
-    /// only doing anything when that's a different cell than last frame.
+    /// Continues the current drag at the mouse position.
     /// </summary>
     private void ContinueDragAtMousePosition()
     {
-        if (!TryGetCellUnderMouse(out Vector3Int cell))
+        if (Mouse.current == null)
+        {
+            return;
+        }
+
+        ContinueDragAtScreenPosition(Mouse.current.position.ReadValue());
+    }
+
+
+    /// <summary>
+    /// Extends or trims the route toward a screen position, only doing
+    /// anything when the pointer has moved into a different grid cell.
+    /// </summary>
+    private void ContinueDragAtScreenPosition(Vector2 screenPosition)
+    {
+        if (!TryGetCellAtScreenPosition(screenPosition, out Vector3Int cell))
         {
             return;
         }
@@ -481,10 +649,30 @@ public class RouteInputController : MonoBehaviour
 
 
     /// <summary>
-    /// Converts the current mouse position into a grid cell. Returns false
-    /// (and logs why) if a required reference is missing.
+    /// Converts the current mouse position into a grid cell.
     /// </summary>
     private bool TryGetCellUnderMouse(out Vector3Int cell)
+    {
+        cell = default;
+
+        if (Mouse.current == null)
+        {
+            return false;
+        }
+
+        return TryGetCellAtScreenPosition(
+            Mouse.current.position.ReadValue(),
+            out cell
+        );
+    }
+
+
+    /// <summary>
+    /// Converts a mouse or touch screen position into a grid cell.
+    /// </summary>
+    private bool TryGetCellAtScreenPosition(
+        Vector2 screenPosition,
+        out Vector3Int cell)
     {
         cell = default;
 
@@ -516,31 +704,38 @@ public class RouteInputController : MonoBehaviour
         }
 
 
-        // Read the mouse position using Unity's new Input System.
-        Vector2 mouseScreenPosition =
-            Mouse.current.position.ReadValue();
-
-
-        // Convert the screen position into a world position.
-        Vector3 mouseWorldPosition =
+        // Convert the pointer's screen position into a world position.
+        Vector3 pointerWorldPosition =
             mainCamera.ScreenToWorldPoint(
                 new Vector3(
-                    mouseScreenPosition.x,
-                    mouseScreenPosition.y,
+                    screenPosition.x,
+                    screenPosition.y,
                     0.0f
                 )
             );
 
 
         // This is a 2D game, so movement stays on the Z = 0 plane.
-        mouseWorldPosition.z = 0.0f;
+        pointerWorldPosition.z = 0.0f;
 
 
         cell =
             gridMap.WorldToCell(
-                mouseWorldPosition
+                pointerWorldPosition
             );
 
         return true;
     }
+
+
+    /// <summary>
+    /// Uses the touch pointer ID so tapping a UI control cannot also create
+    /// or edit a route underneath that control.
+    /// </summary>
+    private bool IsTouchOverUI(int touchId)
+    {
+        return EventSystem.current != null &&
+               EventSystem.current.IsPointerOverGameObject(touchId);
+    }
+
 }
