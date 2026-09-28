@@ -17605,6 +17605,8 @@ GameObject:
   - component: {fileID: 2100000015}
   - component: {fileID: 2100000016}
   - component: {fileID: 7100000601}
+  - component: {fileID: 8100000001}
+  - component: {fileID: 8100000002}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -18682,7 +18684,7 @@ MonoBehaviour:
     textColour: {r: 0.40392157, g: 0.84705883, b: 1, a: 1}
   - characterId: pilot
     displayName: PILOT
-    sprite: {fileID: -7169610267031536943, guid: 167c81228c4bb0f40bbb369954976cf0, type: 3}
+    sprite: {fileID: 21300000, guid: 167c81228c4bb0f40bbb369954976cf0, type: 3}
     fontName: Kenney Future Narrow
     fontSize: 27
     verticalAlignment: 0
@@ -18919,6 +18921,15 @@ MonoBehaviour:
   defaultConnectDuration: 1
   defaultReadyHold: 0.45
   defaultBlankLinesBeforeDialogue: 1
+  quickBootOtherDialogue: 1
+  quickBootLines:
+  - ':: LINK RESUME'
+  quickBootCharactersPerSecond: 900
+  quickConnectDuration: 0.25
+  quickReadyHold: 0.05
+  quickPauseScale: 0.2
+  rememberAutoMode: 1
+  autoModePrefsKey: DerelictDeliveries.Dialogue.AutoMode
   startEmpty: 1
   autoScrollToNewest: 1
   showDebugResetButton: 0
@@ -19293,7 +19304,7 @@ MonoBehaviour:
       completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: a06df33003614e12b832163169e3fa76, type: 3}
-      runBootSequence: 0
+      runBootSequence: 1
       eventDefinition: {fileID: 0}
       eventTable: {fileID: 0}
       eventTags: []
@@ -19316,7 +19327,7 @@ MonoBehaviour:
       completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: bd288fe65dda4ccc9512a97e33193fdc, type: 3}
-      runBootSequence: 0
+      runBootSequence: 1
       eventDefinition: {fileID: 0}
       eventTable: {fileID: 0}
       eventTags: []
@@ -19339,7 +19350,7 @@ MonoBehaviour:
       completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: 31ba0ebd796640b4b3769a6838cd7979, type: 3}
-      runBootSequence: 0
+      runBootSequence: 1
       eventDefinition: {fileID: 0}
       eventTable: {fileID: 0}
       eventTags: []
@@ -19364,7 +19375,7 @@ MonoBehaviour:
       completeDetectionTurns: 0
       returnToPicker: 1
       dialogueJson: {fileID: 4900000, guid: 851b21d2a02a48ca831bc226e498d35a, type: 3}
-      runBootSequence: 0
+      runBootSequence: 1
       eventDefinition: {fileID: 0}
       eventTable: {fileID: 0}
       eventTags: []
@@ -23314,7 +23325,7 @@ MonoBehaviour:
   lossColour: {r: 1, g: 0.35, b: 0.3, a: 1}
   showKeyHints: 1
   scale: 1
-  screenMargin: {x: 16, y: 16}
+  screenMargin: {x: 0, y: 0}
   hullColour: {r: 0.95, g: 0.3, b: 0.3, a: 1}
   shieldColour: {r: 0.35, g: 0.85, b: 1, a: 1}
   fuelColour: {r: 1, g: 0.72, b: 0.1, a: 1}
@@ -23372,6 +23383,117 @@ MonoBehaviour:
   paddingCells: 0
   uiCanvas: {fileID: 824059744}
   referenceHeight: 1080
+--- !u!114 &8100000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4615b068fd1672a40ba9f840409f93e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDirectionIndicator
+  centre: {fileID: 419753239}
+  enemyRegistry: {fileID: 1878988784}
+  targetCamera: {fileID: 519420031}
+  pixelsPerUnit: 32
+  sortingLayerId: 497345287
+  sortingOrder: 50
+  renderLayer: 0
+  indicatorRadius: 0.55
+  arcPercent: 25
+  arcThickness: 0.02
+  arcSpacing: 0.1
+  chevronSize: 0.12
+  chevronGap: 0
+  farDistance: 16
+  mediumDistance: 8
+  closeDistance: 6
+  nearDistance: 4
+  minimumFirstArc: 0.75
+  maxDistance: 0
+  hideWhenOnScreen: 0
+  popInSeconds: 0.35
+  popOutSeconds: 0.2
+  trackingSharpness: 6
+  fillSharpness: 8
+  spawnEcho: 1
+  echoSeconds: 0.6
+  echoTravel: 0.9
+  arrowOpacity: 0.915
+  pulseOpacity: 0.906
+  farOpacity: 0.35
+  nearOpacity: 0.9
+  distanceOpacityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnOpacityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  colour: {r: 0.7960785, g: 0.121568635, b: 0.32941177, a: 1}
+  farColour: {r: 0.83921576, g: 0.65882355, b: 0.1254902, a: 1}
+  closeMergeWeight: 1.5
+--- !u!114 &8100000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06380230332d0ee419ee90406c8d5f3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EventSitePulse
+  registry: {fileID: 0}
+  gridMap: {fileID: 0}
+  markerPresenter: {fileID: 0}
+  directionIndicator: {fileID: 8100000001}
+  strength: 0.6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
