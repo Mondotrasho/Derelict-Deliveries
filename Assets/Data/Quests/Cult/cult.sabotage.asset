@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: cult.sabotage
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: cult.sabotage
-  displayName: The Ex-Cultist
+  displayName: The Defector
   category: 2
   tags:
   - cult
@@ -33,27 +33,30 @@ MonoBehaviour:
   markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 4
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "Screams from the engine room. You find your newest crew member kneeling inside a chalk circle, humming, next to two of your crew who will not be getting up again."
+  banner: {fileID: 21300000, guid: 0e868769129582c4f98cee990aee359c, type: 3}
+  shortDescription: "A maintenance alarm pulls up an internal camera. The defector is kneeling inside a chalk circle. One of your crew lies motionless nearby."
   allowLeave: 0
   choices:
-  - id: eject
-    text: "Throw them off the ship"
+  - id: end_sabotage
+    text: Deal with it
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Eject"
+    - label: Sabotage
       weight: 1
-      resultText: "You drag them to the airlock. They're still humming when it opens. That's two good crew gone.\n\nEVENT END 2: SABOTEUR"
+      resultText: "One crew member is dead. The defector turns the ceremonial knife on themself before anyone can reach the circle."
       resources:
       - kind: 2
         amount: -2
@@ -79,5 +82,5 @@ MonoBehaviour:
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 3, 3 turns after taking the defector on."
+  debugText: "Defector ending. Crew -2 removes the murdered original crew member and the defector who had previously joined as Crew +1."
   dialogueJson: {fileID: 0}

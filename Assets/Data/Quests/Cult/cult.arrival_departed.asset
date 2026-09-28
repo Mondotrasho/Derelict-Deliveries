@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: cult.arrival_departed
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: cult.arrival_departed
+  displayName: Ramp Clear
+  category: 1
+  tags:
+  - cult
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 0
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 21300000, guid: 651b26b4be7d5364a8e01ba81637a5cc, type: 3}
+  shortDescription: "The gangplank is empty again. Whatever the passengers came here to do, it no longer involves your ship."
+  allowLeave: 0
+  choices: []
+  pickupResources: []
+  debugText: "Final visual beat after the cult passenger handover."
+  dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK

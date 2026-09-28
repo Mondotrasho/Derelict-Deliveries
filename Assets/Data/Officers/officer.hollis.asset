@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OfficerDefinition
   id: hollis
   displayName: "Dr. Hollis Crane"
-  role: Science Officer
-  description: "Reads sensor noise like tea leaves. Usually right."
+  role: Shields / Radar
+  description: "Reads sensor noise like tea leaves and has an instinct for when the shields need to come up."
   portrait: {fileID: 21300000, guid: d165b8a0717cf364f99e5948539ff764, type: 3}
   bonuses:
   - stat: scanning

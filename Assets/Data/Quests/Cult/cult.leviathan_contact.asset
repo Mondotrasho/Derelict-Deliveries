@@ -10,22 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
-  m_Name: cult.egg_delivery
+  m_Name: cult.leviathan_contact
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
-  id: cult.egg_delivery
-  displayName: Special Delivery
-  category: 1
+  id: cult.leviathan_contact
+  displayName: Incoming Contact
+  category: 2
   tags:
   - cult
   conditions:
     tags: []
-    flags:
-    - scope: 0
-      key: cult:egg
-      expected: 1
-    - scope: 0
-      key: cult:egg_stirred
-      expected: 1
+    flags: []
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -39,12 +33,12 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 21300000, guid: dddeadb5bacb17c42bc0a140d8695527, type: 3}
-  shortDescription: "The customer takes the warm egg from your hold. Before the handlers clear the pad, the shell flexes and emits a thin, impossible scream that punches straight through every receiver on the ship."
+  banner: {fileID: 21300000, guid: e38cc8a1991965c449212a9b4b95068a, type: 3}
+  shortDescription: "The contact resolves on the external feed. It is enormous, distant, and moving into the system toward the signal the egg screamed into the dark."
   allowLeave: 0
   choices:
-  - id: handover
-    text: Get back to the ship
+  - id: close
+    text: CLOSE
     availability:
       tags: []
       flags: []
@@ -57,18 +51,15 @@ MonoBehaviour:
     lockedReason: ""
     showOdds: 0
     outcomes:
-    - label: Delivered
+    - label: Contact Arrives
       weight: 1
-      resultText: "The cry dies away. For a moment the system is silent, as if something very far away is listening."
+      resultText: ""
       resources: []
       writes:
         tags: []
         flags:
         - scope: 0
-          key: cult:egg
-          expected: 0
-        - scope: 0
-          key: cult:egg_delivered
+          key: cult:end:beast
           expected: 1
         counters: []
       detectionTurns: 0
@@ -77,11 +68,13 @@ MonoBehaviour:
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 11400000, guid: b02f46b4135641559966e42ba5b3cb02, type: 2}
+      spawnOnMapEdgeAfterClose: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
+      scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
     dialogue: {fileID: 0}
+    skipResultStep: 1
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Yellow egg handover. The egg calls for its mother; the following event is an answering contact entering the system, not the egg growing into a giant creature. Assign the dedicated delivery banner when its project GUID is available."
+  debugText: "Stage 2. CLOSE dismisses the banner; the eldritch contact is spawned at the map edge one frame after the event window closes."
   dialogueJson: {fileID: 0}

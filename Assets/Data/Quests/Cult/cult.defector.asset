@@ -13,13 +13,19 @@ MonoBehaviour:
   m_Name: cult.defector
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: cult.defector
-  displayName: The Lone Robe
+  displayName: One More Signal
   category: 2
   tags:
   - cult
   conditions:
     tags: []
-    flags: []
+    flags:
+    - scope: 0
+      key: cult:started
+      expected: 1
+    - scope: 0
+      key: cult:passengers
+      expected: 0
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -33,54 +39,27 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 4
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "As you pull away, one robed figure is still pressed against their airlock window, holding up a new sign: TAKE ME INSTEAD."
+  banner: {fileID: 21300000, guid: 28a2aaf44f85a024fb5c10f7f089a087, type: 3}
+  shortDescription: "As you pull away, one figure remains in the transport's viewport holding a smaller sign toward your ship. A private channel opens."
   allowLeave: 0
   choices:
-  - id: talk
-    text: "Hear them out"
+  - id: take_defector
+    text: Take the defector aboard
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Talk"
+    - label: Aboard
       weight: 1
-      resultText: "They nod furiously and wait for your answer."
-      resources: []
-      writes:
-        tags: []
-        flags: []
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 0}
-      scheduleInTurns: 1
-    dialogue: {fileID: 4900000, guid: 17a7b627feea4f79a8f3ac9a89b1db46, type: 3}
-    endsEvent: 0
-    hideAfterUse: 1
-  - id: accept
-    text: "Take them on"
-    availability:
-      tags: []
-      flags: []
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Recruit"
-      weight: 1
-      resultText: "They scramble aboard, shed the robe and ask where the kitchen is. You have a new crew member."
+      resultText: "The lone pilgrim crosses over and joins the working crew."
       resources:
       - kind: 2
         amount: 1
@@ -102,20 +81,23 @@ MonoBehaviour:
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
-  - id: reject
-    text: "Leave them behind"
+  - id: leave_defector
+    text: Leave them behind
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Reject"
+    - label: Leave
       weight: 1
-      resultText: "You leave the whole lot of them to their beacon.\n\nEVENT END 1: TOTAL REJECTION"
+      resultText: "You close the channel and leave the transport behind."
       resources: []
       writes:
         tags: []
@@ -136,5 +118,6 @@ MonoBehaviour:
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 2 (Refuse branch)."
-  dialogueJson: {fileID: 0}
+  debugText: "Distress-refusal branch. Uses the single-sign banner and the unrevealed pilgrim portrait."
+  dialogueJson: {fileID: 4900000, guid: 17a7b627feea4f79a8f3ac9a89b1db46, type: 3}
+  dialogueButtonLabel: "Open the private channel"

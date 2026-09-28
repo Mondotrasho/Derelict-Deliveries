@@ -13,13 +13,19 @@ MonoBehaviour:
   m_Name: cult.arrival
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: cult.arrival
-  displayName: Journey's End
+  displayName: Grey World Arrival
   category: 1
   tags:
   - cult
   conditions:
     tags: []
-    flags: []
+    flags:
+    - scope: 0
+      key: cult:passengers
+      expected: 1
+    - scope: 0
+      key: cult:ritual_done
+      expected: 1
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -30,15 +36,93 @@ MonoBehaviour:
   markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 4
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "Your robed passengers file down the ramp onto the Grey planet, humming the same three notes they have hummed for the entire trip."
-  allowLeave: 0
+  banner: {fileID: 21300000, guid: 651b26b4be7d5364a8e01ba81637a5cc, type: 3}
+  shortDescription: "The Grey landing pad is ready. The gangplank is down, and your passengers are waiting behind the inner hatch."
+  allowLeave: 1
   choices:
-  - id: takeoff
-    text: "Take off"
+  - id: disembark_unrevealed
+    text: Lower the ramp
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:ritual_allowed
+        expected: 1
+      - scope: 0
+        key: cult:ritual_seen
+        expected: 0
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 0
+    outcomes:
+    - label: Disembark
+      weight: 1
+      resultText: "The inner hatch opens and the robed passengers file onto the ramp."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: 63002e29d5f54c2db74079a535fbd2f8, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: disembark_revealed
+    text: Lower the ramp
+    availability:
+      tags: []
+      flags:
+      - scope: 0
+        key: cult:ritual_allowed
+        expected: 1
+      - scope: 0
+        key: cult:ritual_seen
+        expected: 1
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 0
+    outcomes:
+    - label: Disembark
+      weight: 1
+      resultText: "The inner hatch opens and the figures from the security feed file onto the ramp."
+      resources: []
+      writes:
+        tags: []
+        flags: []
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: 494b01a801ff454fab89986136a10de8, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  - id: disembark_interfered
+    text: Lower the ramp
     availability:
       tags: []
       flags:
@@ -47,146 +131,24 @@ MonoBehaviour:
         expected: 1
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Paid"
+    - label: Disembark
       weight: 1
-      resultText: "Their leader presses a fuel chit into your hand without a word. As you take off, you see them talking to the captain of another ship.\n\nEVENT END 4: PAID IN FULL"
-      resources:
-      - kind: 0
-        amount: 50
-      writes:
-        tags: []
-        flags:
-        - scope: 0
-          key: cult:passengers
-          expected: 0
-        - scope: 0
-          key: cult:end:paid
-          expected: 1
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 0}
-      scheduleInTurns: 1
-    dialogue: {fileID: 0}
-    endsEvent: 1
-    hideAfterUse: 1
-  - id: listen
-    text: "Hear the leader out"
-    availability:
-      tags: []
-      flags:
-      - scope: 0
-        key: cult:ritual_allowed
-        expected: 1
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Payment"
-      weight: 1
-      resultText: "The leader pays you in full, and then some. They have another job for you."
-      resources:
-      - kind: 0
-        amount: 50
-      writes:
-        tags: []
-        flags:
-        - scope: 0
-          key: cult:passengers
-          expected: 0
-        - scope: 0
-          key: cult:offered
-          expected: 1
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 0}
-      scheduleInTurns: 1
-    dialogue: {fileID: 4900000, guid: 95b6e37a5d1f4defb45f4aa009b5ca6c, type: 3}
-    endsEvent: 0
-    hideAfterUse: 1
-  - id: egg
-    text: "Take the egg job"
-    availability:
-      tags: []
-      flags:
-      - scope: 0
-        key: cult:offered
-        expected: 1
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Egg"
-      weight: 1
-      resultText: "They load a warm, heavy, slightly pulsing egg into your hold, and pay up front. Deliver it to Fun Planet, the Yellow one."
-      resources:
-      - kind: 0
-        amount: 50
-      - kind: 3
-        amount: 50
-      writes:
-        tags: []
-        flags:
-        - scope: 0
-          key: cult:egg
-          expected: 1
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 11400000, guid: 7c65f65fa35c4b1c909941a8456b16a6, type: 2}
-      scheduleInTurns: 3
-    dialogue: {fileID: 0}
-    endsEvent: 1
-    hideAfterUse: 1
-  - id: decline
-    text: "Turn them down"
-    availability:
-      tags: []
-      flags:
-      - scope: 0
-        key: cult:offered
-        expected: 1
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Decline"
-      weight: 1
-      resultText: "You've had enough of robes for one lifetime. As you take off, you see them talking to the captain of another ship.\n\nEVENT END 4: PAID IN FULL"
+      resultText: "The brig opens under guard. The surviving passengers walk down the ramp in silence."
       resources: []
       writes:
         tags: []
-        flags:
-        - scope: 0
-          key: cult:end:paid
-          expected: 1
+        flags: []
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
+      followUp: {fileID: 11400000, guid: 6998d1896c8a4a819ae6ba6958602abf, type: 2}
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
@@ -196,5 +158,5 @@ MonoBehaviour:
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 6. Planet option cult.dropoff on the Grey planet while cult:passengers is set."
+  debugText: "Grey arrival transition: empty gangplank -> disembarking cultists -> empty gangplank. Dialogue art depends on whether the ritual was revealed."
   dialogueJson: {fileID: 0}

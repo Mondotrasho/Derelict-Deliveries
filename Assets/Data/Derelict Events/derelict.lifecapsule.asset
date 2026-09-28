@@ -90,7 +90,7 @@ MonoBehaviour:
     showOdds: 1
     outcomes:
     - label: 
-      weight: 0
+      weight: 1
       resultText: Its war then!
       resources: []
       writes:

@@ -10,16 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
-  m_Name: cult.market_offer
+  m_Name: cult.egg_offer_unrevealed
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
-  id: cult.market_offer
-  displayName: Pilgrims
+  id: cult.egg_offer_unrevealed
+  displayName: A Familiar Contact
   category: 1
   tags:
   - cult
   conditions:
-    tags: []
-    flags: []
+    tags:
+    - scope: 1
+      tag: Yellow
+      mustHave: 0
+    flags:
+    - scope: 0
+      key: cult:egg_job_available
+      expected: 1
+    - scope: 0
+      key: cult:ritual_seen
+      expected: 0
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -34,14 +43,17 @@ MonoBehaviour:
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
   banner: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
-  shortDescription: "The taller pilgrim lowers their hood. They need passage to the Grey world and promise payment in fuel on arrival."
-  allowLeave: 0
+  shortDescription: "A Quiet Choir contact is waiting near the docks. Apparently the favour they hinted at has arrived."
+  allowLeave: 1
   choices:
-  - id: accept
-    text: Give them passage
+  - id: take_egg
+    text: "Accept the egg job"
     availability:
       tags: []
-      flags: []
+      flags:
+      - scope: 0
+        key: cult:egg_job_available
+        expected: 1
       counters: []
     minCrew: 0
     bonusStat: ""
@@ -49,21 +61,31 @@ MonoBehaviour:
     minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 0
+    showOdds: 1
     outcomes:
-    - label: Passage
+    - label: "Egg"
       weight: 1
-      resultText: "The taller pilgrim whistles. Six more robed figures emerge carrying a stone sarcophagus the size of a person. Nobody explains it. They're headed for the Grey planet."
-      resources: []
+      resultText: "They load a warm, heavy egg into your hold and pay up front. Deliver it to Fun Planet."
+      resources:
+      - kind: 0
+        amount: 50
+      - kind: 3
+        amount: 50
       writes:
         tags: []
         flags:
         - scope: 0
-          key: cult:started
+          key: cult:egg_job_available
+          expected: 0
+        - scope: 0
+          key: cult:egg_job_taken
           expected: 1
         - scope: 0
-          key: cult:passengers
+          key: cult:egg
           expected: 1
+        - scope: 0
+          key: cult:egg_stirred
+          expected: 0
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
@@ -71,16 +93,19 @@ MonoBehaviour:
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 11400000, guid: b4ad2fd289d04e3399606d6d27f612d4, type: 2}
-      scheduleInTurns: 2
+      scheduleEvent: {fileID: 11400000, guid: 7c65f65fa35c4b1c909941a8456b16a6, type: 2}
+      scheduleInTurns: 3
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
-  - id: refuse
-    text: Not a chance
+  - id: decline_egg
+    text: "Decline the egg job"
     availability:
       tags: []
-      flags: []
+      flags:
+      - scope: 0
+        key: cult:egg_job_available
+        expected: 1
       counters: []
     minCrew: 0
     bonusStat: ""
@@ -88,17 +113,20 @@ MonoBehaviour:
     minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 0
+    showOdds: 1
     outcomes:
-    - label: Refuse
+    - label: "Decline"
       weight: 1
-      resultText: "They bow politely and melt back into the crowd. You get the feeling this isn't the last opportunity you'll get."
+      resultText: "You leave the egg with the Choir. Someone else can make that delivery."
       resources: []
       writes:
         tags: []
         flags:
         - scope: 0
-          key: cult:market_refused
+          key: cult:egg_job_available
+          expected: 0
+        - scope: 0
+          key: cult:end:paid
           expected: 1
         counters: []
       detectionTurns: 0
@@ -113,5 +141,6 @@ MonoBehaviour:
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Alternative market start. Accept matches the distress route's two-turn ritual timer. Refusal records the encounter but leaves cult:started false so later starts remain available."
-  dialogueJson: {fileID: 0}
+  debugText: "Delayed egg job. Appears as a planet interaction on any non-Yellow planet after the successful Grey dropoff."
+  dialogueJson: {fileID: 4900000, guid: 562935ae7a854e478b8cdddd25ac1bc9, type: 3}
+  dialogueButtonLabel: "Hear the offer"

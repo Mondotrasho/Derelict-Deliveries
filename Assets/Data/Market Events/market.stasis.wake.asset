@@ -10,19 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
-  m_Name: cult.egg_noises
+  m_Name: market.stasis.wake
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
-  id: cult.egg_noises
-  displayName: Something in the Hold
-  category: 2
+  id: market.stasis.wake
+  displayName: The Scratched Pod
+  category: 1
   tags:
-  - cult
+  - market
+  - recruitment
+  - stasis
   conditions:
     tags: []
-    flags:
-    - scope: 0
-      key: cult:egg
-      expected: 1
+    flags: []
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -30,83 +29,78 @@ MonoBehaviour:
     flags: []
     counters: []
   useMarkerColour: 1
-  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  markerColour: {r: 1, g: 0.8, b: 0.2, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 4
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 21300000, guid: 6b5600012bf2cbe4c946e97920b8f67f, type: 3}
-  shortDescription: "Strange noises are coming from inside the egg. Scratching. Humming. At one point, what sounds a lot like your name."
+  banner: {fileID: 21300000, guid: 91c0bb8a994bd424cab44c55e64f5a1b, type: 3}
+  shortDescription: The broker rolls the scratched pod across the loading line. Whatever you bought is still asleep inside it.
   allowLeave: 0
   choices:
-  - id: flush
-    text: "Flush it out the airlock"
+  - id: wake
+    text: Tap the glass
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ''
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
+    lockedReason: ''
+    showOdds: 0
     outcomes:
-    - label: "Flush"
-      weight: 1
-      resultText: ""
+    - label: Awake
+      weight: 90
+      resultText: ''
       resources: []
       writes:
         tags: []
         flags:
         - scope: 0
-          key: cult:egg
-          expected: 0
-        - scope: 0
-          key: cult:end:airlock2
+          key: market:stasis:sera_awake
           expected: 1
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 11400000, guid: 171c92e38518452080917ddd17e77b97, type: 2}
-      returnCrewFromSiteCounter: ""
+      followUp: {fileID: 0}
+      returnCrewFromSiteCounter: ''
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
-    dialogue: {fileID: 0}
-    skipResultStep: 1
-    endsEvent: 1
-    hideAfterUse: 1
-  - id: ignore
-    text: "Ignore it"
-    availability:
-      tags: []
-      flags: []
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Ignore"
-      weight: 1
-      resultText: "You turn the music up. The egg keeps making noises."
+      recruitOfficer: {fileID: 11400000, guid: 59fbe839cff648f89c7c0cc3e22dc8b2, type: 2}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ''
+    - label: Dead Contract
+      weight: 10
+      resultText: ''
       resources: []
       writes:
         tags: []
-        flags: []
+        flags:
+        - scope: 0
+          key: market:stasis:sera_awake
+          expected: 0
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: ''
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: ''
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 7, 3 turns after taking the egg."
-  dialogueJson: {fileID: 0}
+  debugText: Follow-up after buying the scratched pod. The player taps the glass inside dialogue; the 90/10 wake roll then branches to Sera or an empty result.
+  dialogueJson: {fileID: 4900000, guid: 99f33bdf316f4ea4b6222f71b2ddb1da, type: 3}
+  dialogueButtonLabel: Open the pod controls
