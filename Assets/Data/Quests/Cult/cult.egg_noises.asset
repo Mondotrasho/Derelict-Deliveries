@@ -84,10 +84,7 @@ MonoBehaviour:
     text: "Ignore it"
     availability:
       tags: []
-      flags:
-        - scope: 0
-          key: cult:egg_stirred
-          expected: 1
+      flags: []
       counters: []
     minCrew: 0
     showWhenLocked: 0
@@ -100,7 +97,10 @@ MonoBehaviour:
       resources: []
       writes:
         tags: []
-        flags: []
+        flags:
+        - scope: 0
+          key: cult:egg_stirred
+          expected: 1
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
