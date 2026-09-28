@@ -28,11 +28,11 @@ MonoBehaviour:
     counters: []
   useMarkerColour: 1
   markerColour: {r: 0.8, g: 0.85, b: 0.9, a: 1}
-  identifiedSprite: {fileID: 0}
+  identifiedSprite: {fileID: 1305960342541126603, guid: eaf8419c277ffb849a375671382c7578, type: 3}
   identifiedTint: {r: 0.85, g: 1, b: 0.9, a: 1}
   identifiedSpinDegreesPerSecond: 6
   identifiedSizeInTiles: 1
-  lifetimeTurns: 0
+  lifetimeTurns: 5
   banner: {fileID: 21300000, guid: d599b65b82cc06d4fa3c976437dea8e7, type: 3}
   shortDescription: A sealed life capsule drifts past, its beacon long dead. Something
     might still be inside.
@@ -44,6 +44,10 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: 
     showOdds: 1
@@ -58,10 +62,25 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     - label: Explosion
       weight: 15
       resultText: A ruptured cell ignites as you cut. The blast scorches your hull.
@@ -72,11 +91,27 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
   - id: shoot
@@ -85,23 +120,43 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: 
     showOdds: 1
     outcomes:
     - label: 
-      weight: 0
+      weight: 1
       resultText: Its war then!
       resources: []
       writes:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 11400000, guid: 18b2fdb4feee49cfbba85e4a7c085fe5, type: 2}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
   - id: open
@@ -110,6 +165,10 @@ MonoBehaviour:
       tags: []
       flags: []
       counters: []
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: 
     showOdds: 1
@@ -124,10 +183,25 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     - label: Dead crew
       weight: 30
       resultText: Only a body inside. You take what little it carried.
@@ -138,10 +212,25 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     - label: Parasite
       weight: 10
       resultText: Something bursts from the body and takes one of your crew before
@@ -153,12 +242,30 @@ MonoBehaviour:
         tags: []
         flags: []
         counters: []
+      detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
+  pickupResources: []
   debugText: Life capsule derelict. Scrap / shoot / open, odds on each choice's outcomes.
   dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK

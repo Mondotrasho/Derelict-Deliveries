@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: cult.leviathan
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: cult.leviathan
-  displayName: Something Hatched
-  category: 3
+  displayName: Something Answered
+  category: 2
   tags:
   - cult
   conditions:
     tags: []
     flags:
     - scope: 0
-      key: cult:delivered
+      key: cult:egg_delivered
       expected: 1
     counters: []
   oncePerPlanet: 0
@@ -33,48 +33,48 @@ MonoBehaviour:
   markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 4
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "Every sensor on the ship screams at once. Something vast has hatched, it is hungry, and it has your scent."
+  banner: {fileID: 21300000, guid: 82aef1970a08d3a49869503d59635e49, type: 3}
+  shortDescription: "The egg's scream is gone. Then every long-range receiver on the bridge lights at once. Something has answered from beyond the system."
   allowLeave: 0
   choices:
-  - id: run
-    text: "Run."
+  - id: next
+    text: NEXT
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Beast"
+    - label: Reveal
       weight: 1
-      resultText: "It's coming from the edge of the system. Fly.\n\nEVENT END 6: THE BEAST"
+      resultText: ""
       resources: []
       writes:
         tags: []
-        flags:
-        - scope: 0
-          key: cult:end:beast
-          expected: 1
+        flags: []
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
+      followUp: {fileID: 11400000, guid: a16812eab75841f8999604e0499f7dc6, type: 2}
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
-      spawnDelayTurns: 0
-      spawnWhenWindowCloses: 1
+      spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
     dialogue: {fileID: 0}
+    skipResultStep: 1
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 9, 1 turn after delivery. Spawns enemy.eldritch at a map-edge entry cell."
+  debugText: "Stage 1 of the answering-contact reveal. Spaceflight card -> NEXT -> dedicated eldritch banner."
   dialogueJson: {fileID: 0}

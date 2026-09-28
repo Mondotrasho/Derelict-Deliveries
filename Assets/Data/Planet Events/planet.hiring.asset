@@ -38,7 +38,7 @@ MonoBehaviour:
   allowLeave: 1
   choices:
   - id: hire_mara
-    text: "Hire Mara Voss (Engineer, 10 supplies)"
+    text: "Hire Marek Voss (Engineer, 10 supplies)"
     availability:
       tags:
       - scope: 0
@@ -60,7 +60,7 @@ MonoBehaviour:
     outcomes:
     - label: "Hired"
       weight: 1
-      resultText: "Mara looks your ship over, sighs deeply, and signs on. She has already found three things wrong with it."
+      resultText: "Marek looks your ship over, sighs deeply, and signs on. Three problems are already on the repair list."
       resources:
       - kind: 3
         amount: -10
@@ -83,7 +83,7 @@ MonoBehaviour:
     endsEvent: 0
     hideAfterUse: 1
   - id: hire_hollis
-    text: "Hire Dr. Hollis Crane (Science, 10 supplies)"
+    text: "Hire Dr. Hollis Crane (Shields / Radar, 10 supplies)"
     availability:
       tags:
       - scope: 0
@@ -128,7 +128,7 @@ MonoBehaviour:
     endsEvent: 0
     hideAfterUse: 1
   - id: hire_rook
-    text: "Hire Rook (Pilot, 10 supplies)"
+    text: "Hire Rook (Gunner, 10 supplies)"
     availability:
       tags:
       - scope: 0
@@ -150,7 +150,7 @@ MonoBehaviour:
     outcomes:
     - label: "Hired"
       weight: 1
-      resultText: "Rook takes the controls, adjusts the seat, and asks where the brakes are. You don't have any."
+      resultText: "Rook checks the gun mounts, says 'Acceptable,' and starts correcting the firing alignment."
       resources:
       - kind: 3
         amount: -10

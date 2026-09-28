@@ -37,24 +37,27 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 4
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "A battered transport drifts on the edge of your scanner, its beacon screaming for help. Through the viewport, a crowd of robed figures waves at you. Enthusiastically."
+  banner: {fileID: 21300000, guid: b10a2ffa65344734c98837417265c50d, type: 3}
+  shortDescription: "A battered transport drifts on the edge of your scanner, its beacon screaming for help. Figures move behind the viewport."
   allowLeave: 0
   choices:
   - id: hail
-    text: "Hail them"
+    text: "Hail the transport"
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Hail"
+    - label: "Channel open"
       weight: 1
-      resultText: "They wave harder. One of them holds up a hand-written sign: PLEASE."
+      resultText: "The battered transport answers."
       resources: []
       writes:
         tags: []
@@ -62,7 +65,7 @@ MonoBehaviour:
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
+      followUp: {fileID: 11400000, guid: 31205c700c794c8b9aaffb5c4228eb21, type: 2}
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
@@ -71,75 +74,6 @@ MonoBehaviour:
     dialogue: {fileID: 4900000, guid: d0666eb88f6d4285a38cbe99ad8e8f4b, type: 3}
     endsEvent: 0
     hideAfterUse: 1
-  - id: accept
-    text: "Give them passage"
-    availability:
-      tags: []
-      flags: []
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Passage"
-      weight: 1
-      resultText: "The robed figures file aboard, singing softly. Last on is a stone sarcophagus the size of a person, carried by six of them. Nobody explains it. They're headed for the Grey planet."
-      resources: []
-      writes:
-        tags: []
-        flags:
-        - scope: 0
-          key: cult:started
-          expected: 1
-        - scope: 0
-          key: cult:passengers
-          expected: 1
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 11400000, guid: b4ad2fd289d04e3399606d6d27f612d4, type: 2}
-      scheduleInTurns: 2
-    dialogue: {fileID: 0}
-    endsEvent: 1
-    hideAfterUse: 1
-  - id: refuse
-    text: "Refuse"
-    availability:
-      tags: []
-      flags: []
-      counters: []
-    minCrew: 0
-    showWhenLocked: 0
-    lockedReason: ""
-    showOdds: 1
-    outcomes:
-    - label: "Refuse"
-      weight: 1
-      resultText: "You tell them you're not a taxi. The waving stops."
-      resources: []
-      writes:
-        tags: []
-        flags:
-        - scope: 0
-          key: cult:started
-          expected: 1
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 11400000, guid: 26b845a553d54f1392a296d1fa8e9c9a, type: 2}
-      returnCrewFromSiteCounter: ""
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 0}
-      scheduleInTurns: 1
-    dialogue: {fileID: 0}
-    endsEvent: 1
-    hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 1. Derelict site (add to DerelictEventTable) or QuestScheduler start event from turn 8."
+  debugText: "Cult quest start. Opens on the generic derelict view, then the hail leads to the sign banner and passenger decision."
   dialogueJson: {fileID: 0}

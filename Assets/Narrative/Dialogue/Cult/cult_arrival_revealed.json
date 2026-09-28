@@ -1,0 +1,46 @@
+{
+  "terminal": {
+    "title": "SYS://GREY LANDING PAD",
+    "status": "HANDOVER"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "The pilgrimage is complete. You saw more than most travellers do, and still allowed the rite to finish."
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "I am choosing to remember the part where you owe us fuel."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "A sensible memory. The Choir remembers restraint too. If there is more work, someone will find you."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "Until then, courier. Try not to listen too closely when the dark sings back.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Take the payment",
+          "line": "Then we are square.",
+          "action": "complete_dropoff",
+          "nextTick": 10
+        }
+      ]
+    }
+  ]
+}

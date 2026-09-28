@@ -70,6 +70,18 @@ public sealed class BannerChoiceView : MonoBehaviour
     [Min(0.05f)] [SerializeField] private float openDuration = 0.24f;
     [SerializeField] private Vector2 openStartScale = new Vector2(0.94f, 0.06f);
 
+    [Header("Banner CRT Swap")]
+    [Tooltip("Total time for the banner flicker, redraw and settle effect.")]
+    [Min(0.05f)] [SerializeField] private float bannerSwapDuration = 0.42f;
+    [Tooltip("Number of irregular old-image flickers before the redraw starts. Set to 0 to skip the flicker stage.")]
+    [Min(0)] [SerializeField] private int bannerSwapFlickerCount = 4;
+    [Tooltip("Reveal the new banner from top to bottom behind a CRT scan bar. Off switches after the flicker and only plays the settle stage.")]
+    [SerializeField] private bool bannerSwapWipe = true;
+    [Tooltip("Multiplied by the terminal palette primary colour for the redraw scan bar.")]
+    [SerializeField] private Color bannerSwapScanBarColour = new Color(1f, 1f, 1f, 0.85f);
+    [Tooltip("Maximum horizontal CRT glitch offset, in UI pixels, during a few flicker frames.")]
+    [Min(0f)] [SerializeField] private float bannerSwapJitter = 2f;
+
     public bool IsOpen { get; private set; }
 
     private RectTransform rect;
@@ -83,6 +95,10 @@ public sealed class BannerChoiceView : MonoBehaviour
     private RectTransform headerRect;
     private TextMeshProUGUI titleText, statusText, bodyText, resultText;
     private Image bannerImage;
+    private RectTransform bannerSwapRoot;
+    private Image bannerSwapOldImage, bannerSwapNewImage, bannerSwapScanBar;
+    private RawImage bannerSwapScanlines;
+    private Texture2D bannerSwapScanlineTexture;
     private LayoutElement bannerLayout, headerLayout, dividerLayout, bodyLayout;
     private GridLayoutGroup choiceGrid;
     private RectTransform choiceArea;
@@ -99,6 +115,8 @@ public sealed class BannerChoiceView : MonoBehaviour
     private string chosenId;
     private Vector2 lastSize = new Vector2(-1f, -1f);
     private Coroutine openRoutine;
+    private Coroutine bannerSwapRoutine;
+    private Sprite bannerSwapTarget;
 
 
     private void Awake()
@@ -110,7 +128,9 @@ public sealed class BannerChoiceView : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (bannerSwapRoutine != null) StopCoroutine(bannerSwapRoutine);
         if (scanlineTexture != null) Destroy(scanlineTexture);
+        if (bannerSwapScanlineTexture != null) Destroy(bannerSwapScanlineTexture);
     }
 
 
@@ -122,6 +142,7 @@ public sealed class BannerChoiceView : MonoBehaviour
     public void Show(Sprite banner, string title, string status, string body, bool alert)
     {
         EnsureBuilt();
+        StopBannerSwap(true);
         palette = style != null ? style.GetPalette(alert) : DefaultPalette();
 
         bannerImage.sprite = banner;
@@ -147,8 +168,43 @@ public sealed class BannerChoiceView : MonoBehaviour
     public void SetBanner(Sprite banner)
     {
         if (!built || banner == null) return;
+
+        // A second result can arrive while the first redraw is still running. Commit that
+        // redraw first so transitions never stack and the previous target becomes the old image.
+        StopBannerSwap(true);
+
+        Sprite oldBanner = bannerImage.sprite;
+        if (oldBanner == null || oldBanner == banner || !IsOpen || !isActiveAndEnabled)
+        {
+            SetBannerImmediate(banner);
+            return;
+        }
+
+        bannerSwapTarget = banner;
+
+        // The layout should size itself for the final sprite immediately, even though the base
+        // Image stays hidden until the transition finishes. The two temporary Images do the draw.
         bannerImage.sprite = banner;
+        bannerImage.enabled = false;
         bannerImage.gameObject.SetActive(true);
+
+        bannerSwapOldImage.sprite = oldBanner;
+        bannerSwapOldImage.color = Color.white;
+        bannerSwapOldImage.gameObject.SetActive(true);
+
+        bannerSwapNewImage.sprite = banner;
+        bannerSwapNewImage.color = Color.white;
+        bannerSwapNewImage.fillAmount = bannerSwapWipe ? 0f : 1f;
+        bannerSwapNewImage.gameObject.SetActive(true);
+
+        bannerSwapRoot.localPosition = Vector3.zero;
+        bannerSwapRoot.gameObject.SetActive(true);
+        bannerSwapScanlines.gameObject.SetActive(true);
+        bannerSwapScanBar.gameObject.SetActive(false);
+        UpdateBannerSwapScanlineUV();
+
+        lastSize = new Vector2(-1f, -1f);
+        bannerSwapRoutine = StartCoroutine(BannerSwapAnimation());
     }
 
 
@@ -156,6 +212,7 @@ public sealed class BannerChoiceView : MonoBehaviour
     public void ShowAgain()
     {
         if (!built) return;
+        StopBannerSwap(true);
         SetVisible(true);
         if (bringToFrontOnOpen) transform.SetAsLastSibling();
         PlayOpen();
@@ -220,6 +277,7 @@ public sealed class BannerChoiceView : MonoBehaviour
     {
         if (!built) return;
         StopOpen();
+        StopBannerSwap(true);
         SetVisible(false);
     }
 
@@ -286,6 +344,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         bannerImage = CreateImage("Banner", contentRect);
         bannerImage.preserveAspect = true;
         bannerLayout = bannerImage.gameObject.AddComponent<LayoutElement>();
+        BuildBannerSwapLayers();
 
         bodyText = CreateText("Body", contentRect);
         bodyText.alignment = TextAlignmentOptions.TopLeft;
@@ -344,6 +403,15 @@ public sealed class BannerChoiceView : MonoBehaviour
         leftBorder.color = palette.primary;
         rightBorder.color = palette.primary;
         divider.color = palette.dim;
+
+        if (bannerSwapScanBar != null)
+        {
+            bannerSwapScanBar.color = new Color(
+                palette.primary.r * bannerSwapScanBarColour.r,
+                palette.primary.g * bannerSwapScanBarColour.g,
+                palette.primary.b * bannerSwapScanBarColour.b,
+                palette.primary.a * bannerSwapScanBarColour.a);
+        }
 
         scanlineImage.gameObject.SetActive(style == null || style.Scanlines);
         scanlineImage.transform.SetAsLastSibling();
@@ -513,6 +581,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        UpdateBannerSwapScanlineUV();
     }
 
 
@@ -590,6 +659,249 @@ public sealed class BannerChoiceView : MonoBehaviour
             buttonIds[i] = null;
             buttonEnabled[i] = false;
         }
+    }
+
+
+    // ------------------------------------------------------------------
+    // Banner CRT swap
+    // ------------------------------------------------------------------
+
+    private void BuildBannerSwapLayers()
+    {
+        // bannerImage remains the layout-owned final image. During a transition it is disabled
+        // while these children draw snapshots of the old and new banners over the same rect.
+        bannerImage.gameObject.AddComponent<RectMask2D>();
+
+        bannerSwapRoot = CreateRect("BannerSwap", bannerImage.transform);
+        Stretch(bannerSwapRoot);
+        bannerSwapRoot.gameObject.SetActive(false);
+
+        bannerSwapOldImage = CreateImage("OldBanner", bannerSwapRoot);
+        Stretch(bannerSwapOldImage.rectTransform);
+        bannerSwapOldImage.preserveAspect = true;
+
+        bannerSwapNewImage = CreateImage("NewBanner", bannerSwapRoot);
+        Stretch(bannerSwapNewImage.rectTransform);
+        bannerSwapNewImage.preserveAspect = true;
+        bannerSwapNewImage.type = Image.Type.Filled;
+        bannerSwapNewImage.fillMethod = Image.FillMethod.Vertical;
+        bannerSwapNewImage.fillOrigin = (int)Image.OriginVertical.Top;
+        bannerSwapNewImage.fillAmount = 0f;
+
+        bannerSwapScanlines = new GameObject("SwapScanlines", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+        bannerSwapScanlines.transform.SetParent(bannerSwapRoot, false);
+        bannerSwapScanlines.raycastTarget = false;
+        Stretch(bannerSwapScanlines.rectTransform);
+        RebuildBannerSwapScanlineTexture();
+
+        bannerSwapScanBar = CreateImage("RedrawScanBar", bannerSwapRoot);
+        RectTransform bar = bannerSwapScanBar.rectTransform;
+        bar.anchorMin = new Vector2(0f, 1f);
+        bar.anchorMax = new Vector2(1f, 1f);
+        bar.pivot = new Vector2(0.5f, 0.5f);
+        bar.anchoredPosition = Vector2.zero;
+        bar.sizeDelta = new Vector2(0f, 3f);
+        bannerSwapScanBar.gameObject.SetActive(false);
+    }
+
+
+    private void SetBannerImmediate(Sprite banner)
+    {
+        bannerSwapTarget = null;
+        bannerImage.sprite = banner;
+        bannerImage.enabled = true;
+        bannerImage.color = Color.white;
+        bannerImage.gameObject.SetActive(banner != null);
+        if (bannerSwapRoot != null) bannerSwapRoot.gameObject.SetActive(false);
+        lastSize = new Vector2(-1f, -1f);
+    }
+
+
+    /// <summary>Stop an in-flight swap. Complete=true jumps directly to its intended final banner.</summary>
+    private void StopBannerSwap(bool complete)
+    {
+        if (bannerSwapRoutine != null)
+        {
+            StopCoroutine(bannerSwapRoutine);
+            bannerSwapRoutine = null;
+        }
+
+        if (complete && bannerSwapTarget != null)
+            bannerImage.sprite = bannerSwapTarget;
+
+        bannerSwapTarget = null;
+
+        if (bannerImage != null)
+        {
+            bannerImage.enabled = true;
+            bannerImage.color = Color.white;
+        }
+
+        if (bannerSwapOldImage != null)
+        {
+            bannerSwapOldImage.color = Color.white;
+            bannerSwapOldImage.gameObject.SetActive(false);
+        }
+
+        if (bannerSwapNewImage != null)
+        {
+            bannerSwapNewImage.color = Color.white;
+            bannerSwapNewImage.fillAmount = 1f;
+            bannerSwapNewImage.gameObject.SetActive(false);
+        }
+
+        if (bannerSwapScanBar != null) bannerSwapScanBar.gameObject.SetActive(false);
+        if (bannerSwapScanlines != null) bannerSwapScanlines.gameObject.SetActive(false);
+        if (bannerSwapRoot != null)
+        {
+            bannerSwapRoot.localPosition = Vector3.zero;
+            bannerSwapRoot.gameObject.SetActive(false);
+        }
+    }
+
+
+    private IEnumerator BannerSwapAnimation()
+    {
+        float duration = Mathf.Max(0.05f, bannerSwapDuration);
+        float flickerFraction = bannerSwapFlickerCount > 0 ? 0.30f : 0f;
+        float wipeFraction = bannerSwapWipe ? 0.52f : 0f;
+        float settleFraction = Mathf.Max(0.18f, 1f - flickerFraction - wipeFraction);
+        float fractionTotal = flickerFraction + wipeFraction + settleFraction;
+
+        float flickerDuration = duration * flickerFraction / fractionTotal;
+        float wipeDuration = duration * wipeFraction / fractionTotal;
+        float settleDuration = duration * settleFraction / fractionTotal;
+
+        if (bannerSwapFlickerCount > 0)
+        {
+            float stepSeconds = flickerDuration / bannerSwapFlickerCount;
+            for (int i = 0; i < bannerSwapFlickerCount; i++)
+            {
+                float a = FlickerAlpha(i);
+                bannerSwapOldImage.color = new Color(1f, 1f, 1f, a);
+                SetBannerSwapJitter(i % 2 == 0 ? UnityEngine.Random.Range(-bannerSwapJitter, bannerSwapJitter) : 0f);
+                yield return WaitUnscaled(stepSeconds);
+            }
+        }
+
+        bannerSwapOldImage.color = Color.white;
+        SetBannerSwapJitter(0f);
+
+        if (bannerSwapWipe)
+        {
+            bannerSwapNewImage.fillAmount = 0f;
+            bannerSwapScanBar.gameObject.SetActive(true);
+
+            float elapsed = 0f;
+            while (elapsed < wipeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / Mathf.Max(0.001f, wipeDuration));
+                float eased = t * t * (3f - 2f * t);
+                bannerSwapNewImage.fillAmount = eased;
+                PositionBannerSwapScanBar(eased);
+                yield return null;
+            }
+
+            bannerSwapNewImage.fillAmount = 1f;
+            bannerSwapScanBar.gameObject.SetActive(false);
+        }
+        else
+        {
+            bannerSwapOldImage.gameObject.SetActive(false);
+            bannerSwapNewImage.fillAmount = 1f;
+        }
+
+        // The redraw has finished. A pair of short new-image blips makes it feel like the
+        // terminal locks onto the refreshed frame instead of simply stopping the wipe.
+        bannerSwapOldImage.gameObject.SetActive(false);
+        float settleStep = settleDuration / 3f;
+        bannerSwapNewImage.color = new Color(1f, 1f, 1f, 0.58f);
+        SetBannerSwapJitter(bannerSwapJitter > 0f ? -bannerSwapJitter * 0.55f : 0f);
+        yield return WaitUnscaled(settleStep);
+
+        bannerSwapNewImage.color = Color.white;
+        SetBannerSwapJitter(0f);
+        yield return WaitUnscaled(settleStep);
+
+        bannerSwapNewImage.color = new Color(1f, 1f, 1f, 0.84f);
+        yield return WaitUnscaled(settleStep);
+
+        if (bannerSwapTarget != null) bannerImage.sprite = bannerSwapTarget;
+        bannerSwapTarget = null;
+        bannerSwapRoutine = null;
+        bannerImage.enabled = true;
+        bannerImage.color = Color.white;
+        bannerSwapRoot.localPosition = Vector3.zero;
+        bannerSwapRoot.gameObject.SetActive(false);
+        lastSize = new Vector2(-1f, -1f);
+    }
+
+
+    private static float FlickerAlpha(int index)
+    {
+        // Deliberately uneven rather than a regular pulse: 1 -> .3 -> .9 -> .1 ...
+        switch (index % 6)
+        {
+            case 0: return 0.30f;
+            case 1: return 0.90f;
+            case 2: return 0.10f;
+            case 3: return 0.72f;
+            case 4: return 0.18f;
+            default: return 0.94f;
+        }
+    }
+
+
+    private void SetBannerSwapJitter(float x)
+    {
+        if (bannerSwapRoot == null) return;
+        bannerSwapRoot.localPosition = new Vector3(x, 0f, 0f);
+    }
+
+
+    private void PositionBannerSwapScanBar(float progress)
+    {
+        if (bannerSwapScanBar == null || bannerSwapRoot == null) return;
+        float height = Mathf.Max(1f, bannerSwapRoot.rect.height);
+        bannerSwapScanBar.rectTransform.anchoredPosition = new Vector2(0f, -height * Mathf.Clamp01(progress));
+    }
+
+
+    private IEnumerator WaitUnscaled(float seconds)
+    {
+        float elapsed = 0f;
+        while (elapsed < seconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+
+    private void RebuildBannerSwapScanlineTexture()
+    {
+        if (bannerSwapScanlineTexture != null) Destroy(bannerSwapScanlineTexture);
+
+        bannerSwapScanlineTexture = new Texture2D(1, 4, TextureFormat.RGBA32, false);
+        bannerSwapScanlineTexture.wrapMode = TextureWrapMode.Repeat;
+        bannerSwapScanlineTexture.filterMode = FilterMode.Point;
+        bannerSwapScanlineTexture.SetPixel(0, 0, new Color(0f, 0f, 0f, 0f));
+        bannerSwapScanlineTexture.SetPixel(0, 1, new Color(0f, 0f, 0f, 0.18f));
+        bannerSwapScanlineTexture.SetPixel(0, 2, new Color(0f, 0f, 0f, 0f));
+        bannerSwapScanlineTexture.SetPixel(0, 3, new Color(0f, 0f, 0f, 0.07f));
+        bannerSwapScanlineTexture.Apply();
+
+        bannerSwapScanlines.texture = bannerSwapScanlineTexture;
+        bannerSwapScanlines.color = Color.white;
+    }
+
+
+    private void UpdateBannerSwapScanlineUV()
+    {
+        if (bannerSwapScanlines == null || bannerSwapRoot == null) return;
+        float height = Mathf.Max(1f, bannerSwapRoot.rect.height);
+        bannerSwapScanlines.uvRect = new Rect(0f, 0f, 1f, height / 4f);
     }
 
 

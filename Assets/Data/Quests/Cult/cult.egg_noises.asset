@@ -23,6 +23,9 @@ MonoBehaviour:
     - scope: 0
       key: cult:egg
       expected: 1
+    - scope: 0
+      key: cult:egg_stirred
+      expected: 0
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -36,7 +39,7 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 4
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
+  banner: {fileID: 21300000, guid: 6b5600012bf2cbe4c946e97920b8f67f, type: 3}
   shortDescription: "Strange noises are coming from inside the egg. Scratching. Humming. At one point, what sounds a lot like your name."
   allowLeave: 0
   choices:
@@ -53,7 +56,7 @@ MonoBehaviour:
     outcomes:
     - label: "Flush"
       weight: 1
-      resultText: "Nope. The egg tumbles off into the dark. You feel it watching you go.\n\nEVENT END 5: THE AIRLOCK II"
+      resultText: ""
       resources: []
       writes:
         tags: []
@@ -67,20 +70,24 @@ MonoBehaviour:
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
+      followUp: {fileID: 11400000, guid: 171c92e38518452080917ddd17e77b97, type: 2}
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
     dialogue: {fileID: 0}
+    skipResultStep: 1
     endsEvent: 1
     hideAfterUse: 1
   - id: ignore
     text: "Ignore it"
     availability:
       tags: []
-      flags: []
+      flags:
+        - scope: 0
+          key: cult:egg_stirred
+          expected: 1
       counters: []
     minCrew: 0
     showWhenLocked: 0

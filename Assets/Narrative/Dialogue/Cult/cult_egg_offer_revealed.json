@@ -1,0 +1,102 @@
+{
+  "terminal": {
+    "title": "SYS://QUIET CHOIR CONTACT",
+    "status": "LOCAL CHANNEL"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist",
+      "text": "Traveller. The Choir remembered your restraint. We have another delivery for someone who knows when not to interfere."
+    },
+    {
+      "tick": 2,
+      "speaker": "cultist",
+      "text": "An egg. Warm. Precious. It must reach the golden world they call Fun Planet."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist",
+      "text": "We pay up front. Fuel and supplies. Enough that curiosity should feel unnecessary."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist",
+      "text": "You already know that some questions are healthier unanswered. Deliver it, and your concern ends.",
+      "nextTick": 30
+    },
+    {
+      "tick": 20,
+      "speaker": "cultist",
+      "text": "Warm is how it likes to be. Keep it warm. Do not sing to it. It sings back.",
+      "nextTick": 30
+    },
+    {
+      "tick": 30,
+      "speaker": "cultist",
+      "text": "Will you carry it?"
+    },
+    {
+      "tick": 40,
+      "speaker": "cultist",
+      "text": "Good. The handlers will load it now. Try not to tap the shell.",
+      "nextTick": -1
+    },
+    {
+      "tick": 50,
+      "speaker": "cultist",
+      "text": "Then our debt remains settled. Travel safely.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "What's in the egg?",
+          "line": "What exactly is inside it?",
+          "nextTick": 10
+        },
+        {
+          "text": "Why is it warm?",
+          "line": "Why is it warm?",
+          "nextTick": 20
+        },
+        {
+          "text": "Accept the job",
+          "line": "Load it. I'll take it to Fun Planet.",
+          "action": "take_egg",
+          "nextTick": 40
+        },
+        {
+          "text": "Decline",
+          "line": "No more cult cargo.",
+          "action": "decline_egg",
+          "nextTick": 50
+        }
+      ]
+    },
+    {
+      "tick": 30,
+      "options": [
+        {
+          "text": "Accept the job",
+          "line": "Load it. I'll take it to Fun Planet.",
+          "action": "take_egg",
+          "nextTick": 40
+        },
+        {
+          "text": "Decline",
+          "line": "No more cult cargo.",
+          "action": "decline_egg",
+          "nextTick": 50
+        }
+      ]
+    }
+  ]
+}

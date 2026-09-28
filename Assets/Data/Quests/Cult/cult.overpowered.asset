@@ -97,11 +97,7 @@ MonoBehaviour:
     outcomes:
     - label: Airlock
       weight: 1
-      resultText: 'You don''t take passengers who eat the crew. The airlock hisses.
-        The cargo bay is suddenly very quiet.
-
-
-        EVENT END 3: THE AIRLOCK'
+      resultText: ""
       resources: []
       writes:
         tags: []
@@ -115,19 +111,21 @@ MonoBehaviour:
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
+      followUp: {fileID: 11400000, guid: 59117ab9395342438d39bd71d85379f6, type: 2}
       returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 0}
       loseOfficer: {fileID: 0}
       loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 1
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: Stage 5 (Interfere branch).
+  debugText: Stage 5 (Interfere branch). Airlock choice transitions to a dedicated consequence banner.
   dialogueJson: {fileID: 0}
   dialogueButtonLabel: TALK

@@ -1,11 +1,11 @@
 {
   "terminal": {
     "title": "SYS://ANVIL YARD",
-    "status": "ORE DOCK 4 OPEN"
+    "status": "DOCKING REQUEST LOGGED"
   },
   "characters": {
     "left": "pilot",
-    "right": "engineer"
+    "right": "bureaucrat"
   },
   "lines": [
     {
@@ -15,36 +15,36 @@
     },
     {
       "tick": 2,
-      "speaker": "engineer",
-      "text": "Berth four. Mind the slag chutes, they don't stop for anybody."
+      "speaker": "bureaucrat",
+      "text": "Request received. Berth four is available, assuming nobody has parked an ore barge in it since I checked."
     },
     {
       "tick": 3,
-      "speaker": "engineer",
-      "text": "You've reached the only refinery for three systems that still pays on time. Mostly on time."
+      "speaker": "bureaucrat",
+      "text": "Before landing: keep clear of the slag chutes, the freight magnets and anything marked 'temporary'. Temporary equipment here predates me."
     },
     {
       "tick": 10,
-      "speaker": "engineer",
-      "text": "Ore in, alloy out. Everything that sparkles on this rock gets melted, stamped and shipped.",
+      "speaker": "bureaucrat",
+      "text": "Officially? Refining, fabrication and export. Unofficially? Ore goes in, paperwork comes out, and somewhere in the middle we produce alloy.",
       "nextTick": 30
     },
     {
       "tick": 20,
-      "speaker": "engineer",
-      "text": "Welders, drillers, anyone who can read a pressure gauge. Contracts go up on the board when the foreman remembers.",
+      "speaker": "bureaucrat",
+      "text": "There is always work. Welders, drillers, technicians. Check the contract board and sign the liability waiver before anybody hands you a tool.",
       "nextTick": 30
     },
     {
       "tick": 25,
-      "speaker": "engineer",
-      "text": "That noise? Crusher three. Or the reactor. Honestly they sound the same until one of them explodes.",
+      "speaker": "bureaucrat",
+      "text": "You will need to be more specific. I have six registered grinding noises and three pending complaints about unregistered ones.",
       "nextTick": 30
     },
     {
       "tick": 30,
-      "speaker": "engineer",
-      "text": "Keep your hands inside the ship and your hull away from the magnets. Welcome to the Yard."
+      "speaker": "bureaucrat",
+      "text": "Berth four. Follow the painted line, ignore the unpainted line, and welcome to Anvil Yard."
     }
   ],
   "choices": [

@@ -28,29 +28,34 @@ MonoBehaviour:
     counters: []
   useMarkerColour: 1
   markerColour: {r: 0.8, g: 0.85, b: 0.9, a: 1}
-  identifiedSprite: {fileID: 0}
+  identifiedSprite: {fileID: -8542351777785496446, guid: eaf8419c277ffb849a375671382c7578, type: 3}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 0
+  identifiedSpinDegreesPerSecond: 8
   identifiedSizeInTiles: 1
-  lifetimeTurns: 0
+  lifetimeTurns: 5
   banner: {fileID: 0}
-  shortDescription: "A dead freighter tumbles past, lights off, doors open, vibes terrible. Something in there is probably worth taking."
+  shortDescription: A dead freighter tumbles past, lights off, doors open, vibes
+    terrible. Something in there is probably worth taking.
   allowLeave: 1
   choices:
   - id: board
-    text: "Board it (send 2 crew)"
+    text: Board it (send 2 crew)
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 4
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 1
-    lockedReason: "needs 4 crew"
+    lockedReason: needs 4 crew
     showOdds: 0
     outcomes:
-    - label: "Stripped"
+    - label: Stripped
       weight: 30
-      resultText: "Your crew poke around and come back empty-handed. Someone got here first."
+      resultText: Your crew poke around and come back empty-handed. Someone got here
+        first.
       resources: []
       writes:
         tags: []
@@ -59,12 +64,26 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-    - label: "Rooms"
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    - label: Rooms
       weight: 70
-      resultText: "Two of your crew suit up and cross over. The airlock hisses shut behind them."
+      resultText: Two of your crew suit up and cross over. The airlock hisses shut
+        behind them.
       resources:
       - kind: 2
         amount: -2
@@ -79,26 +98,43 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 11400000, guid: 3233e412bff244588619518b6df62429, type: 2}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
   - id: strip
-    text: "Strip the hull from outside"
+    text: Strip the hull from outside
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Plating"
+    - label: Plating
       weight: 80
-      resultText: "You peel off the plating like a lobster shell. Crunchy, but useful."
+      resultText: You peel off the plating like a lobster shell. Crunchy, but useful.
       resources:
       - kind: 3
         amount: 5
@@ -109,12 +145,25 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-    - label: "Snap back"
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    - label: Snap back
       weight: 20
-      resultText: "A panel snaps back and dents your nose. The wreck wins this round."
+      resultText: A panel snaps back and dents your nose. The wreck wins this round.
       resources:
       - kind: 1
         amount: -5
@@ -125,26 +174,43 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
   - id: recorder
-    text: "Pull the flight recorder"
+    text: Pull the flight recorder
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
-    lockedReason: ""
+    lockedReason: 
     showOdds: 1
     outcomes:
-    - label: "Patrol routes"
+    - label: Patrol routes
       weight: 70
-      resultText: "The logs show the patrol routes. You plot a quieter way home."
+      resultText: The logs show the patrol routes. You plot a quieter way home.
       resources: []
       writes:
         tags: []
@@ -153,12 +219,26 @@ MonoBehaviour:
       detectionTurns: 2
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
-    - label: "Loud recorder"
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
+    - label: Loud recorder
       weight: 30
-      resultText: "The recorder helpfully announces your position to the whole sector. Oops."
+      resultText: The recorder helpfully announces your position to the whole sector.
+        Oops.
       resources: []
       writes:
         tags: []
@@ -167,12 +247,28 @@ MonoBehaviour:
       detectionTurns: -1
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: ""
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Drifting wreck. Board it needs 4 crew and sends 2 across (30% nothing there, 70% the boarding party event with rooms)."
+  debugText: Drifting wreck. Board it needs 4 crew and sends 2 across (30% nothing
+    there, 70% the boarding party event with rooms).
   dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK

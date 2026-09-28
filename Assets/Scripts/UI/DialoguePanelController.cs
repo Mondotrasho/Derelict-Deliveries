@@ -81,6 +81,8 @@ public class DialoguePanelController : MonoBehaviour
         public List<CharacterColourJson> characterColours;
         public List<CharacterColourJson> characterColors;
         public TimingJson timing;
+        // Optional: true = the QUIT button stays disabled; the dialogue only closes when it runs out.
+        public bool lockClose;
         public List<DialogueJsonLine> lines;
         public List<ChoiceSetJson> choices;
     }
@@ -126,6 +128,8 @@ public class DialoguePanelController : MonoBehaviour
         public float charactersPerSecond;
         public float lineInterval;
         public string automaticMode;
+        // Optional: "full", "quick" or "none" - overrides how this dialogue boots.
+        public string boot;
     }
 
     [Serializable]
@@ -137,6 +141,11 @@ public class DialoguePanelController : MonoBehaviour
 
         // Optional flow override. 0 keeps the old behaviour: continue to the next numeric tick.
         public int nextTick;
+
+        // Optional portrait/identity changes applied immediately before this line.
+        // Useful for reveals such as a stasis pod opening during the conversation.
+        public string setLeftCharacter;
+        public string setRightCharacter;
     }
 
     [Serializable]
@@ -209,6 +218,8 @@ public class DialoguePanelController : MonoBehaviour
         public string speakerId;
         public string text;
         public int nextTick;
+        public string setLeftCharacter;
+        public string setRightCharacter;
     }
 
     private class GeneratedLine
@@ -363,6 +374,34 @@ public class DialoguePanelController : MonoBehaviour
     [Min(0f)][SerializeField] private float defaultReadyHold = 0.45f;
     [Min(0)][SerializeField] private int defaultBlankLinesBeforeDialogue = 2;
 
+    [Header("Quick Boot (every dialogue opened without a full boot)")]
+    [Tooltip("Dialogues opened without Run Boot Sequence (events, markets, quests...) play this short boot. Planet hails keep the full, slow boot. Off = no boot for them. A dialogue JSON can force its own with timing.boot = full / quick / none.")]
+    [SerializeField] private bool quickBootOtherDialogue = true;
+    [SerializeField]
+    private List<string> quickBootLines = new List<string>
+    {
+        ":: LINK RESUME"
+    };
+    [Min(1f)][SerializeField] private float quickBootCharactersPerSecond = 900f;
+    [Min(0.05f)][SerializeField] private float quickConnectDuration = 0.25f;
+    [Min(0f)][SerializeField] private float quickReadyHold = 0.05f;
+    [Tooltip("Pauses between boot lines are multiplied by this in a quick boot.")]
+    [Range(0f, 1f)][SerializeField] private float quickPauseScale = 0.2f;
+
+    [Header("Auto Mode Memory")]
+    [Tooltip("The AUTO button's last setting is saved here (PlayerPrefs) and used by every later dialogue. It can be toggled during the boot, before the dialogue starts.")]
+    [SerializeField] private bool rememberAutoMode = true;
+    [SerializeField] private string autoModePrefsKey = "DerelictDeliveries.Dialogue.AutoMode";
+
+    // QUIT lock: set by callers (EventPanel, for events that can't be left) or by the
+    // JSON's lockClose. While locked the dialogue only closes by running out of lines.
+    private bool closeLocked;
+    private bool jsonCloseLocked;
+    public bool IsCloseLocked => closeLocked || jsonCloseLocked;
+
+    private bool bootQuick;              // style of the boot currently running / requested
+    private string parsedBootOverride;   // timing.boot from the loaded JSON
+
     [Header("Behaviour")]
     [SerializeField] private bool startEmpty = true;
     [SerializeField] private bool autoScrollToNewest = true;
@@ -476,6 +515,8 @@ public class DialoguePanelController : MonoBehaviour
 
     private string leftCharacterId = "left";
     private string rightCharacterId = "right";
+    private string initialLeftCharacterId = "left";
+    private string initialRightCharacterId = "right";
     private string leftDisplayName = "";
     private string rightDisplayName = "";
 
@@ -771,14 +812,9 @@ public class DialoguePanelController : MonoBehaviour
 
         ActivateDialogueWindow();
 
-        if (runBootSequence)
-        {
-            LoadDialogueAndBoot(jsonFile);
-        }
-        else
-        {
-            LoadDialogue(jsonFile);
-        }
+        dialogueJson = jsonFile;
+        ParseDialogue(jsonFile.text);
+        BeginOpenedDialogue(runBootSequence);
     }
 
     /// <summary>Same as OpenDialogue, but accepts raw JSON text.</summary>
@@ -792,14 +828,35 @@ public class DialoguePanelController : MonoBehaviour
 
         ActivateDialogueWindow();
 
-        if (runBootSequence)
+        ParseDialogue(json);
+        BeginOpenedDialogue(runBootSequence);
+    }
+
+
+    /// <summary>
+    /// After a dialogue is parsed on open: full boot when asked (planet hails),
+    /// otherwise the quick boot (or none), unless the JSON's timing.boot says otherwise.
+    /// </summary>
+    private void BeginOpenedDialogue(bool fullBoot)
+    {
+        int style = fullBoot ? 2 : (quickBootOtherDialogue ? 1 : 0);   // 0 none, 1 quick, 2 full
+        switch ((parsedBootOverride ?? "").Trim().ToLowerInvariant())
         {
-            LoadDialogueFromJsonAndBoot(json);
+            case "full": style = 2; break;
+            case "quick": style = 1; break;
+            case "none": case "off": style = 0; break;
         }
-        else
+
+        if (style == 0)
         {
-            LoadDialogueFromJson(json);
+            bootRequested = false;
+            if (ready) StartConversationState();
+            return;
         }
+
+        bootQuick = style == 1;
+        if (ready) RunBootSequence();
+        else bootRequested = true;
     }
 
     /// <summary>
@@ -853,6 +910,8 @@ public class DialoguePanelController : MonoBehaviour
         activeSpeakingSide = null;
         dialogueOpen = false;
         ClearChoiceActionResolver();
+        closeLocked = false;          // each dialogue starts unlocked unless its caller locks it
+        jsonCloseLocked = false;
         gameObject.SetActive(false);
         DialogueClosed?.Invoke();
     }
@@ -1030,6 +1089,7 @@ public class DialoguePanelController : MonoBehaviour
 
         dialogueJson = jsonFile;
         ParseDialogue(jsonFile.text);
+        bootQuick = false;
 
         if (ready)
         {
@@ -1054,6 +1114,7 @@ public class DialoguePanelController : MonoBehaviour
     public void LoadDialogueFromJsonAndBoot(string json)
     {
         ParseDialogue(json);
+        bootQuick = false;
 
         if (ready)
         {
@@ -1069,6 +1130,7 @@ public class DialoguePanelController : MonoBehaviour
     {
         dialogue.Clear();
         loadedDefinition = null;
+        jsonCloseLocked = false;
 
         if (!string.IsNullOrWhiteSpace(json))
         {
@@ -1081,6 +1143,9 @@ public class DialoguePanelController : MonoBehaviour
                 Debug.LogError("Could not read dialogue JSON:\n" + exception.Message, this);
             }
         }
+
+        if (loadedDefinition != null) jsonCloseLocked = loadedDefinition.lockClose;
+        RefreshCloseButton();
 
         if (loadedDefinition != null && loadedDefinition.lines != null)
         {
@@ -1099,7 +1164,9 @@ public class DialoguePanelController : MonoBehaviour
                     order = order++,
                     speakerId = jsonLine.speaker ?? "",
                     text = jsonLine.text ?? "",
-                    nextTick = jsonLine.nextTick
+                    nextTick = jsonLine.nextTick,
+                    setLeftCharacter = jsonLine.setLeftCharacter ?? "",
+                    setRightCharacter = jsonLine.setRightCharacter ?? ""
                 });
             }
 
@@ -1118,6 +1185,7 @@ public class DialoguePanelController : MonoBehaviour
 
     private void StartConversationState()
     {
+        RefreshCloseButton();
         StopTyping();
         StopBootSequence();
 
@@ -1135,6 +1203,14 @@ public class DialoguePanelController : MonoBehaviour
         }
 
         ClearGeneratedLines();
+
+        // Re-apply both authored starting characters after any previous dialogue/boot
+        // state. This prevents a portrait hidden or swapped by the previous conversation
+        // from carrying into the next one, including dialogue that opens with the NPC speaking.
+        SetDialogueCharacter(PortraitSide.Left, initialLeftCharacterId, false);
+        SetDialogueCharacter(PortraitSide.Right, initialRightCharacterId, false);
+        SetCharacterImagesVisible(true);
+
         CalculateDialogueLayout();
         ScrollToBottom();
         SetControlsInteractable(true);
@@ -1179,6 +1255,9 @@ public class DialoguePanelController : MonoBehaviour
         rightCharacterId = !string.IsNullOrWhiteSpace(characters != null ? characters.right : null)
             ? characters.right
             : "right";
+
+        initialLeftCharacterId = leftCharacterId;
+        initialRightCharacterId = rightCharacterId;
 
         leftDefinition = FindCharacterDefinition(leftCharacterId);
         rightDefinition = FindCharacterDefinition(rightCharacterId);
@@ -1251,6 +1330,14 @@ public class DialoguePanelController : MonoBehaviour
         {
             activeAutomaticMode = autoValue;
         }
+
+        // The player's own AUTO choice wins over authored defaults once they've made one.
+        if (rememberAutoMode && PlayerPrefs.HasKey(autoModePrefsKey))
+        {
+            activeAutomaticMode = PlayerPrefs.GetInt(autoModePrefsKey) != 0;
+        }
+
+        parsedBootOverride = timing != null ? timing.boot : null;
 
         UpdateAutoButtonLabel();
     }
@@ -2430,7 +2517,7 @@ public class DialoguePanelController : MonoBehaviour
         if (generatedNextButton != null) generatedNextButton.onClick.AddListener(NextTick);
         if (generatedResetButton != null) generatedResetButton.onClick.AddListener(ResetDialogue);
         if (generatedAutoButton != null) generatedAutoButton.onClick.AddListener(ToggleAutomaticMode);
-        if (generatedCloseButton != null) generatedCloseButton.onClick.AddListener(CloseDialogue);
+        if (generatedCloseButton != null) generatedCloseButton.onClick.AddListener(OnCloseButtonPressed);
     }
 
     private void RemoveGeneratedButtonListeners()
@@ -2563,6 +2650,12 @@ public class DialoguePanelController : MonoBehaviour
         activeAutomaticMode = enabled;
         automaticTimer = 0f;
         UpdateAutoButtonLabel();
+
+        if (rememberAutoMode && !string.IsNullOrEmpty(autoModePrefsKey))
+        {
+            PlayerPrefs.SetInt(autoModePrefsKey, enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
     }
 
     private void UpdateAutoButtonLabel()
@@ -2587,8 +2680,9 @@ public class DialoguePanelController : MonoBehaviour
     {
         if (generatedNextButton != null) generatedNextButton.interactable = interactable && !waitingForChoice;
         if (generatedResetButton != null) generatedResetButton.interactable = interactable;
-        if (generatedAutoButton != null) generatedAutoButton.interactable = interactable;
-        if (generatedCloseButton != null) generatedCloseButton.interactable = true;
+        // AUTO stays usable during the boot so it can be set before the dialogue starts.
+        if (generatedAutoButton != null) generatedAutoButton.interactable = true;
+        if (generatedCloseButton != null) generatedCloseButton.interactable = !IsCloseLocked;
 
         foreach (Button button in generatedChoiceButtons)
         {
@@ -2721,6 +2815,8 @@ public class DialoguePanelController : MonoBehaviour
             activeTickLineIndex = i;
             DialogueLine dialogueLine = activeTickLines[i];
 
+            ApplyLineCharacterChanges(dialogueLine);
+
             if (!TryResolveSpeaker(dialogueLine.speakerId, out LineKind kind))
             {
                 Debug.LogWarning($"Unknown dialogue speaker '{dialogueLine.speakerId}'.", this);
@@ -2751,6 +2847,73 @@ public class DialoguePanelController : MonoBehaviour
         automaticTimer = 0f;
         ShowChoicesForCurrentTick();
     }
+
+    private void ApplyLineCharacterChanges(DialogueLine line)
+    {
+        if (line == null) return;
+
+        if (!string.IsNullOrWhiteSpace(line.setLeftCharacter))
+            SetDialogueCharacter(PortraitSide.Left, line.setLeftCharacter, true);
+
+        if (!string.IsNullOrWhiteSpace(line.setRightCharacter))
+            SetDialogueCharacter(PortraitSide.Right, line.setRightCharacter, true);
+    }
+
+
+    private void SetDialogueCharacter(PortraitSide side, string characterId, bool playAppearEffect)
+    {
+        if (string.IsNullOrWhiteSpace(characterId)) return;
+
+        CharacterDefinition definition = FindCharacterDefinition(characterId);
+        TextColoursJson textColours = loadedDefinition != null
+            ? (loadedDefinition.textColours ?? loadedDefinition.textColors)
+            : null;
+        List<CharacterColourJson> characterColours = loadedDefinition != null
+            ? (loadedDefinition.characterColours ?? loadedDefinition.characterColors)
+            : null;
+
+        if (side == PortraitSide.Left)
+        {
+            leftCharacterId = characterId;
+            leftDefinition = definition;
+            leftDisplayName = definition != null && !string.IsNullOrWhiteSpace(definition.displayName)
+                ? definition.displayName
+                : characterId.ToUpperInvariant();
+            resolvedLeftFont = ResolveCharacterFont(definition, fallbackCharacterFont);
+            float requestedSize = definition != null && definition.fontSize > 0f
+                ? definition.fontSize
+                : fallbackCharacterFontSize;
+            resolvedLeftFontSize = ResolveFontSize(resolvedLeftFont, requestedSize);
+            resolvedLeftColour = ResolveCharacterTextColour(
+                textColours != null ? textColours.left : null,
+                FindDialogueCharacterColour(characterColours, characterId),
+                definition,
+                resolvedPrimaryColour);
+            ApplyCharacterPortrait(leftPortrait, definition, characterId, playAppearEffect);
+        }
+        else
+        {
+            rightCharacterId = characterId;
+            rightDefinition = definition;
+            rightDisplayName = definition != null && !string.IsNullOrWhiteSpace(definition.displayName)
+                ? definition.displayName
+                : characterId.ToUpperInvariant();
+            resolvedRightFont = ResolveCharacterFont(definition, fallbackCharacterFont);
+            float requestedSize = definition != null && definition.fontSize > 0f
+                ? definition.fontSize
+                : fallbackCharacterFontSize;
+            resolvedRightFontSize = ResolveFontSize(resolvedRightFont, requestedSize);
+            resolvedRightColour = ResolveCharacterTextColour(
+                textColours != null ? textColours.right : null,
+                FindDialogueCharacterColour(characterColours, characterId),
+                definition,
+                resolvedPrimaryColour);
+            ApplyCharacterPortrait(rightPortrait, definition, characterId, playAppearEffect);
+        }
+
+        layoutDirty = true;
+    }
+
 
     private bool TryResolveSpeaker(string speakerId, out LineKind kind)
     {
@@ -2828,6 +2991,7 @@ public class DialoguePanelController : MonoBehaviour
             for (int i = activeTickLineIndex + 1; i < activeTickLines.Count; i++)
             {
                 DialogueLine dialogueLine = activeTickLines[i];
+                ApplyLineCharacterChanges(dialogueLine);
                 if (TryResolveSpeaker(dialogueLine.speakerId, out LineKind kind))
                 {
                     CreateGeneratedLine(kind, dialogueLine.text, true);
@@ -2907,10 +3071,14 @@ public class DialoguePanelController : MonoBehaviour
         string normalStatus = resolvedStatus;
         statusText.text = "BOOTING";
 
-        string[] bootLineSnapshot = bootLines != null ? bootLines.ToArray() : Array.Empty<string>();
-        float bootSpeed = Mathf.Max(1f, defaultBootCharactersPerSecond);
-        float connectDuration = Mathf.Max(0.1f, defaultConnectDuration);
-        float readyHold = Mathf.Max(0f, defaultReadyHold);
+        bool quick = bootQuick;
+        List<string> sourceLines = quick ? quickBootLines : bootLines;
+        string[] bootLineSnapshot = sourceLines != null ? sourceLines.ToArray() : Array.Empty<string>();
+        float bootSpeed = Mathf.Max(1f, quick ? quickBootCharactersPerSecond : defaultBootCharactersPerSecond);
+        float connectDuration = Mathf.Max(0.05f, quick ? quickConnectDuration : defaultConnectDuration);
+        float readyHold = Mathf.Max(0f, quick ? quickReadyHold : defaultReadyHold);
+        activeBootPauseScale = quick ? quickPauseScale : 1f;
+        activeBootQuick = quick;
         int blankLinesBeforeDialogue = Mathf.Max(0, defaultBlankLinesBeforeDialogue);
         bool keepBootLog = keepBootLogAfterBoot;
 
@@ -2974,7 +3142,7 @@ public class DialoguePanelController : MonoBehaviour
         CalculateDialogueLayout();
         ScrollToBottom();
 
-        float duration = Mathf.Max(0.25f, connectDuration);
+        float duration = Mathf.Max(activeBootQuick ? 0.05f : 0.25f, connectDuration);
         float elapsed = 0f;
         bool performedRetry = false;
         char[] spinner = { '|', '/', '-', '\\' };
@@ -2992,7 +3160,7 @@ public class DialoguePanelController : MonoBehaviour
 
             SetGeneratedLineText(connectionLine, $"CONNECT [{bar}] {percent,3}% {spin}", false);
 
-            if (!performedRetry && t >= 0.42f)
+            if (!activeBootQuick && !performedRetry && t >= 0.42f)
             {
                 performedRetry = true;
                 statusText.text = "NO CARRIER";
@@ -3010,9 +3178,12 @@ public class DialoguePanelController : MonoBehaviour
         statusText.text = "HANDSHAKE";
 
         yield return BootPause(0.08f, 0.14f);
-        yield return BootLine("REMOTE HANDSHAKE......... ACCEPTED", bootSpeed);
-        yield return BootLine("TTY LINK................. OK", bootSpeed);
-        yield return BootLine("NOISE FILTER............. OK", bootSpeed);
+        if (!activeBootQuick)
+        {
+            yield return BootLine("REMOTE HANDSHAKE......... ACCEPTED", bootSpeed);
+            yield return BootLine("TTY LINK................. OK", bootSpeed);
+            yield return BootLine("NOISE FILTER............. OK", bootSpeed);
+        }
         yield return BootPause(0.10f, 0.18f);
     }
 
@@ -3024,9 +3195,13 @@ public class DialoguePanelController : MonoBehaviour
         yield return RevealLine(line, speed, true);
     }
 
+    private float activeBootPauseScale = 1f;
+    private bool activeBootQuick;
+
     private IEnumerator BootPause(float minimum, float maximum)
     {
-        yield return new WaitForSecondsRealtime(UnityEngine.Random.Range(minimum, maximum));
+        float wait = UnityEngine.Random.Range(minimum, maximum) * activeBootPauseScale;
+        if (wait > 0f) yield return new WaitForSecondsRealtime(wait);
     }
 
     private void AddBlankLinesBeforeDialogue(int count)
@@ -3268,6 +3443,8 @@ public class DialoguePanelController : MonoBehaviour
     private void RebuildVisitedPathInstantly()
     {
         ClearGeneratedLines();
+        SetDialogueCharacter(PortraitSide.Left, initialLeftCharacterId, false);
+        SetDialogueCharacter(PortraitSide.Right, initialRightCharacterId, false);
 
         foreach (int tick in visitedTicks)
         {
@@ -3278,6 +3455,7 @@ public class DialoguePanelController : MonoBehaviour
                     continue;
                 }
 
+                ApplyLineCharacterChanges(dialogueLine);
                 if (TryResolveSpeaker(dialogueLine.speakerId, out LineKind kind))
                 {
                     CreateGeneratedLine(kind, dialogueLine.text, true);
@@ -3525,6 +3703,30 @@ public class DialoguePanelController : MonoBehaviour
                 : (string.IsNullOrWhiteSpace(continueButtonText) ? "CONTINUE" : continueButtonText);
         }
     }
+
+    /// <summary>
+    /// Locks or unlocks the QUIT button. Code can still call CloseDialogue(); reaching the
+    /// end of the dialogue always closes it.
+    /// </summary>
+    public void SetCloseLocked(bool locked)
+    {
+        closeLocked = locked;
+        RefreshCloseButton();
+    }
+
+
+    private void OnCloseButtonPressed()
+    {
+        if (IsCloseLocked) return;
+        CloseDialogue();
+    }
+
+
+    private void RefreshCloseButton()
+    {
+        if (generatedCloseButton != null) generatedCloseButton.interactable = !IsCloseLocked;
+    }
+
 
     private void UpdateCloseButtonLabel()
     {

@@ -5,7 +5,7 @@
   },
   "characters": {
     "left": "pilot",
-    "right": "cultist"
+    "right": "cultist_pilgrim"
   },
   "lines": [
     {
@@ -15,35 +15,35 @@
     },
     {
       "tick": 2,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "Blessed traveller! Our vessel is dying, and our pilgrimage is not yet complete."
     },
     {
       "tick": 3,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "We ask only passage to the grey world. The Faithful pay their debts. In fuel."
     },
     {
       "tick": 10,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "We are the Congregation of the Quiet Dark. Humble pilgrims. Very humble. Extremely normal.",
       "nextTick": 30
     },
     {
       "tick": 20,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "Fuel enough to fill your tanks, paid the moment our feet touch holy ground.",
       "nextTick": 30
     },
     {
       "tick": 25,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "A sacred vessel. It travels with us. It is not heavy. Please do not open it.",
       "nextTick": 30
     },
     {
       "tick": 30,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "Will you carry us, traveller? The dark is patient, but we are not."
     }
   ],

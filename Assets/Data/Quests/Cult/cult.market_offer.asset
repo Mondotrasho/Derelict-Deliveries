@@ -34,9 +34,7 @@ MonoBehaviour:
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
   banner: {fileID: 21300000, guid: ae9b01700bea73d4f89cd929277cea0d, type: 3}
-  shortDescription: The taller one lowers their hood. "We are pilgrims. We must reach
-    the grey world, and our own ship... did not survive the journey. We pay in fuel,
-    on arrival."
+  shortDescription: "The taller pilgrim lowers their hood. They need passage to the Grey world and promise payment in fuel on arrival."
   allowLeave: 0
   choices:
   - id: accept
@@ -46,18 +44,16 @@ MonoBehaviour:
       flags: []
       counters: []
     minCrew: 0
-    bonusStat: 
+    bonusStat: ""
     chancePerPoint: 0.05
     minBonus: 0
     showWhenLocked: 0
-    lockedReason: 
-    showOdds: 1
+    lockedReason: ""
+    showOdds: 0
     outcomes:
     - label: Passage
       weight: 1
-      resultText: She whistles, and six more robes step out of the crowd carrying
-        a stone sarcophagus the size of a person. Nobody explains it. They're headed
-        for the Grey planet.
+      resultText: "The taller pilgrim whistles. Six more robed figures emerge carrying a stone sarcophagus the size of a person. Nobody explains it. They're headed for the Grey planet."
       resources: []
       writes:
         tags: []
@@ -72,14 +68,11 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: 
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 11400000, guid: b4ad2fd289d04e3399606d6d27f612d4, type: 2}
-      scheduleInTurns: 1
-      recruitOfficer: {fileID: 0}
-      loseOfficer: {fileID: 0}
-      loseOfficerBestAt: 
+      scheduleInTurns: 2
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
@@ -90,38 +83,35 @@ MonoBehaviour:
       flags: []
       counters: []
     minCrew: 0
-    bonusStat: 
+    bonusStat: ""
     chancePerPoint: 0.05
     minBonus: 0
     showWhenLocked: 0
-    lockedReason: 
-    showOdds: 1
+    lockedReason: ""
+    showOdds: 0
     outcomes:
     - label: Refuse
       weight: 1
-      resultText: They bow politely and melt back into the crowd. You get the feeling
-        this isn't the last you'll see of them.
+      resultText: "They bow politely and melt back into the crowd. You get the feeling this isn't the last opportunity you'll get."
       resources: []
       writes:
         tags: []
-        flags: []
+        flags:
+        - scope: 0
+          key: cult:market_refused
+          expected: 1
         counters: []
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: 
+      returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
-      recruitOfficer: {fileID: 0}
-      loseOfficer: {fileID: 0}
-      loseOfficerBestAt: 
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: Cult quest start from the market (alternative to cult.distress). Accept
-    = same flags and schedule as the distress call's 'Give them passage'. Refuse
-    sets nothing, so the distress call can still start the quest later.
+  debugText: "Alternative market start. Accept matches the distress route's two-turn ritual timer. Refusal records the encounter but leaves cult:started false so later starts remain available."
   dialogueJson: {fileID: 0}

@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: officer.rook
   m_EditorClassIdentifier: Assembly-CSharp::OfficerDefinition
   id: rook
-  displayName: "Rook"
-  role: Pilot
-  description: "Has never lost a race. Has lost several ships."
-  portrait: {fileID: -7169610267031536943, guid: 167c81228c4bb0f40bbb369954976cf0, type: 3}
+  displayName: Rook
+  role: Gunner
+  description: Speaks rarely. Notices firing solutions before anyone else notices
+    the target.
+  portrait: {fileID: 21300000, guid: bce5be4531ec489478e628693ce96423, type: 3}
+  manifestPortrait: {fileID: 21300000, guid: d203e8685ef2ad3468913425a6850831, type: 3}
   bonuses:
-  - stat: piloting
+  - stat: gunnery
     amount: 2

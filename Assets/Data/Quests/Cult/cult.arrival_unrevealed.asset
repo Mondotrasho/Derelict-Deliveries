@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6508edd02a423b84154a123549d1140, type: 3}
+  m_Name: cult.arrival_unrevealed
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
+  id: cult.arrival_unrevealed
+  displayName: Journey's End
+  category: 1
+  tags:
+  - cult
+  conditions:
+    tags: []
+    flags: []
+    counters: []
+  oncePerPlanet: 0
+  onResolve:
+    tags: []
+    flags: []
+    counters: []
+  useMarkerColour: 1
+  markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
+  identifiedSprite: {fileID: 0}
+  identifiedTint: {r: 1, g: 1, b: 1, a: 1}
+  identifiedSpinDegreesPerSecond: 4
+  identifiedSizeInTiles: 1
+  lifetimeTurns: 0
+  banner: {fileID: 21300000, guid: 7a88c2436fbb28c428bb37ac036a8fda, type: 3}
+  shortDescription: "The passengers file down the gangplank onto the Grey world. Their humming stops only when the last robe reaches the ground."
+  allowLeave: 0
+  choices:
+  - id: complete_dropoff
+    text: "Complete the handover"
+    availability:
+      tags: []
+      flags: []
+      counters: []
+    minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
+    showWhenLocked: 0
+    lockedReason: ""
+    showOdds: 1
+    outcomes:
+    - label: "Paid"
+      weight: 1
+      resultText: "The fuel transfer clears while the last of the passengers disappear into the crowd."
+      resources:
+      - kind: 0
+        amount: 50
+      writes:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:passengers
+          expected: 0
+        - scope: 0
+          key: cult:dropoff_done
+          expected: 1
+        counters: []
+      detectionTurns: 0
+      consumeAsteroid: 0
+      followUp: {fileID: 11400000, guid: 944922a40d5d4661b6b0c76784ed6c71, type: 2}
+      returnCrewFromSiteCounter: ""
+      startCombatWith: {fileID: 0}
+      spawnOnMapEdge: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags:
+        - scope: 0
+          key: cult:egg_job_available
+          expected: 1
+        counters: []
+      delayedWritesInTurns: 1
+    dialogue: {fileID: 0}
+    endsEvent: 1
+    hideAfterUse: 1
+  pickupResources: []
+  debugText: "Grey passenger handover. Egg work is unlocked quietly one turn later."
+  dialogueJson: {fileID: 4900000, guid: 21e0f9fa72f74c5b80adec5f0a9ae074, type: 3}
+  dialogueButtonLabel: "Speak to the leader"

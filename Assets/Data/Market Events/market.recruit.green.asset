@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: market.recruit.green
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinition
   id: market.recruit.green
-  displayName: "Mara at the workbench"
+  displayName: "Marek at the workbench"
   category: 1
   tags:
   - market
@@ -28,7 +28,7 @@ MonoBehaviour:
       mustHave: 0
     flags: []
     counters: []
-  oncePerPlanet: 1
+  oncePerPlanet: 0
   onResolve:
     tags: []
     flags: []
@@ -45,7 +45,7 @@ MonoBehaviour:
   allowLeave: 1
   choices:
   - id: hire_mara
-    text: "Hire Mara"
+    text: "Hire Marek"
     availability:
       tags: []
       flags: []
@@ -64,7 +64,7 @@ MonoBehaviour:
     outcomes:
     - label: "Hired"
       weight: 1
-      resultText: "Mara joins the crew."
+      resultText: "Marek joins the crew."
       resources:
       - kind: 3
         amount: -10
@@ -89,4 +89,4 @@ MonoBehaviour:
   pickupResources: []
   debugText: "Rare Green market recruitment. Once resolved on this planet."
   dialogueJson: {fileID: 4900000, guid: 01c5f31d1e4a4d6187eee1a6c81a9f52, type: 3}
-  dialogueButtonLabel: "Talk to Mara"
+  dialogueButtonLabel: "Talk to Marek"

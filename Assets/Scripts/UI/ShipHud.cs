@@ -76,7 +76,8 @@ public sealed class ShipHud : MonoBehaviour
 
     [Header("Layout")]
     [Min(0.25f)] [SerializeField] private float scale = 1f;
-    [SerializeField] private Vector2 screenMargin = new Vector2(16f, 16f);
+    [Tooltip("Gap between the HUD panels and the screen edges. 0 = panels sit flush against the edges.")]
+    [SerializeField] private Vector2 screenMargin = Vector2.zero;
 
     [Header("Colours")]
     [SerializeField] private Color hullColour = new Color(0.95f, 0.3f, 0.3f, 1f);
@@ -101,7 +102,7 @@ public sealed class ShipHud : MonoBehaviour
     [SerializeField] private string waveClockCapText = "MAX";
 
     [Header("Labels")]
-    [SerializeField] private string plotCaption = "PLOT";
+    [HideInInspector] [SerializeField] private string plotCaption = "PLOT";   // caption removed from the layout
     [SerializeField] private string oneTurnShort = "1 TURN";
     [SerializeField] private string multiTurnShort = "MULTI";
     [SerializeField] private string goLabel = "GO";
@@ -153,6 +154,9 @@ public sealed class ShipHud : MonoBehaviour
     private TerminalStyle.Palette palette;
     private Bar hullBar, shieldBar, fuelBar;
     private TMP_Text crewText, suppliesText, moveText, turnText, routeText;
+    private RectTransform routeTip;
+    private float moveWidth, moveHeight;
+    private Canvas hudCanvas;
     private Image crewIconImage, suppliesIconImage;
     private RectTransform statusRoot;
     private int lastCrew = int.MinValue, lastSupplies = int.MinValue;
@@ -282,27 +286,38 @@ public sealed class ShipHud : MonoBehaviour
         invIcon.rectTransform.offsetMin = new Vector2(10f, 7f) * scale;
         invIcon.rectTransform.offsetMax = new Vector2(-10f, -7f) * scale;
 
-        // MOVEMENT + actions (bottom right)
-        //   MOVEMENT 5/8  > > > > > > > >
-        //   PLOT [1 TURN]        [GO] [CANCEL] [END TURN]
+        // MOVEMENT + actions (bottom right, frame flipped so its heavy edge is at the bottom)
+        //   > > > > > > > > > > > >   TURN 3
+        //   [1 TURN] [GO] [CANCEL] [END TURN]
+        // Exactly as wide as the button row, tight padding.
+        // No MOVE / PLOT captions: the pips fill the top row up to TURN, and the key
+        // hints and the route readout only appear while hovering (see UpdateMovement).
+        const float movePad = 8f, moveGap = 4f;
+        const float modeW = 96f, goW = 60f, cancelW = 88f, endW = 104f;
+        moveWidth = movePad * 2f + modeW + goW + cancelW + endW + moveGap * 3f;
+        moveHeight = movePad * 2f + 26f + 40f + moveGap;
         RectTransform move = movePanel = Panel(root, "Movement", new Vector2(1f, 0f), new Vector2(-screenMargin.x, screenMargin.y),
-                                   new Vector2(540f, 140f));
-        var mcol = Column(move, 12f, 6f);
-        RectTransform moveRow = Row(mcol, 28f, 8f);
-        moveText = Label(moveRow, "MOVE", 16f, palette.primary, 28f, 96f);
-        pipRow = Row(moveRow, 24f, 4f);
+                                   new Vector2(moveWidth, moveHeight), flipFrame: true);
+        var mcol = Column(move, movePad, moveGap);
+        RectTransform moveRow = Row(mcol, 26f, 6f);
+        pipRow = Row(moveRow, 22f, 2f);
         Flex(pipRow);
-        turnText = Label(moveRow, "TURN 1", 16f, palette.primary, 28f, 90f);
+        turnText = Label(moveRow, "TURN 1", 16f, palette.primary, 26f, 72f);
         turnText.alignment = TextAlignmentOptions.Right;
-        routeText = Label(mcol, "", 13f, palette.dim, 16f);
 
-        RectTransform buttons = Row(mcol, 42f, 6f);
-        Label(buttons, plotCaption, 13f, palette.dim, 42f, 40f);
-        modeButton = MakeButton(buttons, oneTurnShort, ToggleMode, 96f, out modeLabel, flexible: false);
-        Flex(Rect("Gap", buttons));                                        // pushes the actions right
-        goButton = MakeButton(buttons, Hint(goLabel, "SPC"), () => planController?.CommitSegment(), 84f, out goText, flexible: false);
-        cancelButton = MakeButton(buttons, cancelLabel, () => planController?.Cancel(), 96f, out cancelText, flexible: false);
-        endButton = MakeButton(buttons, Hint(endTurnLabel, "E"), EndTurn, 116f, out endText, flexible: false);
+        // route readout: a small tag sitting on top of the panel, shown on hover
+        routeTip = Panel(root, "RouteTip", new Vector2(1f, 0f),
+                         new Vector2(-screenMargin.x, screenMargin.y + moveHeight), new Vector2(moveWidth, 22f));
+        routeText = Label(routeTip, "", 13f, palette.dim, 0f);
+        routeText.alignment = TextAlignmentOptions.Center;
+        Stretch(routeText.rectTransform);
+        routeTip.gameObject.SetActive(false);
+
+        RectTransform buttons = Row(mcol, 40f, moveGap);
+        modeButton = MakeButton(buttons, oneTurnShort, ToggleMode, modeW, out modeLabel, flexible: false);
+        goButton = MakeButton(buttons, goLabel, () => planController?.CommitSegment(), goW, out goText, flexible: false);
+        cancelButton = MakeButton(buttons, cancelLabel, () => planController?.Cancel(), cancelW, out cancelText, flexible: false);
+        endButton = MakeButton(buttons, endTurnLabel, EndTurn, endW, out endText, flexible: false);
 
         // THREAT (top centre)
         threatRoot = Panel(root, "Threat", new Vector2(0.5f, 1f), new Vector2(0f, -screenMargin.y), new Vector2(640f, 92f));
@@ -436,13 +451,30 @@ public sealed class ShipHud : MonoBehaviour
     }
 
 
-    private RectTransform Panel(RectTransform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size)
+    private RectTransform Panel(RectTransform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size, bool flipFrame = false)
     {
         RectTransform rt = Rect(name, parent);
         rt.anchorMin = rt.anchorMax = rt.pivot = anchor;
         rt.anchoredPosition = pos * scale;
         rt.sizeDelta = size * scale;
-        Image bg = rt.gameObject.AddComponent<Image>();
+        Image bg;
+        if (flipFrame)
+        {
+            // Frame upside down (its "top" edge at the bottom), on its own child so the
+            // content isn't flipped. Transparent root image keeps the panel clickable.
+            Image hit = rt.gameObject.AddComponent<Image>();
+            hit.color = Color.clear;
+            hit.raycastTarget = true;
+            RectTransform frame = Rect("Frame", rt);
+            Stretch(frame);
+            frame.localScale = new Vector3(1f, -1f, 1f);
+            frame.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            bg = frame.gameObject.AddComponent<Image>();
+        }
+        else
+        {
+            bg = rt.gameObject.AddComponent<Image>();
+        }
         bg.raycastTarget = true;
         if (style != null) style.ApplyPanel(bg, palette);
         else bg.color = new Color(palette.background.r, palette.background.g, palette.background.b, 0.85f);
@@ -614,7 +646,10 @@ public sealed class ShipHud : MonoBehaviour
             for (int i = 0; i < max; i++)
             {
                 Image pip = Img(pipRow, "Pip" + i, pipSprite, moveColour, false);
-                Size(pip.rectTransform, 18f, 26f);
+                Size(pip.rectTransform, 6f, 26f);
+                // equal flexible slots across the whole row; the chevron keeps its shape
+                Layout(pip.rectTransform).flexibleWidth = 1f;
+                pip.preserveAspect = true;
                 pips.Add(pip);
             }
         }
@@ -634,12 +669,18 @@ public sealed class ShipHud : MonoBehaviour
             else c = moveColour;                                                                     // left after it
             pips[i].color = c;
         }
-        moveText.text = $"MOVE {current}/{max}";
+        if (moveText != null) moveText.text = $"MOVE {current}/{max}";
         turnText.text = turnManager != null ? $"TURN {turnManager.CurrentTurn}" : "";
 
         bool oneTurn = planController == null || planController.Mode == MovementPlanController.PlanningMode.OneTurn;
-        modeLabel.text = Hint(oneTurn ? oneTurnShort : multiTurnShort, "M");
-        routeText.text = RouteReadout(a, current, oneTurn);
+        modeLabel.text = HoverHint(modeButton, oneTurn ? oneTurnShort : multiTurnShort, "M");
+        goText.text = HoverHint(goButton, goLabel, "SPC");
+        endText.text = HoverHint(endButton, endTurnLabel, "E");
+
+        string route = RouteReadout(a, current, oneTurn);
+        routeText.text = route;
+        bool showTip = !string.IsNullOrEmpty(route) && (PointerOver(movePanel) || PointerOver(routeTip));
+        if (routeTip.gameObject.activeSelf != showTip) routeTip.gameObject.SetActive(showTip);
 
         bool canAct = planController != null && planController.CanAcceptPlayerInput;
         bool moving = player != null && player.IsMoving;
@@ -828,6 +869,22 @@ public sealed class ShipHud : MonoBehaviour
         bool usable = !hidden && group.alpha > 0.5f;
         group.interactable = usable;
         group.blocksRaycasts = usable;
+    }
+
+
+    /// <summary>Key hint only while the pointer is over that button.</summary>
+    private string HoverHint(Button button, string label, string key)
+    {
+        return button != null && PointerOver((RectTransform)button.transform) ? Hint(label, key) : label;
+    }
+
+
+    private bool PointerOver(RectTransform rt)
+    {
+        if (rt == null || !rt.gameObject.activeInHierarchy || Mouse.current == null) return false;
+        if (hudCanvas == null) hudCanvas = GetComponentInParent<Canvas>();
+        Camera cam = hudCanvas != null && hudCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? hudCanvas.worldCamera : null;
+        return RectTransformUtility.RectangleContainsScreenPoint(rt, Mouse.current.position.ReadValue(), cam);
     }
 
 

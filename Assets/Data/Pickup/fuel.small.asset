@@ -28,13 +28,13 @@ MonoBehaviour:
     counters: []
   useMarkerColour: 1
   markerColour: {r: 1, g: 0.85, b: 0.3, a: 1}
-  identifiedSprite: {fileID: 0}
+  identifiedSprite: {fileID: 8389785845944959047, guid: eaf8419c277ffb849a375671382c7578, type: 3}
   identifiedTint: {r: 1, g: 0.9, b: 0.5, a: 1}
   identifiedSpinDegreesPerSecond: 30
   identifiedSizeInTiles: 0.8
   lifetimeTurns: 0
   banner: {fileID: 0}
-  shortDescription: "A drifting fuel canister."
+  shortDescription: A drifting fuel canister.
   allowLeave: 1
   choices: []
   pickupResources:
@@ -42,3 +42,4 @@ MonoBehaviour:
     amount: 10
   debugText: Fuel pickup. Collected by flying over it.
   dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK

@@ -24,12 +24,13 @@ MonoBehaviour:
     - scope: 1
       tag: Yellow
       mustHave: 1
-    - scope: 0
-      tag: officer:sera
-      mustHave: 0
     flags: []
-    counters: []
-  oncePerPlanet: 1
+    counters:
+    - scope: 0
+      key: market:stasis:purchases
+      compare: 1
+      value: 1
+  oncePerPlanet: 0
   onResolve:
     tags: []
     flags: []
@@ -42,96 +43,88 @@ MonoBehaviour:
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
   banner: {fileID: 21300000, guid: 91c0bb8a994bd424cab44c55e64f5a1b, type: 3}
-  shortDescription: A broker is selling sealed cryogenic contracts, including one
-    scratched unlabelled pod.
+  shortDescription: A broker is selling sealed cryogenic contracts: one scratched unlabelled pod and one ordinary labour batch. Each lot is sold separately.
   allowLeave: 1
   choices:
   - id: buy_unusual_pod
-    text: Buy the unusual pod
+    text: Buy the scratched pod - 12 supplies
     availability:
-      tags: []
-      flags: []
+      tags:
+      - scope: 0
+        tag: officer:sera
+        mustHave: 0
+      flags:
+      - scope: 0
+        key: market:stasis:unusual_sold
+        expected: 0
       counters:
       - scope: 0
         key: res.supplies
         compare: 0
         value: 12
     minCrew: 0
-    bonusStat: 
+    bonusStat: ''
     chancePerPoint: 0.05
     minBonus: 0
     showWhenLocked: 1
-    lockedReason: needs 12 supplies
+    lockedReason: unavailable or needs 12 supplies
     showOdds: 0
     outcomes:
-    - label: Officer
-      weight: 65
-      resultText: The sleeper is a trained officer.
+    - label: Purchased
+      weight: 1
+      resultText: The scratched pod is transferred to your ship. The contract contains no useful identity record.
       resources:
       - kind: 3
         amount: -12
       writes:
         tags: []
-        flags: []
-        counters: []
+        flags:
+        - scope: 0
+          key: market:stasis:unusual_sold
+          expected: 1
+        counters:
+        - scope: 0
+          key: market:stasis:purchases
+          compare: 0
+          value: 1
       detectionTurns: 0
       consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: 
-      startCombatWith: {fileID: 0}
-      spawnOnMapEdge: {fileID: 0}
-      scheduleEvent: {fileID: 0}
-      scheduleInTurns: 1
-      recruitOfficer: {fileID: 11400000, guid: 59fbe839cff648f89c7c0cc3e22dc8b2, type: 2}
-      loseOfficer: {fileID: 0}
-      loseOfficerBestAt: 
-    - label: Worker
-      weight: 35
-      resultText: The records are useless, but the sleeper is healthy.
-      resources:
-      - kind: 3
-        amount: -12
-      - kind: 2
-        amount: 1
-      writes:
-        tags: []
-        flags: []
-        counters: []
-      detectionTurns: 0
-      consumeAsteroid: 0
-      followUp: {fileID: 0}
-      returnCrewFromSiteCounter: 
+      followUp: {fileID: 11400000, guid: cd73c4d43f6f4b0fa840fa6717558d15, type: 2}
+      returnCrewFromSiteCounter: ''
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 0}
       loseOfficer: {fileID: 0}
-      loseOfficerBestAt: 
+      loseOfficerBestAt: ''
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   - id: buy_labour_pods
-    text: Buy the labour pods
+    text: Buy the labour pods - 8 supplies
     availability:
       tags: []
-      flags: []
+      flags:
+      - scope: 0
+        key: market:stasis:labour_sold
+        expected: 0
       counters:
       - scope: 0
         key: res.supplies
         compare: 0
         value: 8
     minCrew: 0
-    bonusStat: 
+    bonusStat: ''
     chancePerPoint: 0.05
     minBonus: 0
     showWhenLocked: 1
     lockedReason: needs 8 supplies
-    showOdds: 1
+    showOdds: 0
     outcomes:
     - label: Labourers
       weight: 1
-      resultText: Three labourers join the ship.
+      resultText: Three labour contracts transfer cleanly. Three new crew report aboard.
       resources:
       - kind: 3
         amount: -8
@@ -139,24 +132,30 @@ MonoBehaviour:
         amount: 3
       writes:
         tags: []
-        flags: []
-        counters: []
+        flags:
+        - scope: 0
+          key: market:stasis:labour_sold
+          expected: 1
+        counters:
+        - scope: 0
+          key: market:stasis:purchases
+          compare: 0
+          value: 1
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
-      returnCrewFromSiteCounter: 
+      returnCrewFromSiteCounter: ''
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 0}
       loseOfficer: {fileID: 0}
-      loseOfficerBestAt: 
+      loseOfficerBestAt: ''
     dialogue: {fileID: 0}
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: Rare Yellow market recruitment. Assign the stasis-pod banner directly
-    to this definition if desired.
-  dialogueJson: {fileID: 4900000, guid: 50d1fcc86ebe4fcca8e8ec5f36a19b0a, type: 3}
+  debugText: Yellow stasis market. Unusual and labour lots can each be bought once; after two purchases the event stops being eligible.
+  dialogueJson: {fileID: 0}
   dialogueButtonLabel: Inspect the pods

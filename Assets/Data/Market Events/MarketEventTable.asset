@@ -25,11 +25,3 @@ MonoBehaviour:
     weight: 12
   - definition: {fileID: 11400000, guid: a8739fdcf529486eb3906f692fe4ef02, type: 2}
     weight: 9
-  - definition: {fileID: 11400000, guid: 6ed44beaddce4cd9bc177fdcb4a1c65c, type: 2}
-    weight: 14
-  - definition: {fileID: 11400000, guid: a2ba264cad13488fafd772049e833d6a, type: 2}
-    weight: 14
-  - definition: {fileID: 11400000, guid: 54a5e16a12cd436b926e976a31a2ac62, type: 2}
-    weight: 14
-  - definition: {fileID: 11400000, guid: c6c25149cfb14aa1ab7800f8496b8750, type: 2}
-    weight: 14

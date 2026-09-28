@@ -23,6 +23,9 @@ MonoBehaviour:
     - scope: 0
       key: cult:egg
       expected: 1
+    - scope: 0
+      key: cult:egg_stirred
+      expected: 1
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -33,27 +36,30 @@ MonoBehaviour:
   markerColour: {r: 0.85, g: 0.3, b: 0.35, a: 1}
   identifiedSprite: {fileID: 0}
   identifiedTint: {r: 1, g: 1, b: 1, a: 1}
-  identifiedSpinDegreesPerSecond: 4
+  identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "The customer at Fun Planet takes the egg in both arms with a wide smile. As they do, cracks spider across its surface."
+  banner: {fileID: 21300000, guid: dddeadb5bacb17c42bc0a140d8695527, type: 3}
+  shortDescription: "The customer takes the warm egg from your hold. Before the handlers clear the pad, the shell flexes and emits a thin, impossible scream that punches straight through every receiver on the ship."
   allowLeave: 0
   choices:
-  - id: run
-    text: "Get out of here. Now."
+  - id: handover
+    text: Get back to the ship
     availability:
       tags: []
       flags: []
       counters: []
     minCrew: 0
+    bonusStat: ""
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 0
     lockedReason: ""
-    showOdds: 1
+    showOdds: 0
     outcomes:
-    - label: "Run"
+    - label: Delivered
       weight: 1
-      resultText: "You don't wait for a signature. Behind you, something wet and enormous says hello."
+      resultText: "The cry dies away. For a moment the system is silent, as if something very far away is listening."
       resources: []
       writes:
         tags: []
@@ -62,7 +68,7 @@ MonoBehaviour:
           key: cult:egg
           expected: 0
         - scope: 0
-          key: cult:delivered
+          key: cult:egg_delivered
           expected: 1
         counters: []
       detectionTurns: 0
@@ -77,5 +83,5 @@ MonoBehaviour:
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: "Stage 8. Planet option cult.deliver on the Yellow planet while cult:egg is set."
+  debugText: "Yellow egg handover. The egg calls for its mother; the following event is an answering contact entering the system, not the egg growing into a giant creature. Assign the dedicated delivery banner when its project GUID is available."
   dialogueJson: {fileID: 0}
