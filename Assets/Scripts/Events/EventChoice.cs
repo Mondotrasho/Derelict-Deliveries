@@ -64,8 +64,11 @@ public sealed class ChoiceOutcome
     [Tooltip("Spawn this enemy type at a map-edge entry cell (it then hunts the player like any enemy). E.g. defiling the shrine brings the eldritch monster.")]
     public EnemyShipDefinition spawnOnMapEdge;
 
-    [Tooltip("Turns to wait before Spawn On Map Edge happens. 0 = straight away (while the window is still open). 1+ = at the start of that later player turn, with the map in view, so the player sees it arrive.")]
+    [Tooltip("Turns to wait before Spawn On Map Edge happens. 0 = this turn (see Spawn When Window Closes). 1+ = at the start of that later player turn, with the map in view, so the player sees it arrive.")]
     [Min(0)] public int spawnDelayTurns;
+
+    [Tooltip("With a delay of 0: hold the spawn until the event window closes, so it appears on the map the moment the player is back in control instead of behind the window.")]
+    public bool spawnWhenWindowCloses;
 
     [Tooltip("When this outcome happens, swap the window's banner straight away to this event's banner (e.g. Defile -> the defiled shrine), so the result screen already shows the new state.")]
     public EventDefinition showBannerOf;
