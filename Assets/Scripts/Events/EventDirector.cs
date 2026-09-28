@@ -44,7 +44,9 @@ public struct EventDiscoveryTuning
 /// Owns Event Discovery's arrival ordering. It is the ONLY event-system
 /// subscriber to PlayerShipState.CellEntered:
 ///   1. outside player movement, or an event/POI/hazard is already open -> stop;
-///   2. a planet with options opens the Point of Interest picker;
+///   2. a planet with options opens the Point of Interest picker, but only if
+///      that planet's cell was the destination of the committed journey
+///      (flying over / through a planet on the way somewhere else does nothing);
 ///   3. pickups may resolve on fly-over, while mining/derelict sites only open
 ///      if that exact site was the destination of the committed journey;
 ///   4. else roll an unmarked hazard for the cell (asteroids);
@@ -102,6 +104,10 @@ public class EventDirector : MonoBehaviour
     private EventSiteRegistry subscribedRegistry;
     private MovementPlanController subscribedMovementPlan;
     private EventSite targetedInvestigationSite;
+
+    // Final cell of the journey the player committed (null = none in flight).
+    // Planets only open when the ship arrives here.
+    private Vector3Int? journeyDestination;
 
     public PlayerShipState Player => player;
     public TurnManager TurnManager => turnManager;
@@ -223,6 +229,7 @@ public class EventDirector : MonoBehaviour
         }
 
         targetedInvestigationSite = null;
+        journeyDestination = null;
         subscribedPlayer = null;
         subscribedFog = null;
         subscribedTurns = null;
@@ -236,6 +243,7 @@ public class EventDirector : MonoBehaviour
     private void HandleJourneyStarted(Vector3Int destination)
     {
         targetedInvestigationSite = null;
+        journeyDestination = destination;
 
         if (registry == null ||
             !registry.TryGetSiteAtCell(destination, out EventSite site) ||
@@ -252,6 +260,7 @@ public class EventDirector : MonoBehaviour
     private void HandleRouteCancelled()
     {
         targetedInvestigationSite = null;
+        journeyDestination = null;
     }
 
 
@@ -285,7 +294,11 @@ public class EventDirector : MonoBehaviour
         if (warpExit != null && (warpExit.IsBusy || warpExit.RunOver)) return;
 
         if (warpExit != null && warpExit.TryOpen(cell)) return;                                // map edge, fuel full
-        if (pointsOfInterest != null && pointsOfInterest.TryOpen(cell)) return;                // planets
+
+        bool reachedDestination = journeyDestination.HasValue && journeyDestination.Value == cell;
+        if (reachedDestination) journeyDestination = null;                                     // arrived: one open per journey
+
+        if (reachedDestination && pointsOfInterest != null && pointsOfInterest.TryOpen(cell)) return;   // planets (destination only)
 
         bool reachedTargetedSite =
             targetedInvestigationSite != null &&
@@ -384,6 +397,7 @@ public class EventDirector : MonoBehaviour
     private void HandleClockReset()
     {
         memory.Clear();
+        journeyDestination = null;
     }
 
 
