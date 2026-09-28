@@ -63,6 +63,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
 
     public bool IsOpen => current != null;
 
+    private readonly List<EnemyShipDefinition> spawnsOnClose = new List<EnemyShipDefinition>();
     private readonly List<BannerChoiceView.Choice> buttons = new List<BannerChoiceView.Choice>();
     private readonly HashSet<string> usedChoices = new HashSet<string>();
     private readonly System.Random rng = new System.Random();
@@ -230,6 +231,10 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             string summary = resolution.summary;
             somethingHappened = true;
 
+            if (outcome != null && outcome.showBannerOf != null && banners != null)
+            {
+                view.SetBanner(banners.Resolve(outcome.showBannerOf, planet));
+            }
             view.ShowResult(JoinResult(outcome != null ? outcome.resultText : "", summary));
             view.SetChoices(new[] { new BannerChoiceView.Choice(ContinueId, continueLabel) });
             yield return view.WaitForChoice(id => picked = id);
@@ -271,6 +276,17 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
         view.Hide();
         current = null;
         usedChoices.Clear();
+
+        // Outcomes marked Spawn When Window Closes: now the map is in view.
+        if (!cancelled && enemySpawner != null)
+        {
+            foreach (EnemyShipDefinition type in spawnsOnClose)
+            {
+                if (!enemySpawner.TrySpawnAtMapEdge(type, out _))
+                    enemySpawner.ScheduleMapEdgeSpawn(type, 1);   // edge full: next turn instead
+            }
+        }
+        spawnsOnClose.Clear();
 
         done?.Invoke(resolved && !cancelled
             ? new EventOutcome { resolved = true, stopJourney = false }
@@ -401,7 +417,15 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
 
         if (outcome != null && outcome.spawnOnMapEdge != null)
         {
-            if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
+            if (outcome.spawnDelayTurns > 0 && enemySpawner != null)
+            {
+                enemySpawner.ScheduleMapEdgeSpawn(outcome.spawnOnMapEdge, outcome.spawnDelayTurns);
+            }
+            else if (outcome.spawnWhenWindowCloses && enemySpawner != null)
+            {
+                spawnsOnClose.Add(outcome.spawnOnMapEdge);   // done in Present once the window is hidden
+            }
+            else if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
             {
                 Debug.LogWarning($"EventPanel: could not spawn {outcome.spawnOnMapEdge.DisplayName} at the map edge (no free entry cell?).", this);
             }

@@ -68,6 +68,8 @@ MonoBehaviour:
       returnCrewFromSiteCounter: ""
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
+      spawnDelayTurns: 0
+      spawnWhenWindowCloses: 1
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
     dialogue: {fileID: 0}

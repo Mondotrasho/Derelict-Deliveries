@@ -17606,6 +17606,7 @@ GameObject:
   - component: {fileID: 2100000016}
   - component: {fileID: 7100000601}
   - component: {fileID: 7100000603}
+  - component: {fileID: 7100000604}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -17802,7 +17803,7 @@ MonoBehaviour:
   - {r: 1, g: 0.35, b: 0.3, a: 1}
   sortingLayerName: Foreground
   sortingOrder: 80
-  showTurnLabels: 1
+  showTurnLabels: 0
   placeLabelOnTarget: 1
   turnLabelPrefix: '#'
   useCurrentTurnNumbering: 1
@@ -20232,7 +20233,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7100000102
 RectTransform:
   m_ObjectHideFlags: 0
@@ -23141,22 +23142,92 @@ MonoBehaviour:
   arcSpacing: 0.1
   chevronSize: 0.14
   chevronGap: 0
-  farDistance: 10
-  mediumDistance: 6
-  closeDistance: 3
-  nearDistance: 2
+  farDistance: 16
+  mediumDistance: 8
+  closeDistance: 6
+  nearDistance: 3
   minimumFirstArc: 0.3
   maxDistance: 0
   hideWhenOnScreen: 0
-  popInSeconds: 0.35
+  popInSeconds: 0.5
   popOutSeconds: 0.2
-  trackingSharpness: 12
-  fillSharpness: 8
+  trackingSharpness: 4
+  fillSharpness: 4
   spawnEcho: 1
   echoSeconds: 0.6
   echoTravel: 0.9
-  colour: {r: 1, g: 0.12, b: 0.1, a: 1}
-  farColour: {r: 1, g: 0.62, b: 0.1, a: 1}
+  arrowOpacity: 0.8
+  pulseOpacity: 0.9
+  farOpacity: 0.2
+  nearOpacity: 0.9
+  distanceOpacityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spawnOpacityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  colour: {r: 0.7960785, g: 0.121568635, b: 0.32941177, a: 1}
+  farColour: {r: 0.83921576, g: 0.65882355, b: 0.1254902, a: 1}
+  closeMergeWeight: 3
+--- !u!114 &7100000604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06380230332d0ee419ee90406c8d5f3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EventSitePulse
+  registry: {fileID: 0}
+  gridMap: {fileID: 0}
+  markerPresenter: {fileID: 0}
+  directionIndicator: {fileID: 0}
+  strength: 0.3
 --- !u!1 &7100000701
 GameObject:
   m_ObjectHideFlags: 0

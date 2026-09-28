@@ -91,6 +91,14 @@ public class EnemySpawnController : MonoBehaviour
 
     private int nextSpawnCellIndex;
 
+    private struct PendingSpawn
+    {
+        public EnemyShipDefinition type;
+        public int dueTurn;
+    }
+
+    private readonly List<PendingSpawn> pendingSpawns = new List<PendingSpawn>();
+
     public event Action<int> DetectionCountdownChanged;
     public event Action<int> ReinforcementCountdownChanged;
     public event Action DetectionStarted;
@@ -131,6 +139,7 @@ public class EnemySpawnController : MonoBehaviour
         if (turnManager != null)
         {
             turnManager.EnemyPhaseStarted += HandleEnemyPhaseStarted;
+            turnManager.PlayerPhaseStarted += HandlePlayerPhaseStarted;
             turnManager.ClockReset += ResetSchedule;
         }
     }
@@ -140,6 +149,7 @@ public class EnemySpawnController : MonoBehaviour
         if (turnManager != null)
         {
             turnManager.EnemyPhaseStarted -= HandleEnemyPhaseStarted;
+            turnManager.PlayerPhaseStarted -= HandlePlayerPhaseStarted;
             turnManager.ClockReset -= ResetSchedule;
         }
     }
@@ -218,6 +228,7 @@ public class EnemySpawnController : MonoBehaviour
         ReinforcementWaveIndex = 0;
         IsDetectionActive = false;
         nextSpawnCellIndex = 0;
+        pendingSpawns.Clear();
 
         DetectionCountdownChanged?.Invoke(TurnsUntilDetection);
         ReinforcementCountdownChanged?.Invoke(TurnsUntilNextWave);
@@ -304,6 +315,37 @@ public class EnemySpawnController : MonoBehaviour
         {
             TurnsUntilNextWave = Mathf.Max(1, TurnsUntilNextWave + delta);
             ReinforcementCountdownChanged?.Invoke(TurnsUntilNextWave);
+        }
+    }
+
+
+    /// <summary>
+    /// Queues a map-edge spawn for the start of a later player turn (after the
+    /// event window has closed, with the map in view) so the player sees it
+    /// arrive. Ignores the active-enemy cap, like TrySpawnAtMapEdge.
+    /// </summary>
+    public void ScheduleMapEdgeSpawn(EnemyShipDefinition type, int turnsFromNow)
+    {
+        if (type == null) return;
+        int now = turnManager != null ? turnManager.CurrentTurn : 0;
+        pendingSpawns.Add(new PendingSpawn { type = type, dueTurn = now + Mathf.Max(1, turnsFromNow) });
+    }
+
+
+    private void HandlePlayerPhaseStarted(int turnNumber)
+    {
+        int now = turnManager != null ? turnManager.CurrentTurn : turnNumber;
+        for (int i = pendingSpawns.Count - 1; i >= 0; i--)
+        {
+            if (pendingSpawns[i].dueTurn > now) continue;
+            PendingSpawn due = pendingSpawns[i];
+            pendingSpawns.RemoveAt(i);
+            if (!TrySpawnAtMapEdge(due.type, out _))
+            {
+                // every entry cell blocked: try again next turn rather than losing it
+                pendingSpawns.Add(new PendingSpawn { type = due.type, dueTurn = now + 1 });
+                Debug.LogWarning($"EnemySpawnController: no free edge cell for {due.type.DisplayName}; retrying next turn.", this);
+            }
         }
     }
 

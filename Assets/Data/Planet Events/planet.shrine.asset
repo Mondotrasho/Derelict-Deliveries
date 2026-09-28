@@ -76,6 +76,8 @@ MonoBehaviour:
       returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 11400000, guid: 7ecef3d07e9d475c8a5292b9dfecf9d9, type: 2}
+      spawnDelayTurns: 1
+      showBannerOf: {fileID: 11400000, guid: 58ceb9ef80c1453cadf62f493c0651b6, type: 2}
       scheduleEvent: {fileID: 0}
       scheduleInTurns: 1
       recruitOfficer: {fileID: 0}

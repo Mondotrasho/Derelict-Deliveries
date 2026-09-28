@@ -299,8 +299,17 @@ public class EventMarkerPresenter : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Returns the colour this presenter would use for the site's question-mark
+    /// marker so other effects can stay visually in sync with it.
+    /// </summary>
+    public Color GetMarkerColour(EventSite site) => ColourFor(site);
+
+
     private Color ColourFor(EventSite site)
     {
+        if (site == null) return Color.white;
+
         if (HasSpawnedSprite(site) && site.Knowledge != PlanetKnowledgeState.Identified)
             return neutralColour;
 
