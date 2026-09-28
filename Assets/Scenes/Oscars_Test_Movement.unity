@@ -17607,6 +17607,8 @@ GameObject:
   - component: {fileID: 7100000601}
   - component: {fileID: 8100000001}
   - component: {fileID: 8100000002}
+  - component: {fileID: 8200000001}
+  - component: {fileID: 8200000002}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -19380,6 +19382,118 @@ MonoBehaviour:
       eventTable: {fileID: 0}
       eventTags: []
   sharedOptions:
+  - id: recruit.green
+    title: Visit the workbench
+    description: Someone is working on a thruster by the docks.
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Green
+        mustHave: 1
+      - scope: 0
+        tag: officer:mara
+        mustHave: 0
+      flags: []
+      counters: []
+    oncePerPlanet: 0
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: 6ed44beaddce4cd9bc177fdcb4a1c65c, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
+  - id: recruit.grey
+    title: Visit the surplus lab
+    description: A cluttered lab full of salvaged radar gear.
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Grey
+        mustHave: 1
+      - scope: 0
+        tag: officer:hollis
+        mustHave: 0
+      flags: []
+      counters: []
+    oncePerPlanet: 0
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: a2ba264cad13488fafd772049e833d6a, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
+  - id: recruit.red
+    title: Check the weapons stalls
+    description: Someone is testing guns a little too loudly.
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Red
+        mustHave: 1
+      - scope: 0
+        tag: officer:rook
+        mustHave: 0
+      flags: []
+      counters: []
+    oncePerPlanet: 0
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: c6c25149cfb14aa1ab7800f8496b8750, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
+  - id: recruit.yellow
+    title: Visit the cryogenic broker
+    description: Stasis pods for sale, contents unlisted.
+    kind: 2
+    conditions:
+      tags:
+      - scope: 1
+        tag: Yellow
+        mustHave: 1
+      - scope: 0
+        tag: officer:sera
+        mustHave: 0
+      flags: []
+      counters:
+      - scope: 0
+        key: market:stasis:purchases
+        compare: 1
+        value: 1
+    oncePerPlanet: 0
+    onComplete:
+      tags: []
+      flags: []
+      counters: []
+    completeResources: []
+    completeDetectionTurns: 0
+    returnToPicker: 1
+    dialogueJson: {fileID: 0}
+    runBootSequence: 0
+    eventDefinition: {fileID: 11400000, guid: 54a5e16a12cd436b926e976a31a2ac62, type: 2}
+    eventTable: {fileID: 0}
+    eventTags: []
   - id: survey.mining
     title: Survey for ore
     description: Placeholder mining event (debug window).
@@ -23260,6 +23374,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7100000702}
   - component: {fileID: 7100000703}
+  - component: {fileID: 8200000003}
   m_Layer: 5
   m_Name: ShipHud
   m_TagString: Untagged
@@ -23494,6 +23609,71 @@ MonoBehaviour:
   markerPresenter: {fileID: 0}
   directionIndicator: {fileID: 8100000001}
   strength: 0.6
+--- !u!114 &8200000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1601c8a66cd34bc787dfdb07e7148e62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OfficerRoster
+  player: {fileID: 0}
+  startingOfficers: []
+  director: {fileID: 0}
+  scanningStat: scanning
+  scanRadiusPerPoint: 1
+--- !u!114 &8200000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1705402911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aabbd01df3d4277b0cbbdc8f0e27b48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipCrewManifest
+  roster: {fileID: 0}
+  player: {fileID: 0}
+  passengerFlag: cult:passengers
+  passengerCount: 7
+  leaderName: The Cultist
+  leaderPortrait: {fileID: 21300000, guid: 8b48e99196145394f95a3319a0f06ae2, type: 3}
+  followerName: Robed figure
+  followerPortraits:
+  - {fileID: 21300000, guid: af1a7222b4260134284f2a32466a3c5e, type: 3}
+  - {fileID: 21300000, guid: af1a7222b4260134284f2a32466a3c5e, type: 3}
+  passengerRole: Passenger
+  corruptedFlag: cult:ritual_seen
+  corruptedPortrait: {fileID: 21300000, guid: d8fcacc492581894c94c9dc4f0ac5575, type: 3}
+--- !u!114 &8200000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7100000701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78800f795f604c459f82d4263356ec59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipManifestPanel
+  manifest: {fileID: 8200000002}
+  hud: {fileID: 7100000703}
+  style: {fileID: 11400000, guid: e2fa03d164984edfa08c97362373abd6, type: 2}
+  shipSprite: {fileID: 21300000, guid: 810be3c4471be2b469097d4172ceaacd, type: 3}
+  maxScreenFraction: 0.95
+  wholePixelScale: 1
+  scaleOverride: 1.5
+  portraitPixels: 60
+  blockerColour: {r: 0.7735849, g: 0.27367392, b: 0.27367392, a: 0}
+  validSlotColour: {r: 0.5208259, g: 0.8301887, b: 0.71344745, a: 0.007843138}
+  targetSlotColour: {r: 0.4, g: 1, b: 0.6, a: 0.27058825}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

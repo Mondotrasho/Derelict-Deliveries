@@ -28,7 +28,7 @@ MonoBehaviour:
       mustHave: 0
     flags: []
     counters: []
-  oncePerPlanet: 1
+  oncePerPlanet: 0
   onResolve:
     tags: []
     flags: []

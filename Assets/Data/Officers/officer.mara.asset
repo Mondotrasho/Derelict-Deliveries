@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: officer.mara
   m_EditorClassIdentifier: Assembly-CSharp::OfficerDefinition
   id: mara
-  displayName: "Marek Voss"
+  displayName: Marek Voss
   role: Engineer
-  description: "Can fix anything with a wrench, some tape and a bad attitude."
+  description: Can fix anything with a wrench, some tape and a bad attitude.
   portrait: {fileID: 21300000, guid: 35573cdb47adba34389ba74434eb9831, type: 3}
+  manifestPortrait: {fileID: 21300000, guid: 3290297ed5d61e94595f5781035e22a1, type: 3}
   bonuses:
   - stat: engineering
     amount: 2

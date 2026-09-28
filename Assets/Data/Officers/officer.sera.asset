@@ -15,8 +15,10 @@ MonoBehaviour:
   id: sera
   displayName: Sera Vale
   role: Pilot
-  description: "A thawed contract pilot with considerably better instincts than the broker who sold the pod."
+  description: A thawed contract pilot with considerably better instincts than the
+    broker who sold the pod.
   portrait: {fileID: 21300000, guid: 4025d2bed62c7dd4c99679a9b24fb605, type: 3}
+  manifestPortrait: {fileID: 21300000, guid: 18bdc5a72f66f974582baf36efc2876f, type: 3}
   bonuses:
   - stat: piloting
     amount: 2

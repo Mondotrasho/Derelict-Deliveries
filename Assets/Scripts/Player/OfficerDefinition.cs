@@ -26,6 +26,9 @@ public sealed class OfficerDefinition : ScriptableObject
     [TextArea(2, 4)] [SerializeField] private string description = "";
     [Tooltip("For the ship UI later. Optional.")]
     [SerializeField] private Sprite portrait;
+
+    [Tooltip("Small cropped portrait (60x60) for the ship manifest panel. Empty = the Portrait above.")]
+    [SerializeField] private Sprite manifestPortrait;
     [SerializeField] private List<Bonus> bonuses = new List<Bonus>();
 
     public string Id => id;
@@ -33,6 +36,7 @@ public sealed class OfficerDefinition : ScriptableObject
     public string Role => role;
     public string Description => description;
     public Sprite Portrait => portrait;
+    public Sprite ManifestPortrait => manifestPortrait != null ? manifestPortrait : portrait;
     public IReadOnlyList<Bonus> Bonuses => bonuses;
 
 
