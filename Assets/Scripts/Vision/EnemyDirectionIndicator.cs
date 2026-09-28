@@ -94,9 +94,23 @@ public sealed class EnemyDirectionIndicator : MonoBehaviour
         public bool leaving;
     }
 
+    private struct ArcStroke
+    {
+        public float angle;
+        public float halfAngle;
+        public Color colour;
+        public float alpha;
+    }
+
     private readonly List<int> touched = new List<int>();
     private readonly List<Contact> contacts = new List<Contact>();
     private readonly Dictionary<EnemyShip, Contact> byEnemy = new Dictionary<EnemyShip, Contact>();
+    private readonly List<ArcStroke>[] arcBands =
+    {
+        new List<ArcStroke>(),
+        new List<ArcStroke>(),
+        new List<ArcStroke>()
+    };
 
     private Texture2D texture;
     private Color32[] pixels;
@@ -310,6 +324,7 @@ public sealed class EnemyDirectionIndicator : MonoBehaviour
         float fullHalf = arcPercent * 3.6f * 0.5f;          // percent of 360, halved
 
         bool any = false;
+        for (int i = 0; i < arcBands.Length; i++) arcBands[i].Clear();
 
         foreach (Contact c in contacts)
         {
@@ -332,18 +347,26 @@ public sealed class EnemyDirectionIndicator : MonoBehaviour
                             chevronSize * ppu * Mathf.Clamp(open, 0f, 1.2f), col, alpha);
             }
 
-            // stacked, concentric distance arcs (outer one at R, chevron sits on
-            // it). Each grows in sweep, one after the other, as the enemy closes.
+            // Collect the normal distance arcs first. Arcs on the same concentric
+            // band are rasterised together below so nearby contacts can become one
+            // continuous shape instead of drawing over each other in contact order.
             for (int i = 0; i < 3; i++)
             {
                 float amount = Mathf.Clamp01(c.bands - i);
                 if (i == 0) amount = Mathf.Max(amount, minimumFirstArc);
                 if (amount <= 0.01f) break;
-                DrawArc(c0, c.angle, radiusPx - i * spacingPx, thickPx,
-                        half * amount, col, alpha);
+
+                arcBands[i].Add(new ArcStroke
+                {
+                    angle = c.angle,
+                    halfAngle = half * amount,
+                    colour = col,
+                    alpha = alpha
+                });
             }
 
-            // spawn echo: concentric arcs expanding past R and dithering away
+            // Spawn echoes keep their independent radii. They are temporary and
+            // deliberately remain separate from the stable distance-band merge.
             if (c.echo >= 0f)
             {
                 float e = EaseOutCubic(c.echo);
@@ -356,11 +379,123 @@ public sealed class EnemyDirectionIndicator : MonoBehaviour
             }
         }
 
+        for (int i = 0; i < arcBands.Length; i++)
+        {
+            if (arcBands[i].Count == 0) continue;
+            DrawMergedArcBand(c0, radiusPx - i * spacingPx, thickPx, arcBands[i]);
+        }
+
         view.enabled = any;
         if (!any) return;
 
         texture.SetPixels32(pixels);
         texture.Apply(false);
+    }
+
+
+    /// <summary>
+    /// Rasterises one concentric distance band as a shared shape. Overlapping arcs
+    /// blend their colours, and tiny angular gaps between neighbouring arcs are
+    /// bridged so close contacts flow into one continuous pixel-art segment.
+    /// </summary>
+    private void DrawMergedArcBand(Vector2 centre, float radius, float thickness, List<ArcStroke> strokes)
+    {
+        if (radius < 1f || strokes.Count == 0) return;
+
+        float halfThick = thickness * 0.5f;
+        int r0 = Mathf.FloorToInt(radius - halfThick - 1f), r1 = Mathf.CeilToInt(radius + halfThick + 1f);
+        int xMin = Mathf.Max(0, Mathf.FloorToInt(centre.x - r1)), xMax = Mathf.Min(size - 1, Mathf.CeilToInt(centre.x + r1));
+        int yMin = Mathf.Max(0, Mathf.FloorToInt(centre.y - r1)), yMax = Mathf.Min(size - 1, Mathf.CeilToInt(centre.y + r1));
+
+        // Merge by roughly 1-2 screen pixels. This is derived from the existing
+        // geometry rather than exposed as another setting, so the Inspector stays
+        // unchanged while the behaviour scales naturally with radius/thickness.
+        float mergePixels = Mathf.Clamp(thickness * 0.75f + 0.75f, 1f, 2.5f);
+        float mergeAngle = Mathf.Atan2(mergePixels, Mathf.Max(radius, 1f)) * Mathf.Rad2Deg;
+
+        for (int y = yMin; y <= yMax; y++)
+            for (int x = xMin; x <= xMax; x++)
+            {
+                float dx = x + 0.5f - centre.x, dy = y + 0.5f - centre.y;
+                float d = Mathf.Sqrt(dx * dx + dy * dy);
+                if (d < r0 || d > r1 || Mathf.Abs(d - radius) > halfThick) continue;
+
+                float pixelAngle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                bool covered = false;
+                float coverageAlpha = 0f;
+                Color colourSum = default;
+                float colourWeight = 0f;
+
+                float positiveGap = float.PositiveInfinity;
+                float negativeGap = float.PositiveInfinity;
+                ArcStroke positiveStroke = default;
+                ArcStroke negativeStroke = default;
+
+                for (int i = 0; i < strokes.Count; i++)
+                {
+                    ArcStroke stroke = strokes[i];
+                    float halfAngle = Mathf.Min(180f, Mathf.Max(0f, stroke.halfAngle));
+                    float delta = Mathf.DeltaAngle(stroke.angle, pixelAngle);
+                    float edgeDistance = Mathf.Abs(delta) - halfAngle;
+
+                    if (edgeDistance <= 0f)
+                    {
+                        covered = true;
+                        coverageAlpha = Mathf.Max(coverageAlpha, stroke.alpha);
+                    }
+                    else if (delta > 0f && edgeDistance < positiveGap)
+                    {
+                        positiveGap = edgeDistance;
+                        positiveStroke = stroke;
+                    }
+                    else if (delta < 0f && edgeDistance < negativeGap)
+                    {
+                        negativeGap = edgeDistance;
+                        negativeStroke = stroke;
+                    }
+
+                    // Let nearby arcs influence the colour slightly before their
+                    // silhouettes actually overlap. That removes the hard colour
+                    // seam as two contacts move together, without softening pixels.
+                    if (edgeDistance <= mergeAngle)
+                    {
+                        float edgeInfluence = edgeDistance <= 0f
+                            ? 1f
+                            : 1f - Mathf.Clamp01(edgeDistance / mergeAngle);
+                        float centreInfluence = 1f - Mathf.Clamp01(
+                            Mathf.Abs(delta) / Mathf.Max(halfAngle + mergeAngle, 0.001f));
+                        float weight = stroke.alpha * edgeInfluence * (0.35f + 0.65f * centreInfluence);
+
+                        colourSum += stroke.colour * weight;
+                        colourWeight += weight;
+                    }
+                }
+
+                // A small gap is filled only when there is an arc on both sides of
+                // it. Isolated arc ends therefore keep their original length.
+                if (!covered && positiveGap < float.PositiveInfinity && negativeGap < float.PositiveInfinity
+                    && positiveGap + negativeGap <= mergeAngle)
+                {
+                    covered = true;
+                    float totalGap = positiveGap + negativeGap;
+                    float t = totalGap > 0.0001f ? positiveGap / totalGap : 0.5f;
+                    coverageAlpha = Mathf.Lerp(positiveStroke.alpha, negativeStroke.alpha, t);
+
+                    if (colourWeight <= 0.0001f)
+                    {
+                        colourSum = Color.Lerp(positiveStroke.colour, negativeStroke.colour, t);
+                        colourWeight = 1f;
+                    }
+                }
+
+                if (!covered) continue;
+
+                Color mergedColour = colourWeight > 0.0001f
+                    ? colourSum / colourWeight
+                    : Color.white;
+                mergedColour.a = 1f;
+                Plot(x, y, mergedColour, coverageAlpha);
+            }
     }
 
 

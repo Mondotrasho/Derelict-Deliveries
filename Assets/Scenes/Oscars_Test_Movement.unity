@@ -17802,7 +17802,7 @@ MonoBehaviour:
   - {r: 1, g: 0.35, b: 0.3, a: 1}
   sortingLayerName: Foreground
   sortingOrder: 80
-  showTurnLabels: 1
+  showTurnLabels: 0
   placeLabelOnTarget: 1
   turnLabelPrefix: '#'
   useCurrentTurnNumbering: 1
@@ -23141,16 +23141,16 @@ MonoBehaviour:
   arcSpacing: 0.1
   chevronSize: 0.14
   chevronGap: 0
-  farDistance: 10
-  mediumDistance: 6
-  closeDistance: 3
-  nearDistance: 2
+  farDistance: 16
+  mediumDistance: 8
+  closeDistance: 6
+  nearDistance: 3
   minimumFirstArc: 0.3
   maxDistance: 0
   hideWhenOnScreen: 0
   popInSeconds: 0.35
   popOutSeconds: 0.2
-  trackingSharpness: 12
+  trackingSharpness: 8
   fillSharpness: 8
   spawnEcho: 1
   echoSeconds: 0.6
