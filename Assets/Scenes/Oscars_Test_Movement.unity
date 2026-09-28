@@ -23155,8 +23155,8 @@ MonoBehaviour:
   spawnEcho: 1
   echoSeconds: 0.6
   echoTravel: 0.9
-  colour: {r: 1, g: 0.12, b: 0.1, a: 1}
-  farColour: {r: 1, g: 0.62, b: 0.1, a: 1}
+  colour: {r: 0.7960785, g: 0.121568635, b: 0.32941177, a: 1}
+  farColour: {r: 0.83921576, g: 0.65882355, b: 0.1254902, a: 1}
 --- !u!1 &7100000701
 GameObject:
   m_ObjectHideFlags: 0

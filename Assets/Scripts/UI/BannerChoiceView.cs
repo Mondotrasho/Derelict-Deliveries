@@ -143,6 +143,15 @@ public sealed class BannerChoiceView : MonoBehaviour
     }
 
 
+    /// <summary>Swap just the banner image, leaving everything else as it is.</summary>
+    public void SetBanner(Sprite banner)
+    {
+        if (!built || banner == null) return;
+        bannerImage.sprite = banner;
+        bannerImage.gameObject.SetActive(true);
+    }
+
+
     /// <summary>Show the window again after Hide (e.g. back from a dialogue) without changing its content.</summary>
     public void ShowAgain()
     {

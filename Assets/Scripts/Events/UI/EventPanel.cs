@@ -230,6 +230,10 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             string summary = resolution.summary;
             somethingHappened = true;
 
+            if (outcome != null && outcome.showBannerOf != null && banners != null)
+            {
+                view.SetBanner(banners.Resolve(outcome.showBannerOf, planet));
+            }
             view.ShowResult(JoinResult(outcome != null ? outcome.resultText : "", summary));
             view.SetChoices(new[] { new BannerChoiceView.Choice(ContinueId, continueLabel) });
             yield return view.WaitForChoice(id => picked = id);
@@ -401,7 +405,11 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
 
         if (outcome != null && outcome.spawnOnMapEdge != null)
         {
-            if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
+            if (outcome.spawnDelayTurns > 0 && enemySpawner != null)
+            {
+                enemySpawner.ScheduleMapEdgeSpawn(outcome.spawnOnMapEdge, outcome.spawnDelayTurns);
+            }
+            else if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
             {
                 Debug.LogWarning($"EventPanel: could not spawn {outcome.spawnOnMapEdge.DisplayName} at the map edge (no free entry cell?).", this);
             }
