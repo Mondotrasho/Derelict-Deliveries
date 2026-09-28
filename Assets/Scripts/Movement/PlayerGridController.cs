@@ -76,6 +76,14 @@ public class PlayerGridController : MonoBehaviour
     [SerializeField]
     private float minimumFinalApproachSpeed = 0.4f;
 
+    [Tooltip("Within this distance of the final point the ship slides straight onto it instead of steering along its heading. Stops it orbiting the destination when it arrives facing the wrong way (its turning circle is wider than Arrival Distance). Automatically grown to cover the ship's current turning circle.")]
+    [SerializeField]
+    private float arrivalCaptureDistance = 0.12f;
+
+    [Tooltip("Safety net: if the final approach takes longer than this many seconds, snap onto the cell.")]
+    [SerializeField]
+    private float arrivalTimeoutSeconds = 1.5f;
+
 
     [Header("Path Smoothing")]
 
@@ -102,8 +110,8 @@ public class PlayerGridController : MonoBehaviour
     [Header("Movement Style")]
 
     [Tooltip("StepByStep (the original approach) walks the path one waypoint at a time, each with its own speed calculation (turn slowdown, final braking measured against that waypoint). ArcLength instead flattens the whole route into one polyline up front and tracks a single distance-travelled scalar along it, with speed purely a function of distance travelled/remaining across the ENTIRE route - simpler, no per-waypoint edge cases, at the cost of no turn-slowdown feature.")]
-    [SerializeField]
-    private MovementStyle movementStyle = MovementStyle.StepByStep;
+    [SerializeField, HideInInspector]
+    private MovementStyle movementStyle = MovementStyle.ArcLength;
 
     [Tooltip("ArcLength only. Distance travelled before reaching full cruise speed when leaving a standing start.")]
     [SerializeField]
@@ -126,6 +134,20 @@ public class PlayerGridController : MonoBehaviour
     [Range(0.05f, 1.0f)]
     [SerializeField]
     private float minimumHeadingSpeedFactor = 0.35f;
+
+    [Tooltip("ArcLength only. At the start of a route, if the ship faces more than this many degrees away from the path it turns on the spot before moving off, instead of swinging out in an arc.")]
+    [Range(10.0f, 180.0f)]
+    [SerializeField]
+    private float turnInPlaceAngle = 60.0f;
+
+    [Tooltip("Rotation eases out over the last this-many degrees of a turn instead of stopping dead at full rotation speed. 0 = old constant-rate snap.")]
+    [Range(0.0f, 90.0f)]
+    [SerializeField]
+    private float rotationEaseAngle = 35.0f;
+
+    [Tooltip("ArcLength only. How far ahead of the current route progress the ship's position is matched against the route. Keeps progress from jumping to a later part of the route that passes nearby (U-turns, curling round a planet).")]
+    [SerializeField]
+    private float progressSearchWindow = 0.6f;
 
 
     private enum MovementStyle
@@ -550,9 +572,9 @@ public class PlayerGridController : MonoBehaviour
 
         movementCoroutine =
             StartCoroutine(
-                movementStyle == MovementStyle.ArcLength
-                    ? FollowPathArcLength(path)
-                    : FollowPath(path)
+                // ArcLength is the only mover now. The StepByStep coroutine
+                // (FollowPath / MoveToPosition) is left in place but unused.
+                FollowPathArcLength(path)
             );
 
         return true;
@@ -712,7 +734,8 @@ public class PlayerGridController : MonoBehaviour
                 FindClosestDistanceAlongPolyline(
                     transform.position,
                     points,
-                    cumulativeDistances
+                    cumulativeDistances,
+                    physicalPathProgress
                 );
 
             // Do not let tiny numerical changes around a corner make logical
@@ -794,6 +817,13 @@ public class PlayerGridController : MonoBehaviour
                     );
 
                 targetSpeed *= speedFactor;
+
+                // Standing start facing the wrong way: turn on the spot first.
+                if (physicalPathProgress < departureAccelDistance &&
+                    headingError > turnInPlaceAngle)
+                {
+                    targetSpeed = 0.0f;
+                }
             }
 
 
@@ -826,7 +856,8 @@ public class PlayerGridController : MonoBehaviour
                 FindClosestDistanceAlongPolyline(
                     transform.position,
                     points,
-                    cumulativeDistances
+                    cumulativeDistances,
+                    physicalPathProgress
                 );
 
             physicalPathProgress =
@@ -869,9 +900,12 @@ public class PlayerGridController : MonoBehaviour
         Vector3 finalPosition =
             points[points.Count - 1];
 
+        float finalApproachStarted = Time.time;
+
         while (Vector3.Distance(
                    transform.position,
-                   finalPosition) > arrivalDistance)
+                   finalPosition) > arrivalDistance &&
+               Time.time - finalApproachStarted < arrivalTimeoutSeconds)
         {
             Vector3 desiredDirection =
                 finalPosition -
@@ -890,7 +924,7 @@ public class PlayerGridController : MonoBehaviour
                 );
 
             Vector3 travelDirection =
-                UpdateHeading(desiredDirection);
+                ApproachDirection(desiredDirection);
 
             transform.position +=
                 travelDirection *
@@ -928,13 +962,22 @@ public class PlayerGridController : MonoBehaviour
     private float FindClosestDistanceAlongPolyline(
         Vector3 worldPosition,
         List<Vector3> points,
-        List<float> cumulativeDistances)
+        List<float> cumulativeDistances,
+        float currentProgress)
     {
         float bestSqrDistance = float.PositiveInfinity;
-        float bestDistanceAlongPath = 0.0f;
+        float bestDistanceAlongPath = currentProgress;
+
+        // Only segments overlapping [currentProgress, currentProgress + window]
+        // are considered, so a later stretch of route that happens to pass
+        // near the ship can't be matched and skip cells.
+        float windowEnd = currentProgress + Mathf.Max(0.05f, progressSearchWindow);
 
         for (int i = 0; i < points.Count - 1; i++)
         {
+            if (cumulativeDistances[i + 1] < currentProgress - 0.0001f) continue;
+            if (cumulativeDistances[i] > windowEnd) break;
+
             Vector3 segmentStart = points[i];
             Vector3 segmentEnd = points[i + 1];
 
@@ -1283,9 +1326,12 @@ public class PlayerGridController : MonoBehaviour
         bool turnAhead,
         bool isFinalStep)
     {
+        float stepStarted = Time.time;
+
         while (Vector3.Distance(
                    transform.position,
-                   destinationPosition) > arrivalDistance)
+                   destinationPosition) > arrivalDistance &&
+               (!isFinalStep || Time.time - stepStarted < arrivalTimeoutSeconds))
         {
             Vector3 toDestination =
                 destinationPosition -
@@ -1331,7 +1377,9 @@ public class PlayerGridController : MonoBehaviour
             // direction-to-target - so translation and facing can never
             // disagree, even mid-turn.
             Vector3 travelDirection =
-                UpdateHeading(desiredDirection);
+                isFinalStep
+                    ? ApproachDirection(desiredDirection)
+                    : UpdateHeading(desiredDirection);
 
             transform.position +=
                 travelDirection *
@@ -1343,6 +1391,33 @@ public class PlayerGridController : MonoBehaviour
 
 
         transform.position = destinationPosition;
+    }
+
+
+    /// <summary>
+    /// Travel direction for the last stretch onto the destination. Normally
+    /// the ship moves along its heading (it never slides sideways), but at a
+    /// fixed turn rate it has a minimum turning circle of speed / turn rate.
+    /// If it reaches the destination facing the wrong way and that circle is
+    /// wider than arrivalDistance, following the heading just orbits the point
+    /// forever. Inside the capture radius it therefore moves straight at the
+    /// target while the sprite keeps rotating to catch up - over a few pixels
+    /// the slide isn't visible.
+    /// </summary>
+    private Vector3 ApproachDirection(Vector3 toTarget)
+    {
+        Vector3 heading = UpdateHeading(toTarget);
+
+        float turnRateRadians = Mathf.Max(1.0f, rotationSpeed) * Mathf.Deg2Rad;
+        float turningRadius = currentSpeed / turnRateRadians;
+        float capture = Mathf.Max(arrivalCaptureDistance, turningRadius * 2.0f);
+
+        if (toTarget.magnitude <= capture && toTarget.sqrMagnitude > 0.000001f)
+        {
+            return toTarget.normalized;
+        }
+
+        return heading;
     }
 
 
@@ -1507,11 +1582,19 @@ public class PlayerGridController : MonoBehaviour
                     targetAngle
                 );
 
+            // Full speed through most of a turn, easing out over the last
+            // rotationEaseAngle degrees so it settles rather than snapping.
+            float remaining = Quaternion.Angle(currentHeading, targetRotation);
+            float ease = rotationEaseAngle > 0.0f
+                ? Mathf.Clamp(remaining / rotationEaseAngle, 0.2f, 1.0f)
+                : 1.0f;
+
             currentHeading =
                 Quaternion.RotateTowards(
                     currentHeading,
                     targetRotation,
                     rotationSpeed *
+                    ease *
                     Time.deltaTime
                 );
         }

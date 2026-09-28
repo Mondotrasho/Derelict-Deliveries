@@ -10,7 +10,11 @@ using UnityEngine.UI;
 ///
 ///   top-centre   THREAT bar - fills as detection / the next hunter wave gets
 ///                closer, shifting amber to red, pulsing faster, glitching and
-///                shaking as it closes in. Turns into HUNTED once detected.
+///                shaking as it closes in. Turns into HUNTED once detected:
+///                the bar then stays full (still animated) and the countdown to
+///                the next hunter wave moves into a segmented pie clock to the
+///                right, one slice per turn, greyed out while the enemy cap is
+///                full (a wave then would bring nobody).
 ///   top-right    STATUS - hull, shields and fuel bars (icon + value over the
 ///                bar), crew and supplies counts and an INVENTORY button (it
 ///                raises On Inventory Pressed / InventoryPressed - wire it up).
@@ -87,6 +91,14 @@ public sealed class ShipHud : MonoBehaviour
     [SerializeField] private string huntedLabel = "HUNTED  //  NEXT WAVE IN";
     [Tooltip("At or below this many turns the bar goes into full panic mode.")]
     [Min(0)] [SerializeField] private int dangerTurns = 2;
+    [Tooltip("Diameter of the wave pie clock.")]
+    [Min(20f)] [SerializeField] private float waveClockSize = 64f;
+    [Tooltip("Gap between pie slices, in degrees.")]
+    [Range(0f, 30f)] [SerializeField] private float waveClockGapDegrees = 8f;
+    [Tooltip("Ring thickness (0 = thin line, 1 = solid pie).")]
+    [Range(0.1f, 1f)] [SerializeField] private float waveClockThickness = 0.38f;
+    [SerializeField] private Color waveClockCapColour = new Color(0.45f, 0.45f, 0.45f, 1f);
+    [SerializeField] private string waveClockCapText = "MAX";
 
     [Header("Labels")]
     [SerializeField] private string plotCaption = "PLOT";
@@ -170,6 +182,16 @@ public sealed class ShipHud : MonoBehaviour
     private Vector2 threatHome;
     private float threatShown = -1f, shakeUntil, glitchUntil, stripeOffset;
     private int lastThreatTurns = int.MinValue;
+
+    // wave pie clock (visible once hunted)
+    private RectTransform waveClockRoot;
+    private Image waveClockBack;
+    private readonly List<Image> waveSlices = new List<Image>();
+    private TMP_Text waveClockCount;
+    private Sprite waveRingSprite;
+    private float waveFlashUntil, clockPunchUntil;
+    private int lastWaveTurns = int.MinValue;
+    private bool wasHunted;
 
     private MovementAllowance Allowance => planController != null ? planController.Allowance : null;
 
@@ -316,8 +338,101 @@ public sealed class ShipHud : MonoBehaviour
         threatFrameImage = Img(barRoot, "Frame", threatFrame != null ? threatFrame : barFrame, threatCalmColour, true);
         Stretch(threatFrameImage.rectTransform);
 
-        threatCount = Label(trow, "T-0", 40f, threatCalmColour, 60f, 110f);
+        // same 110-wide slot as before: T-n text until detected, then the pie
+        RectTransform countSlot = Rect("Count", trow);
+        Size(countSlot, 110f, 60f);
+        threatCount = Label(countSlot, "T-0", 40f, threatCalmColour, 0f);
         threatCount.alignment = TextAlignmentOptions.Center;
+        Stretch((RectTransform)threatCount.transform);
+
+        waveClockRoot = Rect("WaveClock", countSlot);
+        waveClockRoot.anchorMin = waveClockRoot.anchorMax = waveClockRoot.pivot = new Vector2(0.5f, 0.5f);
+        waveClockRoot.sizeDelta = Vector2.one * waveClockSize * scale;
+        waveRingSprite = MakeRingSprite(waveClockThickness);
+        waveClockBack = Img(waveClockRoot, "Back", waveRingSprite, new Color(0f, 0f, 0f, 0.55f), false);
+        Stretch(waveClockBack.rectTransform);
+        var countGo = Rect("Slices", waveClockRoot);
+        Stretch(countGo);
+        waveClockCount = Label(waveClockRoot, "0", 22f, threatHotColour, 0f);
+        waveClockCount.alignment = TextAlignmentOptions.Center;
+        waveClockCount.overflowMode = TextOverflowModes.Overflow;
+        Stretch((RectTransform)waveClockCount.transform);
+        waveClockRoot.gameObject.SetActive(false);
+
+        if (enemySpawner != null)
+        {
+            enemySpawner.ReinforcementWaveSpawned += HandleWaveSpawned;
+        }
+    }
+
+
+    private void OnDestroy()
+    {
+        if (enemySpawner != null)
+        {
+            enemySpawner.ReinforcementWaveSpawned -= HandleWaveSpawned;
+        }
+    }
+
+
+    private void HandleWaveSpawned(int waveIndex, int spawned)
+    {
+        // the spawner resets the countdown in the same call, so the clock would
+        // never be seen full - show it full for a moment and kick the bar
+        float t = Time.unscaledTime;
+        waveFlashUntil = t + 0.7f;
+        clockPunchUntil = t + 0.35f;
+        shakeUntil = t + 0.6f;
+    }
+
+
+    /// <summary>Rebuilds the pie slices when the turns-per-wave changes.</summary>
+    private void EnsureWaveSlices(int count)
+    {
+        count = Mathf.Clamp(count, 1, 24);
+        if (waveSlices.Count == count) return;
+
+        Transform parent = waveClockRoot.Find("Slices");
+        foreach (Image img in waveSlices) if (img != null) Destroy(img.gameObject);
+        waveSlices.Clear();
+
+        float gap = count > 1 ? waveClockGapDegrees : 0f;
+        float sliceFill = Mathf.Max(0.01f, 1f / count - gap / 360f);
+
+        for (int i = 0; i < count; i++)
+        {
+            Image s = Img(parent, $"Slice{i}", waveRingSprite, threatHotColour, false);
+            Stretch(s.rectTransform);
+            s.type = Image.Type.Filled;
+            s.fillMethod = Image.FillMethod.Radial360;
+            s.fillOrigin = (int)Image.Origin360.Top;
+            s.fillClockwise = true;
+            s.fillAmount = sliceFill;
+            // slice i starts i/count of the way round (clockwise), centred on its gap
+            s.rectTransform.localEulerAngles = new Vector3(0f, 0f, -(360f * i / count) - gap * 0.5f);
+            waveSlices.Add(s);
+        }
+    }
+
+
+    /// <summary>A white ring (or disc) texture so the clock needs no art.</summary>
+    private static Sprite MakeRingSprite(float thickness)
+    {
+        const int size = 128;
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        float outer = size * 0.5f - 1f;
+        float inner = outer * (1f - thickness);
+        var px = new Color32[size * size];
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(size * 0.5f, size * 0.5f));
+            float a = Mathf.Clamp01(outer - d + 0.5f) * Mathf.Clamp01(d - inner + 0.5f);
+            px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255f));
+        }
+        tex.SetPixels32(px);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
     }
 
 
@@ -545,23 +660,32 @@ public sealed class ShipHud : MonoBehaviour
         }
 
         bool hunted = enemySpawner.IsDetectionActive;
-        int turns = hunted ? enemySpawner.TurnsUntilNextWave : enemySpawner.TurnsUntilDetection;
-        int total = Mathf.Max(1, hunted ? enemySpawner.TurnsBetweenWaves : enemySpawner.DetectionDelayTurns);
-        float target = 1f - Mathf.Clamp01((float)turns / total);
         float t = Time.unscaledTime;
 
-        if (turns != lastThreatTurns)
+        // the bar is detection only: once hunted it stays full
+        int turns = hunted ? enemySpawner.TurnsUntilNextWave : enemySpawner.TurnsUntilDetection;
+        int total = Mathf.Max(1, enemySpawner.DetectionDelayTurns);
+        float target = hunted ? 1f : 1f - Mathf.Clamp01((float)enemySpawner.TurnsUntilDetection / total);
+
+        if (turns != lastThreatTurns || hunted != wasHunted)
         {
-            if (lastThreatTurns != int.MinValue) shakeUntil = t + 0.45f;   // it just got closer
+            if (lastThreatTurns != int.MinValue)
+            {
+                shakeUntil = t + 0.45f;                    // it just got closer
+                if (hunted) clockPunchUntil = t + 0.3f;    // and a slice ticked in
+            }
             lastThreatTurns = turns;
+            wasHunted = hunted;
         }
 
         threatShown = threatShown < 0f ? target : Mathf.MoveTowards(threatShown, target, Time.unscaledDeltaTime * 0.8f);
         threatFill.anchorMax = new Vector2(Mathf.Max(0.02f, threatShown), 1f);
 
-        bool danger = hunted || turns <= dangerTurns;
+        // hunted: bar stays full and red but settles to a slow throb; panic
+        // mode only kicks in again as the next wave gets close
+        bool danger = turns <= dangerTurns;
         float heat = hunted ? 1f : threatShown;
-        float pulseSpeed = 2f + 8f * heat;
+        float pulseSpeed = hunted && !danger ? 3.5f : 2f + 8f * heat;
         float pulse = 0.5f + 0.5f * Mathf.Sin(t * pulseSpeed);
         Color c = Color.Lerp(threatCalmColour, threatHotColour, heat);
         Color glow = Color.Lerp(c, Color.white, danger ? pulse * 0.45f : pulse * 0.12f);
@@ -590,7 +714,12 @@ public sealed class ShipHud : MonoBehaviour
 
         string label = hunted ? huntedLabel : detectionLabel;
         threatLabel.text = glitching ? Garble(label) : label;
-        threatCount.text = glitching ? Garble($"T-{turns}") : $"T-{turns}";
+        threatCount.gameObject.SetActive(!hunted);
+        if (!hunted)
+        {
+            threatCount.text = glitching ? Garble($"T-{turns}") : $"T-{turns}";
+        }
+        UpdateWaveClock(hunted, glow, pulse, glitching, t);
 
         Vector2 offset = Vector2.zero;
         if (t < shakeUntil) offset += Random.insideUnitCircle * 6f * scale;
@@ -727,6 +856,40 @@ public sealed class ShipHud : MonoBehaviour
     {
         onInventoryPressed?.Invoke();
         InventoryPressed?.Invoke();
+    }
+
+
+    private void UpdateWaveClock(bool hunted, Color glow, float pulse, bool glitching, float t)
+    {
+        waveClockRoot.gameObject.SetActive(hunted);
+        if (!hunted) return;
+
+        int slices = Mathf.Max(1, enemySpawner.TurnsBetweenWaves);
+        EnsureWaveSlices(slices);
+        slices = waveSlices.Count;
+
+        int left = enemySpawner.TurnsUntilNextWave;
+        bool capped = enemySpawner.AtEnemyCap;
+        bool flashing = t < waveFlashUntil;
+        int filled = flashing ? slices : Mathf.Clamp(slices - left, 0, slices);
+
+        Color on = capped ? waveClockCapColour : glow;
+        Color off = new Color(on.r, on.g, on.b, 0.18f);
+        for (int i = 0; i < slices; i++)
+        {
+            Color c = i < filled ? on : off;
+            // the next slice to fill breathes so you can see where it's up to
+            if (!capped && !flashing && i == filled) c.a = Mathf.Lerp(0.18f, 0.55f, pulse);
+            waveSlices[i].color = c;
+        }
+
+        string text = capped ? waveClockCapText : left.ToString();
+        waveClockCount.text = glitching ? Garble(text) : text;
+        waveClockCount.color = capped ? waveClockCapColour : glow;
+        waveClockCount.fontSize = (capped ? 16f : 24f) * scale;
+
+        float punch = t < clockPunchUntil ? 1f + 0.15f * ((clockPunchUntil - t) / 0.35f) : 1f;
+        waveClockRoot.localScale = Vector3.one * punch;
     }
 
 

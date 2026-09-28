@@ -108,6 +108,11 @@ public class EnemySpawnController : MonoBehaviour
     public int ReinforcementWaveIndex { get; private set; }
     public bool IsDetectionActive { get; private set; }
 
+    /// <summary>True while the active-enemy cap is full, so waves would spawn nothing.</summary>
+    public bool AtEnemyCap => maxActiveEnemies > 0 &&
+                              enemyRegistry != null &&
+                              enemyRegistry.Enemies.Count >= maxActiveEnemies;
+
     private void Reset()
     {
         ResolveReferences();
@@ -151,13 +156,7 @@ public class EnemySpawnController : MonoBehaviour
 
             if (TurnsUntilDetection == 0)
             {
-                IsDetectionActive = true;
-                TurnsUntilNextWave = turnsBetweenWaves;
-                DetectionStarted?.Invoke();
-                ReinforcementCountdownChanged?.Invoke(TurnsUntilNextWave);
-
-                int spawned = SpawnWave(initialWaveSize);
-                ReinforcementWaveSpawned?.Invoke(0, spawned);
+                BeginDetection();
             }
 
             return;
@@ -186,6 +185,26 @@ public class EnemySpawnController : MonoBehaviour
 
         TurnsUntilNextWave = turnsBetweenWaves;
         ReinforcementCountdownChanged?.Invoke(TurnsUntilNextWave);
+    }
+
+    /// <summary>
+    /// Detection hits zero: start the hunt and send the initial wave straight
+    /// away, so the UI's full bar and the first enemy arrive together.
+    /// </summary>
+    private void BeginDetection()
+    {
+        if (IsDetectionActive)
+        {
+            return;
+        }
+
+        IsDetectionActive = true;
+        TurnsUntilNextWave = Mathf.Max(1, turnsBetweenWaves);
+        DetectionStarted?.Invoke();
+        ReinforcementCountdownChanged?.Invoke(TurnsUntilNextWave);
+
+        int spawned = SpawnWave(initialWaveSize);
+        ReinforcementWaveSpawned?.Invoke(0, spawned);
     }
 
     /// <summary>
@@ -261,7 +280,8 @@ public class EnemySpawnController : MonoBehaviour
     /// <summary>
     /// Moves the hunt: before detection, adds (or with a negative value removes)
     /// turns until detection; after detection, the same for the next wave.
-    /// Reaching 0 triggers on the next enemy phase through the normal path.
+    /// Pushing detection to 0 starts the hunt immediately (no dead turn with a
+    /// full bar and no enemy).
     /// </summary>
     public void AddDetectionTurns(int delta)
     {
@@ -274,6 +294,11 @@ public class EnemySpawnController : MonoBehaviour
         {
             TurnsUntilDetection = Mathf.Max(0, TurnsUntilDetection + delta);
             DetectionCountdownChanged?.Invoke(TurnsUntilDetection);
+
+            if (TurnsUntilDetection == 0)
+            {
+                BeginDetection();
+            }
         }
         else
         {

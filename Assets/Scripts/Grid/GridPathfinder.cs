@@ -43,6 +43,20 @@ public class GridPathfinder : MonoBehaviour
     [SerializeField]
     private bool preferDiagonalMovement = true;
 
+    private enum TieBreakMode
+    {
+        /// <summary>Original: just prefer a diagonal arrival. Stable while hovering.</summary>
+        Original,
+        /// <summary>Fewest direction changes, then the original rule.</summary>
+        FewestTurns,
+        /// <summary>Fewest turns, then closest to the straight line. Tidiest routes but they re-shape as the cursor moves.</summary>
+        FewestTurnsHugLine
+    }
+
+    [Tooltip("How equal-cost routes are chosen (shape only, costs never change). Original = the old predictable routes. FewestTurns = fewer zig-zags. FewestTurnsHugLine = tidiest, but routes re-shape more as the cursor moves.")]
+    [SerializeField]
+    private TieBreakMode equalCostTieBreak = TieBreakMode.Original;
+
 
     /// <summary>Whether diagonal steps are currently allowed by this pathfinder.</summary>
     public bool AllowDiagonalMovement
@@ -351,6 +365,9 @@ public class GridPathfinder : MonoBehaviour
                             : 0;
 
                     neighbourNode.Parent = currentNode;
+                    neighbourNode.Turns = TurnsVia(currentNode, direction);
+                    neighbourNode.LineDeviation = currentNode.LineDeviation +
+                        LineDeviation(neighbourCell, startCell, destinationCell);
 
                     knownNodes.Add(neighbourCell, neighbourNode);
                     openNodes.Add(neighbourNode);
@@ -362,19 +379,38 @@ public class GridPathfinder : MonoBehaviour
                 bool isCheaper =
                     newGCost < neighbourNode.GCost;
 
-                // Equal-cost routes prefer a diagonal arrival when requested,
-                // preserving the existing smoother-looking tie-break without
-                // changing which route is considered cheapest.
+                // Diagonal = two straight steps, so loads of routes tie on
+                // cost. Among equal-cost routes pick the one with the fewest
+                // direction changes, then the one hugging the straight line
+                // start -> destination most closely, then (old rule) a
+                // diagonal arrival. Shape only - costs are untouched.
+                int newTurns = TurnsVia(currentNode, direction);
+                float newDeviation = currentNode.LineDeviation +
+                    LineDeviation(neighbourCell, startCell, destinationCell);
+
+                bool diagonalRule = isDiagonalStep && !ArrivedDiagonally(neighbourNode);
+                bool useTurns = equalCostTieBreak != TieBreakMode.Original;
+                bool useLine = equalCostTieBreak == TieBreakMode.FewestTurnsHugLine;
+
+                bool smoother;
+                if (useTurns && newTurns != neighbourNode.Turns)
+                    smoother = newTurns < neighbourNode.Turns;
+                else if (useLine && Mathf.Abs(newDeviation - neighbourNode.LineDeviation) > 0.001f)
+                    smoother = newDeviation < neighbourNode.LineDeviation;
+                else
+                    smoother = diagonalRule;
+
                 bool isEqualCostButSmoother =
                     preferDiagonalMovement &&
                     newGCost == neighbourNode.GCost &&
-                    isDiagonalStep &&
-                    !ArrivedDiagonally(neighbourNode);
+                    smoother;
 
                 if (isCheaper || isEqualCostButSmoother)
                 {
                     neighbourNode.GCost = newGCost;
                     neighbourNode.Parent = currentNode;
+                    neighbourNode.Turns = newTurns;
+                    neighbourNode.LineDeviation = newDeviation;
 
                     if (!openNodes.Contains(neighbourNode))
                     {
@@ -390,6 +426,25 @@ public class GridPathfinder : MonoBehaviour
         );
 
         return emptyPath;
+    }
+
+
+    /// <summary>Turns so far if we step from node in direction.</summary>
+    private static int TurnsVia(PathNode node, Vector3Int direction)
+    {
+        if (node.Parent == null) return 0;
+        return node.Turns + (node.Cell - node.Parent.Cell == direction ? 0 : 1);
+    }
+
+
+    /// <summary>Distance of a cell from the straight line start -> destination.</summary>
+    private static float LineDeviation(Vector3Int cell, Vector3Int start, Vector3Int destination)
+    {
+        Vector2 line = new Vector2(destination.x - start.x, destination.y - start.y);
+        Vector2 offset = new Vector2(cell.x - start.x, cell.y - start.y);
+        float length = line.magnitude;
+        if (length < 0.0001f) return 0f;
+        return Mathf.Abs(line.x * offset.y - line.y * offset.x) / length;
     }
 
 
@@ -769,6 +824,11 @@ public class GridPathfinder : MonoBehaviour
         }
 
         public PathNode Parent { get; set; }
+
+        // Tie-break data for equal-cost routes (shape only).
+        public int Turns { get; set; }
+
+        public float LineDeviation { get; set; }
 
 
         public PathNode(Vector3Int cell)
