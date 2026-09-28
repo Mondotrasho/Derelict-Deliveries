@@ -96,6 +96,7 @@ class Graph:
         self.nodes = {}
         self.edges = []
         self.issues = []
+        self.banner_swaps = []      # (src, dst, where) from Show Banner Of outcomes
         self.state = {}             # (kind, scope, key) -> StateKey
         self.path_nodes = {}        # file path -> set(node ids)
 
@@ -271,6 +272,10 @@ def build(snap, project):
                 label = ctext + pct
                 where = f'choice "{ctext}" / {(_s(o.get("label")) or "outcome")}'
                 write_state(g, o.get('writes'), nid, where)
+                dw = o.get('delayedWrites')
+                if isinstance(dw, dict) and any(dw.get(k) for k in ('tags', 'flags', 'counters')):
+                    dt = max(1, _int(o.get('delayedWritesInTurns'), 1))
+                    write_state(g, dw, nid, f'{where} (delayed +{dt} turn{"s" if dt != 1 else ""})')
                 for res in o.get('resources') or []:
                     if _int(res.get('kind'), -1) == 3:
                         g.key('counter', 'Player', 'res.supplies').writers.append((nid, where, None))
@@ -283,8 +288,23 @@ def build(snap, project):
                     turns = max(1, _int(o.get('scheduleInTurns'), 1))
                     g.edge(nid, 'ev:' + sc, 'schedule', f'{label} · +{turns} turn{"s" if turns != 1 else ""}')
                 sp = guid_of(o.get('spawnOnMapEdge'))
+                sp_close = guid_of(o.get('spawnOnMapEdgeAfterClose'))
+                delay = _int(o.get('spawnDelayTurns'))
                 if sp and check_ref(sp, nid, f'{where} spawn', 'enemy'):
-                    g.edge(nid, ensure_enemy(sp), 'spawn', f'{label} · spawns at map edge')
+                    when = (f'in {delay} turn{"s" if delay != 1 else ""}' if delay > 0
+                            else 'immediately (behind the window)')
+                    g.edge(nid, ensure_enemy(sp), 'spawn', f'{label} · spawns at map edge {when}')
+                if sp_close and check_ref(sp_close, nid, f'{where} spawn after close', 'enemy'):
+                    g.edge(nid, ensure_enemy(sp_close), 'spawn', f'{label} · spawns at map edge when the window closes')
+                if sp and sp_close:
+                    g.issue('warning', f'{g.nodes[nid].title}: {where} spawns an enemy both now and after close (two enemies)', nid)
+                if delay > 0 and not sp:
+                    g.issue('warning', f'{g.nodes[nid].title}: {where} has Spawn Delay Turns {delay} but no Spawn On Map Edge'
+                            + (' (the delay does not apply to Spawn On Map Edge After Close)' if sp_close else ''), nid)
+                sb = guid_of(o.get('showBannerOf'))
+                if sb and check_ref(sb, nid, f'{where} show banner of', 'event'):
+                    g.edge(nid, 'ev:' + sb, 'banner', f'{label} · CRT banner swap')
+                    g.banner_swaps.append((nid, 'ev:' + sb, where))
                 cb = guid_of(o.get('startCombatWith'))
                 if cb and check_ref(cb, nid, f'{where} combat', 'enemy'):
                     g.edge(nid, ensure_enemy(cb), 'combat', f'{label} · combat')
@@ -427,6 +447,7 @@ def build(snap, project):
     resolve_planet_contexts(g, snap)
     validate_dialogue_actions(g)
     resolve_banners(g, snap)
+    check_banner_swaps(g)
     return g
 
 
@@ -598,6 +619,38 @@ def validate_dialogue_actions(g):
                     ids = {_s(c.get('id')) for c in (owner.data.get('choices') or [])}
                     if action not in ids:
                         g.issue('warning', f'Dialogue {n.title}: action "{action}" is not a choice on {owner.title}', nid)
+
+
+def _single_banner(n):
+    b = getattr(n, 'banner', None) or {}
+    if 'single' in b:
+        return b['single'][0]
+    rows = b.get('planets') or []
+    gids = {r[1] for r in rows if r[1]}
+    return next(iter(gids)) if len(gids) == 1 else ('varies' if gids else None)
+
+
+def check_banner_swaps(g):
+    """Show Banner Of outcomes and follow-ups (which CRT-swap when the banner changes)."""
+    for src, dst, where in g.banner_swaps:
+        s, d = g.nodes.get(src), g.nodes.get(dst)
+        if not s or not d:
+            continue
+        a, b = _single_banner(s), _single_banner(d)
+        if b is None:
+            g.issue('warning', f'{s.title}: {where} Show Banner Of {d.title}, but that event resolves to no banner (the swap is skipped)', src)
+        elif a is not None and a == b and a != 'varies':
+            g.issue('info', f'{s.title}: {where} Show Banner Of {d.title} uses the same banner (no visible swap)', src)
+    for e in g.edges:
+        if e.kind != 'follow':
+            continue
+        s, d = g.nodes.get(e.src), g.nodes.get(e.dst)
+        if not s or not d or d.kind != 'event':
+            continue
+        a, b = _single_banner(s), _single_banner(d)
+        if a and b and a != b:
+            e.detail = (e.detail + ' · ' if e.detail else '') + ('CRT banner swap' if 'varies' not in (a, b) else 'CRT banner swap (per planet)')
+            e.crt = True
 
 
 def resolve_banners(g, snap):
@@ -965,8 +1018,19 @@ def check_dialogue(g, n, snap):
     # Portraits are scene data. If the chosen scene has a DialoguePanelController,
     # check that both JSON character ids resolve to its Character Definitions.
     char_defs = getattr(snap, 'dialogue_characters', {}) or {}
+    # Lines can swap a side's character mid-conversation (setLeftCharacter /
+    # setRightCharacter, e.g. the stasis pod opening into Sera). Those ids need
+    # definitions and portraits too.
+    swaps = []
+    for l in lines:
+        for key, side in (('setLeftCharacter', 'left'), ('setRightCharacter', 'right')):
+            cid = _s(l.get(key)).strip().lower()
+            if cid:
+                swaps.append((side, cid, l.get('tick')))
+
     if char_defs:
-        for side, cid in (('left', left), ('right', right)):
+        to_check = [('left', left), ('right', right)] + [(f'{side} (from tick {t})', cid) for side, cid, t in swaps]
+        for side, cid in to_check:
             if not cid:
                 g.issue('warning', f'Dialogue {n.title}: {side} character id is empty', n.id)
                 continue
@@ -980,7 +1044,15 @@ def check_dialogue(g, n, snap):
             elif sg not in snap.guid_to_path:
                 g.issue('error', f'Dialogue {n.title}: character "{cid}" portrait points to a missing image', n.id)
 
-    for l in lines:
+    # Walk lines in tick order, applying swaps before their line, so a speaker is
+    # valid once some earlier (or the same) line has put them on a side.
+    cur = {'left': left, 'right': right}
+    for l in sorted(lines, key=lambda x: (_int(x.get('tick')), _int(x.get('order')))):
+        for key, side in (('setLeftCharacter', 'left'), ('setRightCharacter', 'right')):
+            cid = _s(l.get(key)).strip().lower()
+            if cid:
+                cur[side] = cid
+                speakers.add(cid)
         sp = _s(l.get('speaker')).lower()
         if sp not in speakers:
             g.issue('warning', f'Dialogue {n.title}: tick {l.get("tick")} speaker "{l.get("speaker")}" is neither the left nor right character (the line is skipped)', n.id)
@@ -1050,7 +1122,7 @@ def to_mermaid(g, node_ids, edge_kinds):
             lines.append(f'  {"  " if boxed else ""}{mid(nid)}{a}{esc(n.title)}<br/><small>{esc(n.subtitle)}</small>{b}')
         if boxed:
             lines.append('  end')
-    arrow = {'entry': '-->', 'follow': '-->', 'schedule': '-.->', 'dialogue': '-->', 'spawn': '==>', 'combat': '==>',
+    arrow = {'entry': '-->', 'follow': '-->', 'schedule': '-.->', 'dialogue': '-->', 'spawn': '==>', 'banner': '-.->', 'combat': '==>',
              'ending': '-->', 'story': '-.->', 'flag': '-.->'}
     for e in g.edges:
         if e.kind in edge_kinds and e.src in node_ids and e.dst in node_ids:
@@ -1199,11 +1271,27 @@ def details(g, nid, project=None, snap=None):
                     bits.append(f'hunt {_int(o.get("detectionTurns")):+d} turns')
                 if _int(o.get('consumeAsteroid')):
                     bits.append('mines the asteroid')
-                for key, lab in (('followUp', 'then'), ('scheduleEvent', 'schedules'), ('spawnOnMapEdge', 'spawns'), ('startCombatWith', 'fights')):
+                for key, lab in (('followUp', 'then'), ('scheduleEvent', 'schedules'), ('spawnOnMapEdge', 'spawns'),
+                                 ('spawnOnMapEdgeAfterClose', 'spawns when the window closes'), ('startCombatWith', 'fights'),
+                                 ('showBannerOf', 'CRT-swaps the banner to')):
                     rt = ref_title(o.get(key))
                     if rt:
-                        extra = f' in {_int(o.get("scheduleInTurns"), 1)} turn(s)' if key == 'scheduleEvent' else ''
+                        extra = ''
+                        if key == 'scheduleEvent':
+                            extra = f' in {_int(o.get("scheduleInTurns"), 1)} turn(s)'
+                        elif key == 'spawnOnMapEdge':
+                            dl = _int(o.get('spawnDelayTurns'))
+                            extra = f' in {dl} turn(s)' if dl > 0 else ' immediately'
+                        elif key == 'followUp':
+                            fg = guid_of(o.get('followUp'))
+                            if any(e.kind == 'follow' and e.src == nid and e.dst == 'ev:' + fg and getattr(e, 'crt', False) for e in g.edges):
+                                extra = ' (CRT banner swap)'
                         bits.append(f'{lab} {rt}{extra}')
+                dw = o.get('delayedWrites')
+                if isinstance(dw, dict) and any(dw.get(k) for k in ('tags', 'flags', 'counters')):
+                    dwt = writes_text(dw)
+                    if dwt:
+                        bits.append(f'after {_int(o.get("delayedWritesInTurns"), 1)} turn(s): {dwt}')
                 for key, lab in (('recruitOfficer', 'recruits'), ('loseOfficer', 'loses')):
                     rt = ref_title(o.get(key))
                     if rt:
@@ -1265,17 +1353,35 @@ def details(g, nid, project=None, snap=None):
             chars = d.get('characters') or {}
             char_defs = getattr(snap, 'dialogue_characters', {}) if snap is not None else {}
             add('Characters\n', 'h2')
-            for side in ('left', 'right'):
-                cid = _s(chars.get(side)).strip()
+            # Opening pair, then any mid-conversation swaps (setLeft/RightCharacter).
+            # Portraits are drawn the way the game shows them on that side: mirrored
+            # when the definition's Flip When Left / Flip When Right is on.
+            appearances = [(side, _s(chars.get(side)).strip(), None) for side in ('left', 'right')]
+            for l in sorted(d.get('lines') or [], key=lambda x: (_int(x.get('tick')), _int(x.get('order')))):
+                for key, side in (('setLeftCharacter', 'left'), ('setRightCharacter', 'right')):
+                    cid = _s(l.get(key)).strip()
+                    if cid:
+                        appearances.append((side, cid, _int(l.get('tick'))))
+            for side, cid, tick in appearances:
                 definition = (char_defs or {}).get(cid.lower()) if cid else None
                 display = _s((definition or {}).get('displayName')).strip() or cid or '(none)'
-                add(f'{side.title()}: {display}', 'b')
+                when = f' (from tick {tick})' if tick is not None else ''
+                add(f'{side.title()}{when}: {display}', 'b')
                 if cid and display.lower() != cid.lower():
                     add(f'  [{cid}]', 'dim')
                 add('\n')
+                if definition is not None:
+                    flip = bool(_int(definition.get('flipWhenLeft' if side == 'left' else 'flipWhenRight')))
+                    other = bool(_int(definition.get('flipWhenRight' if side == 'left' else 'flipWhenLeft')))
+                    add(f'  {"mirrored" if flip else "as drawn"} on the {side} '
+                        f'(Flip When {side.title()} {"on" if flip else "off"}; '
+                        f'on the {"right" if side == "left" else "left"} it would be {"mirrored" if other else "as drawn"})\n', 'dim')
+                else:
+                    flip = False
                 sg, sf = _ref((definition or {}).get('sprite'))
                 if sg:
-                    add(f'{side.title()} portrait\n', 'img:' + sg + '|' + str(sf or '') + '|190')
+                    add(f'{side.title()} portrait{when}{" (mirrored)" if flip else ""}\n',
+                        'img:' + sg + '|' + str(sf or '') + '|190|' + ('flip' if flip else ''))
                 elif cid:
                     add('  no portrait sprite assigned in the selected scene\n', 'warn')
             add('\n')
@@ -1307,7 +1413,11 @@ def details(g, nid, project=None, snap=None):
 
             choices = {cs.get('tick'): cs for cs in d.get('choices') or []}
             for l in sorted(d.get('lines') or [], key=lambda x: (_int(x.get('tick')), _int(x.get('order')))):
-                add(f'{_int(l.get("tick")):>3} ', 'pct'); add(f'{_s(l.get("speaker"))}: ', 'b'); add(_s(l.get('text')))
+                add(f'{_int(l.get("tick")):>3} ', 'pct')
+                for key, side in (('setLeftCharacter', 'left'), ('setRightCharacter', 'right')):
+                    if _s(l.get(key)).strip():
+                        add(f'[{side} becomes {_s(l.get(key)).strip()}] ', 'dim')
+                add(f'{_s(l.get("speaker"))}: ', 'b'); add(_s(l.get('text')))
                 if _int(l.get('nextTick')):
                     add(f'  -> {tick_dest(l.get("nextTick"))}', 'dim')
                 add('\n')

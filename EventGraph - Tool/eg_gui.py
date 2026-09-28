@@ -33,10 +33,10 @@ NODE_COLOURS = {
 EDGE_STYLE = {   # colour, dash, width
     'entry': ('#8f9bb0', None, 1.2), 'follow': ('#e2e8f0', None, 1.6), 'schedule': ('#f6ad55', (6, 4), 1.6),
     'dialogue': ('#b794f4', None, 1.2), 'spawn': ('#fc8181', None, 2.4), 'combat': ('#fc8181', None, 2.4),
-    'ending': ('#f6e05e', None, 1.4), 'story': ('#68d391', (6, 3), 1.6), 'flag': ('#5a6478', (2, 4), 1.0),
+    'ending': ('#f6e05e', None, 1.4), 'banner': ('#63b3ed', (2, 3), 1.4), 'story': ('#68d391', (6, 3), 1.6), 'flag': ('#5a6478', (2, 4), 1.0),
 }
 EDGE_GROUPS = [('entry', 'Entries (table / option / start)'), ('follow', 'Follow-ups'), ('schedule', 'Scheduled (N turns)'),
-               ('dialogue', 'Dialogues'), ('spawn', 'Spawn / combat'), ('ending', 'Endings'),
+               ('dialogue', 'Dialogues'), ('spawn', 'Spawn / combat'), ('ending', 'Endings'), ('banner', 'Banner swaps (Show Banner Of)'),
                ('story', 'Story links (quest flags)'), ('flag', 'Other flag links')]
 NODE_GROUPS = [('Asteroid', 'Asteroid events'), ('Planet', 'Planet events'), ('Derelict', 'Derelict events'),
                ('Hazard', 'Hazard events'), ('Pickup', 'Pickups'), ('table', 'Tables'), ('option', 'Planet options'),
@@ -167,10 +167,10 @@ class App(tk.Tk):
         self.hide_lonely_var = tk.BooleanVar(value=saved.get('hideLonely', False))
         ttk.Checkbutton(left, text='Hide unconnected nodes', variable=self.hide_lonely_var, command=self._filters_changed).pack(anchor='w', pady=(6, 0))
         ttk.Separator(left).pack(fill='x', pady=6)
-        legend = tk.Canvas(left, width=200, height=82, bg=BG, highlightthickness=0)
+        legend = tk.Canvas(left, width=200, height=98, bg=BG, highlightthickness=0)
         legend.pack(anchor='w')
         short = {'entry': 'Entry', 'follow': 'Follow-up', 'schedule': 'Scheduled', 'dialogue': 'Dialogue',
-                 'spawn': 'Spawn/fight', 'ending': 'Ending', 'story': 'Story link', 'flag': 'Other flag'}
+                 'spawn': 'Spawn/fight', 'ending': 'Ending', 'banner': 'Banner swap', 'story': 'Story link', 'flag': 'Other flag'}
         for i, (key, _) in enumerate(EDGE_GROUPS):
             col, dash, w = EDGE_STYLE[key]
             x0, y0 = 6 + (i % 2) * 100, 10 + (i // 2) * 16
@@ -405,7 +405,7 @@ class App(tk.Tk):
             # Story links shape the layout even when hidden, so a quest reads in story order
             # (cult:egg is set by Journey's End, so what needs it sits to its right).
             links = [(e.src, e.dst) for e in self.g.edges
-                     if e.kind not in ('flag',) and e.src in self.visible and e.dst in self.visible]
+                     if e.kind not in ('flag', 'banner') and e.src in self.visible and e.dst in self.visible]
             nodes = {nid: self.g.nodes[nid] for nid in self.visible}
             cw, ch = max(400, self.canvas.winfo_width()), max(300, self.canvas.winfo_height())
             groups = {nid: self.g.nodes[nid].group for nid in self.visible} if self.groups_var.get() else None
@@ -867,8 +867,19 @@ class App(tk.Tk):
         self._image_cache[key] = result
         return result + (path,)
 
-    def _insert_image(self, t, keep, guid, fid, max_width, caption):
+    @staticmethod
+    def _mirrored(img):
+        """Horizontal mirror of a PhotoImage (pure Tk: one 1-px column copy each)."""
+        w, h = img.width(), img.height()
+        out = tk.PhotoImage(width=w, height=h)
+        for x in range(w):
+            out.tk.call(out, 'copy', img, '-from', x, 0, x + 1, h, '-to', w - 1 - x, 0)
+        return out
+
+    def _insert_image(self, t, keep, guid, fid, max_width, caption, flip=False):
         img, info, path = self._photo(guid, max_width)
+        if img is not None and flip:
+            img = self._mirrored(img)
         name = os.path.basename(path) if path else f'{guid[:8]}...'
         if img is not None:
             t.image_create('end', image=img, padx=0, pady=3)
@@ -893,8 +904,10 @@ class App(tk.Tk):
                 segments = self._overview_segments()
         for text, tag in segments:
             if tag.startswith('img:'):
-                guid, fid, width = tag[4:].split('|')
-                self._insert_image(t, self._shown_images, guid, fid, int(width), text.rstrip('\n'))
+                parts = tag[4:].split('|')
+                guid, fid, width = parts[0], parts[1], parts[2]
+                flip = len(parts) > 3 and parts[3] == 'flip'
+                self._insert_image(t, self._shown_images, guid, fid, int(width), text.rstrip('\n'), flip)
                 continue
             if tag.startswith('link:'):
                 target = tag[5:]
