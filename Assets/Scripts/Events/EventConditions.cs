@@ -159,6 +159,11 @@ public sealed class EventConditions
 [Serializable]
 public sealed class EventStateWrites
 {
+    public bool IsEmpty =>
+        (tags == null || tags.Count == 0) &&
+        (flags == null || flags.Count == 0) &&
+        (counters == null || counters.Count == 0);
+
     [Tooltip("mustHave on = AddTag, off = RemoveTag.")]
     public List<TagCondition> tags = new List<TagCondition>();
 

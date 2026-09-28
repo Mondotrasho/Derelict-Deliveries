@@ -137,6 +137,11 @@ public class DialoguePanelController : MonoBehaviour
 
         // Optional flow override. 0 keeps the old behaviour: continue to the next numeric tick.
         public int nextTick;
+
+        // Optional portrait/identity changes applied immediately before this line.
+        // Useful for reveals such as a stasis pod opening during the conversation.
+        public string setLeftCharacter;
+        public string setRightCharacter;
     }
 
     [Serializable]
@@ -209,6 +214,8 @@ public class DialoguePanelController : MonoBehaviour
         public string speakerId;
         public string text;
         public int nextTick;
+        public string setLeftCharacter;
+        public string setRightCharacter;
     }
 
     private class GeneratedLine
@@ -476,6 +483,8 @@ public class DialoguePanelController : MonoBehaviour
 
     private string leftCharacterId = "left";
     private string rightCharacterId = "right";
+    private string initialLeftCharacterId = "left";
+    private string initialRightCharacterId = "right";
     private string leftDisplayName = "";
     private string rightDisplayName = "";
 
@@ -1099,7 +1108,9 @@ public class DialoguePanelController : MonoBehaviour
                     order = order++,
                     speakerId = jsonLine.speaker ?? "",
                     text = jsonLine.text ?? "",
-                    nextTick = jsonLine.nextTick
+                    nextTick = jsonLine.nextTick,
+                    setLeftCharacter = jsonLine.setLeftCharacter ?? "",
+                    setRightCharacter = jsonLine.setRightCharacter ?? ""
                 });
             }
 
@@ -1135,6 +1146,14 @@ public class DialoguePanelController : MonoBehaviour
         }
 
         ClearGeneratedLines();
+
+        // Re-apply both authored starting characters after any previous dialogue/boot
+        // state. This prevents a portrait hidden or swapped by the previous conversation
+        // from carrying into the next one, including dialogue that opens with the NPC speaking.
+        SetDialogueCharacter(PortraitSide.Left, initialLeftCharacterId, false);
+        SetDialogueCharacter(PortraitSide.Right, initialRightCharacterId, false);
+        SetCharacterImagesVisible(true);
+
         CalculateDialogueLayout();
         ScrollToBottom();
         SetControlsInteractable(true);
@@ -1179,6 +1198,9 @@ public class DialoguePanelController : MonoBehaviour
         rightCharacterId = !string.IsNullOrWhiteSpace(characters != null ? characters.right : null)
             ? characters.right
             : "right";
+
+        initialLeftCharacterId = leftCharacterId;
+        initialRightCharacterId = rightCharacterId;
 
         leftDefinition = FindCharacterDefinition(leftCharacterId);
         rightDefinition = FindCharacterDefinition(rightCharacterId);
@@ -2721,6 +2743,8 @@ public class DialoguePanelController : MonoBehaviour
             activeTickLineIndex = i;
             DialogueLine dialogueLine = activeTickLines[i];
 
+            ApplyLineCharacterChanges(dialogueLine);
+
             if (!TryResolveSpeaker(dialogueLine.speakerId, out LineKind kind))
             {
                 Debug.LogWarning($"Unknown dialogue speaker '{dialogueLine.speakerId}'.", this);
@@ -2751,6 +2775,73 @@ public class DialoguePanelController : MonoBehaviour
         automaticTimer = 0f;
         ShowChoicesForCurrentTick();
     }
+
+    private void ApplyLineCharacterChanges(DialogueLine line)
+    {
+        if (line == null) return;
+
+        if (!string.IsNullOrWhiteSpace(line.setLeftCharacter))
+            SetDialogueCharacter(PortraitSide.Left, line.setLeftCharacter, true);
+
+        if (!string.IsNullOrWhiteSpace(line.setRightCharacter))
+            SetDialogueCharacter(PortraitSide.Right, line.setRightCharacter, true);
+    }
+
+
+    private void SetDialogueCharacter(PortraitSide side, string characterId, bool playAppearEffect)
+    {
+        if (string.IsNullOrWhiteSpace(characterId)) return;
+
+        CharacterDefinition definition = FindCharacterDefinition(characterId);
+        TextColoursJson textColours = loadedDefinition != null
+            ? (loadedDefinition.textColours ?? loadedDefinition.textColors)
+            : null;
+        List<CharacterColourJson> characterColours = loadedDefinition != null
+            ? (loadedDefinition.characterColours ?? loadedDefinition.characterColors)
+            : null;
+
+        if (side == PortraitSide.Left)
+        {
+            leftCharacterId = characterId;
+            leftDefinition = definition;
+            leftDisplayName = definition != null && !string.IsNullOrWhiteSpace(definition.displayName)
+                ? definition.displayName
+                : characterId.ToUpperInvariant();
+            resolvedLeftFont = ResolveCharacterFont(definition, fallbackCharacterFont);
+            float requestedSize = definition != null && definition.fontSize > 0f
+                ? definition.fontSize
+                : fallbackCharacterFontSize;
+            resolvedLeftFontSize = ResolveFontSize(resolvedLeftFont, requestedSize);
+            resolvedLeftColour = ResolveCharacterTextColour(
+                textColours != null ? textColours.left : null,
+                FindDialogueCharacterColour(characterColours, characterId),
+                definition,
+                resolvedPrimaryColour);
+            ApplyCharacterPortrait(leftPortrait, definition, characterId, playAppearEffect);
+        }
+        else
+        {
+            rightCharacterId = characterId;
+            rightDefinition = definition;
+            rightDisplayName = definition != null && !string.IsNullOrWhiteSpace(definition.displayName)
+                ? definition.displayName
+                : characterId.ToUpperInvariant();
+            resolvedRightFont = ResolveCharacterFont(definition, fallbackCharacterFont);
+            float requestedSize = definition != null && definition.fontSize > 0f
+                ? definition.fontSize
+                : fallbackCharacterFontSize;
+            resolvedRightFontSize = ResolveFontSize(resolvedRightFont, requestedSize);
+            resolvedRightColour = ResolveCharacterTextColour(
+                textColours != null ? textColours.right : null,
+                FindDialogueCharacterColour(characterColours, characterId),
+                definition,
+                resolvedPrimaryColour);
+            ApplyCharacterPortrait(rightPortrait, definition, characterId, playAppearEffect);
+        }
+
+        layoutDirty = true;
+    }
+
 
     private bool TryResolveSpeaker(string speakerId, out LineKind kind)
     {
@@ -2828,6 +2919,7 @@ public class DialoguePanelController : MonoBehaviour
             for (int i = activeTickLineIndex + 1; i < activeTickLines.Count; i++)
             {
                 DialogueLine dialogueLine = activeTickLines[i];
+                ApplyLineCharacterChanges(dialogueLine);
                 if (TryResolveSpeaker(dialogueLine.speakerId, out LineKind kind))
                 {
                     CreateGeneratedLine(kind, dialogueLine.text, true);
@@ -3268,6 +3360,8 @@ public class DialoguePanelController : MonoBehaviour
     private void RebuildVisitedPathInstantly()
     {
         ClearGeneratedLines();
+        SetDialogueCharacter(PortraitSide.Left, initialLeftCharacterId, false);
+        SetDialogueCharacter(PortraitSide.Right, initialRightCharacterId, false);
 
         foreach (int tick in visitedTicks)
         {
@@ -3278,6 +3372,7 @@ public class DialoguePanelController : MonoBehaviour
                     continue;
                 }
 
+                ApplyLineCharacterChanges(dialogueLine);
                 if (TryResolveSpeaker(dialogueLine.speakerId, out LineKind kind))
                 {
                     CreateGeneratedLine(kind, dialogueLine.text, true);

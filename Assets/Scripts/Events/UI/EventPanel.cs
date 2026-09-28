@@ -63,7 +63,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
 
     public bool IsOpen => current != null;
 
-    private readonly List<EnemyShipDefinition> spawnsOnClose = new List<EnemyShipDefinition>();
+    private Sprite shownBanner;   // banner currently in the window (for CRT follow-up swaps)
     private readonly List<BannerChoiceView.Choice> buttons = new List<BannerChoiceView.Choice>();
     private readonly HashSet<string> usedChoices = new HashSet<string>();
     private readonly System.Random rng = new System.Random();
@@ -102,6 +102,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
         bool somethingHappened = false;   // an outcome was applied: leaving now still resolves the site
         bool resolved = false;
         EnemyShipDefinition combatAfter = null;
+        EnemyShipDefinition spawnAtEdgeAfterClose = null;
 
         ShowDefinition(shown, site, planet, hazard);
 
@@ -165,6 +166,8 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
                         if (actionChoice.hideAfterUse) usedChoices.Add(actionChoice.id);
                         if (action.outcome != null && action.outcome.startCombatWith != null)
                             combatAfter = action.outcome.startCombatWith;
+                        if (action.outcome != null && action.outcome.spawnOnMapEdgeAfterClose != null)
+                            spawnAtEdgeAfterClose = action.outcome.spawnOnMapEdgeAfterClose;
                         if (action.outcome != null && action.outcome.followUp != null)
                             followUpAfterDialogue = action.outcome.followUp;
                         if (actionChoice.endsEvent) dialogueResolved = true;
@@ -183,7 +186,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
                 {
                     shown = followUpAfterDialogue;
                     usedChoices.Clear();
-                    ShowDefinition(shown, site, planet, hazard);
+                    ShowDefinition(shown, site, planet, hazard, crtBannerSwap: true);
                     continue;
                 }
 
@@ -231,14 +234,22 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             string summary = resolution.summary;
             somethingHappened = true;
 
+            if (outcome != null && outcome.spawnOnMapEdgeAfterClose != null)
+                spawnAtEdgeAfterClose = outcome.spawnOnMapEdgeAfterClose;
+
             if (outcome != null && outcome.showBannerOf != null && banners != null)
             {
-                view.SetBanner(banners.Resolve(outcome.showBannerOf, planet));
+                shownBanner = banners.Resolve(outcome.showBannerOf, planet);
+                view.SetBanner(shownBanner);
             }
-            view.ShowResult(JoinResult(outcome != null ? outcome.resultText : "", summary));
-            view.SetChoices(new[] { new BannerChoiceView.Choice(ContinueId, continueLabel) });
-            yield return view.WaitForChoice(id => picked = id);
-            if (cancelled || picked == null) break;
+
+            if (!choice.skipResultStep)
+            {
+                view.ShowResult(JoinResult(outcome != null ? outcome.resultText : "", summary));
+                view.SetChoices(new[] { new BannerChoiceView.Choice(ContinueId, continueLabel) });
+                yield return view.WaitForChoice(id => picked = id);
+                if (cancelled || picked == null) break;
+            }
 
             if (choice.dialogue != null && dialoguePanel != null)
             {
@@ -259,7 +270,7 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             {
                 shown = outcome.followUp;
                 usedChoices.Clear();
-                ShowDefinition(shown, site, planet, hazard);
+                ShowDefinition(shown, site, planet, hazard, crtBannerSwap: true);
                 continue;
             }
 
@@ -277,16 +288,13 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
         current = null;
         usedChoices.Clear();
 
-        // Outcomes marked Spawn When Window Closes: now the map is in view.
-        if (!cancelled && enemySpawner != null)
+        // Some reveals deliberately stage the map contact only once the banner is gone.
+        // Waiting one frame makes the transition visually unambiguous: close event -> map -> contact appears.
+        if (spawnAtEdgeAfterClose != null && !cancelled)
         {
-            foreach (EnemyShipDefinition type in spawnsOnClose)
-            {
-                if (!enemySpawner.TrySpawnAtMapEdge(type, out _))
-                    enemySpawner.ScheduleMapEdgeSpawn(type, 1);   // edge full: next turn instead
-            }
+            yield return null;
+            SpawnAtMapEdge(spawnAtEdgeAfterClose);
         }
-        spawnsOnClose.Clear();
 
         done?.Invoke(resolved && !cancelled
             ? new EventOutcome { resolved = true, stopJourney = false }
@@ -338,14 +346,28 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
     }
 
 
-    private void ShowDefinition(EventDefinition definition, EventSite site, Planet planet, bool hazard)
+    /// <summary>
+    /// Fills the window with a definition. With crtBannerSwap (follow-ups in the
+    /// same window), text updates at once but a changed banner plays the
+    /// BannerChoiceView CRT redraw instead of cutting - e.g. ramp lowering ->
+    /// cultists on the gangplank, detection -> eldritch contact, -> airlock.
+    /// Same sprite (or no banner either side) just cuts, as before.
+    /// </summary>
+    private void ShowDefinition(EventDefinition definition, EventSite site, Planet planet, bool hazard,
+                                bool crtBannerSwap = false)
     {
+        Sprite next = banners != null ? banners.Resolve(definition, planet) : null;
+        bool swap = crtBannerSwap && shownBanner != null && next != null && next != shownBanner;
+
         view.Show(
-            banners != null ? banners.Resolve(definition, planet) : null,
+            swap ? shownBanner : next,      // keep the old image up; SetBanner redraws it
             Title(definition),
             Status(definition, planet),
             definition.BodyText,
             hazard);
+
+        if (swap) view.SetBanner(next);
+        shownBanner = next;
     }
 
 
@@ -415,23 +437,32 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
             else Debug.LogWarning($"EventPanel: no QuestScheduler in the scene for {outcome.scheduleEvent.Id}.", this);
         }
 
+        if (outcome != null && outcome.delayedWrites != null && !outcome.delayedWrites.IsEmpty)
+        {
+            if (questScheduler != null) questScheduler.ScheduleWrites(outcome.delayedWrites, outcome.delayedWritesInTurns);
+            else Debug.LogWarning("EventPanel: no QuestScheduler in the scene for delayed quest state.", this);
+        }
+
         if (outcome != null && outcome.spawnOnMapEdge != null)
         {
             if (outcome.spawnDelayTurns > 0 && enemySpawner != null)
-            {
                 enemySpawner.ScheduleMapEdgeSpawn(outcome.spawnOnMapEdge, outcome.spawnDelayTurns);
-            }
-            else if (outcome.spawnWhenWindowCloses && enemySpawner != null)
-            {
-                spawnsOnClose.Add(outcome.spawnOnMapEdge);   // done in Present once the window is hidden
-            }
-            else if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(outcome.spawnOnMapEdge, out _))
-            {
-                Debug.LogWarning($"EventPanel: could not spawn {outcome.spawnOnMapEdge.DisplayName} at the map edge (no free entry cell?).", this);
-            }
+            else
+                SpawnAtMapEdge(outcome.spawnOnMapEdge);
         }
 
         return result;
+    }
+
+
+    private void SpawnAtMapEdge(EnemyShipDefinition definition)
+    {
+        if (definition == null) return;
+
+        if (enemySpawner == null || !enemySpawner.TrySpawnAtMapEdge(definition, out _))
+        {
+            Debug.LogWarning($"EventPanel: could not spawn {definition.DisplayName} at the map edge (no free entry cell?).", this);
+        }
     }
 
 
