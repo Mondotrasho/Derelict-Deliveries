@@ -23,6 +23,9 @@ MonoBehaviour:
     - scope: 0
       key: cult:egg
       expected: 1
+    - scope: 0
+      key: cult:egg_stirred
+      expected: 0
     counters: []
   oncePerPlanet: 0
   onResolve:
@@ -81,7 +84,10 @@ MonoBehaviour:
     text: "Ignore it"
     availability:
       tags: []
-      flags: []
+      flags:
+        - scope: 0
+          key: cult:egg_stirred
+          expected: 1
       counters: []
     minCrew: 0
     showWhenLocked: 0

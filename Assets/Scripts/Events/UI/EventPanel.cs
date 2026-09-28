@@ -172,12 +172,20 @@ public sealed class EventPanel : MonoBehaviour, IEventPresenter
                             followUpAfterDialogue = action.outcome.followUp;
                         if (actionChoice.endsEvent) dialogueResolved = true;
 
+                        // A gameplay choice has been made, so quitting can no longer lose it.
+                        dialoguePanel.SetCloseLocked(false);
+
                         return new DialogueActionResult(true, action.outcomeIndex);
                     });
 
                 // The event card is deliberately visible until the player chooses to interact.
                 // Once dialogue starts, hide it so the two UIs never overlap or flash through.
                 view.Hide();
+
+                // Events that can't be left for later (quest stages from the QuestScheduler are
+                // one-shot) must not be quit before a choice is made, or the quest would stall.
+                // QUIT stays disabled until an action resolves or the dialogue runs out.
+                if (!canLeaveDialogueEvent) dialoguePanel.SetCloseLocked(true);
                 yield return dialoguePanel.OpenDialogueAndWait(shown.DialogueJson);
                 dialoguePanel.ClearChoiceActionResolver();
                 if (cancelled) break;
