@@ -1,0 +1,71 @@
+{
+  "terminal": {
+    "title": "SYS://MARKET//SCRATCHED POD",
+    "status": "CONTRACT UNKNOWN"
+  },
+  "characters": {
+    "left": "charlie",
+    "right": "stasis_pod"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "charlie",
+      "text": "The scratched pod is yours. Frost beads across the glass while the broker quietly stops answering messages."
+    },
+    {
+      "tick": 2,
+      "speaker": "charlie",
+      "text": "No readable contract. No useful ID. There is one obvious test."
+    },
+    {
+      "tick": 10,
+      "speaker": "charlie",
+      "text": "*tap tap*"
+    },
+    {
+      "tick": 11,
+      "speaker": "sera",
+      "setRightCharacter": "sera",
+      "text": "If you are done knocking, open the latch."
+    },
+    {
+      "tick": 12,
+      "speaker": "charlie",
+      "text": "You are awake. That is already better than the warranty."
+    },
+    {
+      "tick": 13,
+      "speaker": "sera",
+      "text": "Sera Vale. Pilot. I would very much like to know what year it is after we get off this dock.",
+      "nextTick": -1
+    },
+    {
+      "tick": 20,
+      "speaker": "charlie",
+      "text": "*The knock runs dead against the glass.*"
+    },
+    {
+      "tick": 21,
+      "speaker": "charlie",
+      "text": "Nothing. No movement. No readable vitals beyond the pod's own green light. The broker has stopped answering. You have been scammed.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 2,
+      "options": [
+        {
+          "text": "Tap the glass",
+          "line": "All right. Wake up.",
+          "action": "wake",
+          "outcomeTicks": [
+            10,
+            20
+          ]
+        }
+      ]
+    }
+  ]
+}

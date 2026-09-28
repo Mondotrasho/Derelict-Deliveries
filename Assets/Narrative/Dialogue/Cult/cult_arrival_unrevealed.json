@@ -1,0 +1,46 @@
+{
+  "terminal": {
+    "title": "SYS://GREY LANDING PAD",
+    "status": "HANDOVER"
+  },
+  "characters": {
+    "left": "pilot",
+    "right": "cultist_pilgrim"
+  },
+  "lines": [
+    {
+      "tick": 1,
+      "speaker": "cultist_pilgrim",
+      "text": "The pilgrimage is complete. You kept your word, traveller. The Choir keeps its debts as well."
+    },
+    {
+      "tick": 2,
+      "speaker": "pilot",
+      "text": "Fuel first. Mysterious gratitude second."
+    },
+    {
+      "tick": 3,
+      "speaker": "cultist_pilgrim",
+      "text": "Of course. And should the Choir need a careful captain again, someone may find you."
+    },
+    {
+      "tick": 10,
+      "speaker": "cultist_pilgrim",
+      "text": "Travel quietly, courier. We may speak again.",
+      "nextTick": -1
+    }
+  ],
+  "choices": [
+    {
+      "tick": 3,
+      "options": [
+        {
+          "text": "Take the payment",
+          "line": "Then we are square.",
+          "action": "complete_dropoff",
+          "nextTick": 10
+        }
+      ]
+    }
+  ]
+}

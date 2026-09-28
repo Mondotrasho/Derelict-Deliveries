@@ -11,28 +11,28 @@
     {
       "tick": 1,
       "speaker": "mara",
-      "text": "Your port thruster is coughing. Your coolant loop is worse. I can fix both, but I would rather stop watching you mistreat them."
+      "text": "Name's Marek Voss. Ship's engineer, or I was until my last captain sold the ship out from under me. Your port thruster is coughing and your coolant loop is worse."
     },
     {
       "tick": 2,
       "speaker": "charlie",
-      "text": "Is that an offer to join the crew or an insult?"
+      "text": "You're telling me you want the engineer's job?"
     },
     {
       "tick": 3,
       "speaker": "mara",
-      "text": "Ten crates of supplies up front. After that I insult the ship professionally."
+      "text": "Someone has to keep this thing flying. Ten crates of supplies up front and the engine room is mine."
     },
     {
       "tick": 10,
       "speaker": "mara",
-      "text": "Deal. Show me the engine room before something there develops opinions.",
+      "text": "Then you've got yourself an engineer. Show me the engine room before something in there develops opinions.",
       "nextTick": -1
     },
     {
       "tick": 20,
       "speaker": "mara",
-      "text": "Then I will pretend I never saw your coolant loop.",
+      "text": "Your call. When that coolant loop goes, remember an engineer offered.",
       "nextTick": -1
     }
   ],
@@ -41,8 +41,8 @@
       "tick": 3,
       "options": [
         {
-          "text": "Hire Mara - 10 supplies",
-          "line": "Ten crates. You are hired.",
+          "text": "Hire Marek as engineer - 10 supplies",
+          "line": "Ten crates. Welcome aboard, engineer.",
           "action": "hire_mara",
           "nextTick": 10
         },

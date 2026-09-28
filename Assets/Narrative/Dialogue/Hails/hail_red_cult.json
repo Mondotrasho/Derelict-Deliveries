@@ -5,7 +5,7 @@
   },
   "characters": {
     "left": "charlie",
-    "right": "cultist"
+    "right": "quiet_choir"
   },
   "lines": [
     {
@@ -15,35 +15,35 @@
     },
     {
       "tick": 2,
-      "speaker": "cultist",
+      "speaker": "quiet_choir",
       "text": "We receive everything, traveller. Every signal. Every whisper. Every thought you think you kept to yourself."
     },
     {
       "tick": 3,
-      "speaker": "cultist",
+      "speaker": "quiet_choir",
       "text": "This is the Quiet Choir. We sing to what sleeps beneath the rock, so that it may keep sleeping. Mostly."
     },
     {
       "tick": 10,
-      "speaker": "cultist",
+      "speaker": "quiet_choir",
       "text": "There is a shrine on the surface. Look, if you must. Do not touch the offerings. We cannot stress this enough.",
       "nextTick": 30
     },
     {
       "tick": 20,
-      "speaker": "cultist",
+      "speaker": "quiet_choir",
       "text": "Some of our brothers and sisters travel to the grey world. If they ask for passage, be kind. Be very kind.",
       "nextTick": 30
     },
     {
       "tick": 25,
-      "speaker": "cultist",
+      "speaker": "quiet_choir",
       "text": "Oh, that. The hymn is always playing. You will stop noticing it in a few days. Or you will start singing along.",
       "nextTick": 30
     },
     {
       "tick": 30,
-      "speaker": "cultist",
+      "speaker": "quiet_choir",
       "text": "Land if you wish, traveller. The Choir is patient. The thing beneath the rock is less so."
     }
   ],

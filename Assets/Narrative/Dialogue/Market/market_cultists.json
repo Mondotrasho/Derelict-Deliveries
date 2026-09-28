@@ -5,12 +5,12 @@
   },
   "characters": {
     "left": "charlie",
-    "right": "cultist"
+    "right": "cultist_unknown"
   },
   "lines": [
     {
       "tick": 1,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "You have a ship. We can smell the fuel on you. That is a compliment."
     },
     {
@@ -20,47 +20,47 @@
     },
     {
       "tick": 3,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "Perhaps. We are always interested in ships that travel farther than their owners planned."
     },
     {
       "tick": 10,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "Pilgrims. Travellers. Two humble voices of a very old choir. Nobody important. Please forget our faces.",
       "nextTick": 30
     },
     {
       "tick": 20,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "The robes are warm, the hoods are practical, and strangers ask fewer questions than you might expect.",
       "nextTick": 30
     },
     {
       "tick": 30,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "If you are looking for work, courier, ask."
     },
     {
       "tick": 60,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "The taller one smiles. Not work, exactly. A favour. Come, sit.",
       "nextTick": -1
     },
     {
       "tick": 70,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "A third robe steps out behind you. By the time you reach the docks, four crates are missing.",
       "nextTick": -1
     },
     {
       "tick": 80,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "A small courier job. Easy money, no questions. Six crates for your trouble.",
       "nextTick": -1
     },
     {
       "tick": 90,
-      "speaker": "cultist",
+      "speaker": "cultist_unknown",
       "text": "The quiet one watches you all the way back to the docks.",
       "nextTick": -1
     }
@@ -89,24 +89,6 @@
           ]
         },
         {
-          "text": "Ask about work",
-          "line": "Fine. What kind of work?",
-          "action": "work_existing",
-          "outcomeTicks": [
-            80,
-            70
-          ]
-        },
-        {
-          "text": "Ask about work",
-          "line": "Fine. What kind of work?",
-          "action": "work_grey",
-          "outcomeTicks": [
-            80,
-            70
-          ]
-        },
-        {
           "text": "Leave",
           "line": "I think I will keep walking.",
           "nextTick": 90
@@ -122,24 +104,6 @@
           "action": "work_cult",
           "outcomeTicks": [
             60,
-            70
-          ]
-        },
-        {
-          "text": "Ask about work",
-          "line": "All right. What is the job?",
-          "action": "work_existing",
-          "outcomeTicks": [
-            80,
-            70
-          ]
-        },
-        {
-          "text": "Ask about work",
-          "line": "All right. What is the job?",
-          "action": "work_grey",
-          "outcomeTicks": [
-            80,
             70
           ]
         },

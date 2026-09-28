@@ -5,35 +5,47 @@
   },
   "characters": {
     "left": "pilot",
-    "right": "cultist"
+    "right": "cultist_pilgrim"
   },
   "lines": [
     {
       "tick": 1,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "Wait! Please. Not all of us want to go where they are going."
     },
     {
       "tick": 2,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "I can cook. I can weld. I can stop chanting. Mostly."
     },
     {
       "tick": 10,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "The grey world is not a destination. It is an appointment. I do not wish to keep it.",
       "nextTick": 30
     },
     {
       "tick": 20,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "Nothing! I carry nothing. Only regret, and a small ceremonial knife. For fruit.",
       "nextTick": 30
     },
     {
       "tick": 30,
-      "speaker": "cultist",
+      "speaker": "cultist_pilgrim",
       "text": "Take me with you, and I will work for my passage. You will not regret it."
+    },
+    {
+      "tick": 40,
+      "speaker": "cultist_pilgrim",
+      "text": "Thank you. I can work. I can keep quiet. I can even stop chanting when people are sleeping.",
+      "nextTick": -1
+    },
+    {
+      "tick": 50,
+      "speaker": "cultist_pilgrim",
+      "text": "I understand. Please go before they notice I asked.",
+      "nextTick": -1
     }
   ],
   "choices": [
@@ -49,6 +61,23 @@
           "text": "What are you hiding?",
           "line": "What's under the robe?",
           "nextTick": 20
+        }
+      ]
+    },
+    {
+      "tick": 30,
+      "options": [
+        {
+          "text": "Take them aboard",
+          "line": "All right. You're coming with us.",
+          "action": "take_defector",
+          "nextTick": 40
+        },
+        {
+          "text": "Leave them",
+          "line": "No. I'm not taking the risk.",
+          "action": "leave_defector",
+          "nextTick": 50
         }
       ]
     }
