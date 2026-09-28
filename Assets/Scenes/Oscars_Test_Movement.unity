@@ -18290,12 +18290,12 @@ MonoBehaviour:
   enemyPrefab: {fileID: 5632680383886799243, guid: ce3f72c080983a448bfff4e1cf8963b5, type: 3}
   spawnedEnemyParent: {fileID: 0}
   spawnTypes: []
-  detectionDelayTurns: 6
+  detectionDelayTurns: 10
   initialWaveSize: 1
-  turnsBetweenWaves: 6
+  turnsBetweenWaves: 5
   reinforcementWaveSize: 1
-  reinforcementGrowthPerWave: 0
-  maxActiveEnemies: 2
+  reinforcementGrowthPerWave: 1
+  maxActiveEnemies: 10
   spawnEntries:
   - cell: {x: 16, y: 8, z: 0}
     facingDirection: {x: -1, y: 0}
