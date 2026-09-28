@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 167c81228c4bb0f40bbb369954976cf0
+guid: 6b5600012bf2cbe4c946e97920b8f67f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7169610267031536943
-    second: PILOT_0
+      213: 3553998300248549225
+    second: EventBanner_CultEggTransitMoves_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: PILOT_0
+      name: EventBanner_CultEggTransitMoves_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 96
-        height: 96
+        width: 296
+        height: 100
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1da7797c27d608c90800000000000000
-      internalID: -7169610267031536943
+      spriteID: 96728aacf96525130800000000000000
+      internalID: 3553998300248549225
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      PILOT_0: -7169610267031536943
+      EventBanner_CultEggTransitMoves_0: 3553998300248549225
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
