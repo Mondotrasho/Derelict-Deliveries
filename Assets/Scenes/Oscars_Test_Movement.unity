@@ -3020,7 +3020,7 @@ MonoBehaviour:
   banner: {fileID: 0}
   listenForEscape: 0
   volumeStep: 0.1
-  creditsScreen: {fileID: 0}
+  creditsScreen: {fileID: 1962034675}
   creditsText: {fileID: 4900000, guid: 7426f3dcd520c03439eda71686884b98, type: 3}
 --- !u!4 &646385174
 Transform:
@@ -18644,6 +18644,54 @@ MonoBehaviour:
   passiveArmourScale: 100
   defendRechargeMultiplier: 2
   outOfCombatRegenPerTurn: 10
+--- !u!1 &1962034674
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1962034676}
+  - component: {fileID: 1962034675}
+  m_Layer: 0
+  m_Name: Credits Screen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1962034675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1962034674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dd3523fca96a304295cb6b4ca1dffef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CreditsScreen
+  roll: {fileID: 11400000, guid: f04d85accb4b85748b04cf55fc29eb70, type: 2}
+  sortingOrder: 1000
+  openOnStart: 0
+  backLabel: BACK
+--- !u!4 &1962034676
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1962034674}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.92543, y: 0.80526, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1963077829
 GameObject:
   m_ObjectHideFlags: 0
@@ -23997,3 +24045,4 @@ SceneRoots:
   - {fileID: 2100000002}
   - {fileID: 646385174}
   - {fileID: 1589713766}
+  - {fileID: 1962034676}

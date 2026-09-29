@@ -35,6 +35,7 @@ public sealed class CreditsScreen : MonoBehaviour
     private float viewportHeight;
     private float delayLeft;
     private bool stopped;
+    private float speedMultiplier = 1f;
 
 
     private void Start()
@@ -65,6 +66,7 @@ public sealed class CreditsScreen : MonoBehaviour
         root.SetActive(true);
         IsOpen = true;
         stopped = false;
+        speedMultiplier = 1f;
         delayLeft = roll.startDelay;
 
         Canvas.ForceUpdateCanvases();
@@ -116,8 +118,15 @@ public sealed class CreditsScreen : MonoBehaviour
             stopped = false;
         }
 
+        // Hold any key / mouse button / touch to fast-forward (eased so it doesn't jerk).
+        float targetMultiplier = AnyInputHeld() ? roll.holdSpeedMultiplier : 1f;
+        speedMultiplier = roll.holdEaseSeconds > 0f
+            ? Mathf.MoveTowards(speedMultiplier, targetMultiplier,
+                                Mathf.Abs(roll.holdSpeedMultiplier - 1f) * dt / roll.holdEaseSeconds)
+            : targetMultiplier;
+
         if (delayLeft > 0f) delayLeft -= dt;
-        else if (!stopped) scrollY += roll.scrollSpeed * dt;
+        else if (!stopped) scrollY += roll.scrollSpeed * speedMultiplier * dt;
 
         float stopAt = contentHeight - viewportHeight * 0.6f;
         if (roll.loop)
@@ -132,6 +141,18 @@ public sealed class CreditsScreen : MonoBehaviour
 
         scrollY = Mathf.Clamp(scrollY, -viewportHeight, contentHeight);
         Apply();
+    }
+
+
+    private static bool AnyInputHeld()
+    {
+        if (Keyboard.current != null && Keyboard.current.anyKey.isPressed) return true;
+        Mouse mouse = Mouse.current;
+        if (mouse != null && (mouse.leftButton.isPressed || mouse.rightButton.isPressed || mouse.middleButton.isPressed)) return true;
+        Gamepad pad = Gamepad.current;
+        if (pad != null && (pad.buttonSouth.isPressed || pad.rightTrigger.isPressed)) return true;
+        Touchscreen touch = Touchscreen.current;
+        return touch != null && touch.primaryTouch.press.isPressed;
     }
 
 
@@ -335,12 +356,21 @@ public sealed class CreditsScreen : MonoBehaviour
         float border = roll.borderThickness;
 
         // Mask: the filled shape, slightly inset so the ring covers its hard edge.
-        bool hasBackground = background.a > 0.001f || sprite == null;
-        Image maskImage = NewImage("Mask", frame, CreditsShapes.Fill(roll.frameShape, border * 0.6f),
-                                   sprite == null && background.a <= 0.001f ? roll.initialsBackground : background);
+        // The mask Image must stay fully opaque: a transparent graphic is culled and
+        // writes no stencil, which hides everything inside it. So the mask itself is
+        // never shown, and the background colour is its own Image inside the mask.
+        Sprite fill = CreditsShapes.Fill(roll.frameShape, border * 0.6f);
+        Image maskImage = NewImage("Mask", frame, fill, Color.white);
         Stretch(maskImage.rectTransform);
         Mask mask = maskImage.gameObject.AddComponent<Mask>();
-        mask.showMaskGraphic = hasBackground;
+        mask.showMaskGraphic = false;
+
+        Color backColour = sprite == null && background.a <= 0.001f ? roll.initialsBackground : background;
+        if (backColour.a > 0.001f)
+        {
+            Image back = NewImage("Background", maskImage.rectTransform, fill, backColour);
+            Stretch(back.rectTransform);
+        }
 
         if (sprite != null)
         {

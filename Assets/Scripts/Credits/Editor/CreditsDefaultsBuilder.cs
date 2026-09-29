@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -13,6 +14,10 @@ using UnityEngine;
 /// and asset credits filled in. It never overwrites an asset that already
 /// exists, so once you have edited them, running it again is harmless (delete
 /// an asset first if you want it regenerated).
+///
+///   Tools > Derelict Deliveries > Credits > 3. Relink Missing Credits Images
+/// re-runs the import fix, then fills any EMPTY avatar / link icon / background
+/// slot on the existing assets. Filled slots are never changed.
 /// </summary>
 public static class CreditsDefaultsBuilder
 {
@@ -204,7 +209,7 @@ public static class CreditsDefaultsBuilder
             roll.bodyFont = Font("Kenney Mini Square SDF");
             roll.linkFont = Font("Kenney Mini Square SDF");
 
-            roll.background = AssetDatabase.LoadAssetAtPath<Sprite>(BackgroundFolder + "/Credits_Starfield_1080p.png");
+            roll.background = LoadSprite(BackgroundFolder + "/Credits_Starfield_1080p.png");
             roll.terminalStyle = FindTerminalStyle();
 
             AssetDatabase.CreateAsset(roll, rollPath);
@@ -216,6 +221,70 @@ public static class CreditsDefaultsBuilder
         }
 
         AssetDatabase.SaveAssets();
+    }
+
+
+    // ------------------------------------------------------------------
+    // 3. Relink
+    // ------------------------------------------------------------------
+
+    [MenuItem(MenuRoot + "3. Relink Missing Credits Images")]
+    public static void RelinkImages()
+    {
+        FixImports();
+
+        int fixedCount = 0;
+        fixedCount += SetAvatar("Art_RowanyMills", "Avatar_Vellichor.jpg");
+        fixedCount += SetAvatar("Music_Robotmeadow", "Avatar_Robotmeadow.jpg");
+        fixedCount += SetAvatar("Asset_Kenney", "Avatar_Kenney.png");
+        fixedCount += SetAvatar("Asset_Poppants", "Avatar_Poppants_Itch_pixel.png");
+        fixedCount += SetAvatar("Asset_Wenrexa", "Avatar_Wenrexa_Logo.png");
+        fixedCount += SetLinkIcon("Asset_Poppants", "itch.io/profile", "Avatar_Poppants_Itch_pixel.png", Color.clear);
+        fixedCount += SetLinkIcon("Asset_Poppants", "construct.net", "Avatar_Poppants_Construct_pixel.jpg", Color.clear);
+        fixedCount += SetLinkIcon("Asset_Wenrexa", "ui-different03", "Avatar_Wenrexa_Itch.png", Color.white);
+
+        CreditsRoll roll = AssetDatabase.LoadAssetAtPath<CreditsRoll>(DataFolder + "/CreditsRoll.asset");
+        if (roll != null && roll.background == null)
+        {
+            roll.background = LoadSprite(BackgroundFolder + "/Credits_Starfield_1080p.png");
+            if (roll.background != null)
+            {
+                EditorUtility.SetDirty(roll);
+                fixedCount++;
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Credits: relink done, {fixedCount} empty slot(s) filled. Any image still missing is listed above.");
+    }
+
+
+    private static int SetAvatar(string personFile, string imageFile)
+    {
+        CreditsPerson person = AssetDatabase.LoadAssetAtPath<CreditsPerson>(PeopleFolder + "/" + personFile + ".asset");
+        if (person == null || person.avatar != null) return 0;
+
+        person.avatar = Avatar(imageFile);
+        if (person.avatar == null) return 0;
+        EditorUtility.SetDirty(person);
+        return 1;
+    }
+
+
+    private static int SetLinkIcon(string personFile, string urlContains, string imageFile, Color background)
+    {
+        CreditsPerson person = AssetDatabase.LoadAssetAtPath<CreditsPerson>(PeopleFolder + "/" + personFile + ".asset");
+        if (person == null) return 0;
+
+        CreditLink link = person.links.FirstOrDefault(l => l != null && l.icon == null &&
+                                                           l.url != null && l.url.Contains(urlContains));
+        if (link == null) return 0;
+
+        link.icon = Avatar(imageFile);
+        if (link.icon == null) return 0;
+        link.iconBackground = background;
+        EditorUtility.SetDirty(person);
+        return 1;
     }
 
 
@@ -256,12 +325,27 @@ public static class CreditsDefaultsBuilder
     }
 
 
-    private static Sprite Avatar(string fileName)
+    private static Sprite Avatar(string fileName) => LoadSprite(AvatarFolder + "/" + fileName);
+
+
+    /// <summary>Loads the sprite in an image file, and explains why if there isn't one.</summary>
+    private static Sprite LoadSprite(string path)
     {
-        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AvatarFolder + "/" + fileName);
-        if (sprite == null)
-            Debug.LogWarning($"Credits: no sprite at {AvatarFolder}/{fileName} - run step 1 first, or assign it by hand.");
-        return sprite;
+        // LoadAll also finds the sprite when a texture was imported as Sprite Mode = Multiple.
+        Sprite sprite = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().FirstOrDefault();
+        if (sprite != null) return sprite;
+
+        if (!File.Exists(path))
+        {
+            Debug.LogWarning($"Credits: file not found: {path} (check the name and folder).");
+        }
+        else
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            string type = importer != null ? importer.textureType + " / " + importer.spriteImportMode : "not imported as a texture";
+            Debug.LogWarning($"Credits: {path} has no sprite (import: {type}). Set Texture Type = Sprite (2D and UI), Apply, then run step 3.");
+        }
+        return null;
     }
 
 
