@@ -109,6 +109,11 @@ public sealed class ShipHud : MonoBehaviour
     [SerializeField] private string cancelLabel = "CANCEL";
     [SerializeField] private string endTurnLabel = "END TURN";
 
+    [Header("Menu Button (top left, opens PrototypePauseMenuController)")]
+    [SerializeField] private bool showMenuButton = true;
+    [SerializeField] private string menuLabel = "MENU";
+    [Min(40f)] [SerializeField] private float menuButtonWidth = 96f;
+
     [Header("Buttons")]
     [Tooltip("Largest button text size; labels shrink automatically to fit their button.")]
     [Min(6f)] [SerializeField] private float buttonTextSize = 16f;
@@ -251,7 +256,7 @@ public sealed class ShipHud : MonoBehaviour
         UpdatePanelVisibility();
 
         Keyboard k = Keyboard.current;
-        if (k != null && !(panelsHidden && hideMovementPanel))
+        if (k != null && !(panelsHidden && hideMovementPanel) && !PrototypePauseMenuController.BlocksGameplayInput)
         {
             if (k.mKey.wasPressedThisFrame) ToggleMode();
             if (k.spaceKey.wasPressedThisFrame && goButton.interactable) planController?.CommitSegment();
@@ -318,6 +323,16 @@ public sealed class ShipHud : MonoBehaviour
         goButton = MakeButton(buttons, goLabel, () => planController?.CommitSegment(), goW, out goText, flexible: false);
         cancelButton = MakeButton(buttons, cancelLabel, () => planController?.Cancel(), cancelW, out cancelText, flexible: false);
         endButton = MakeButton(buttons, endTurnLabel, EndTurn, endW, out endText, flexible: false);
+
+        // MENU (top left): opens the pause menu. Same frame and buttons as the rest of the HUD.
+        if (showMenuButton)
+        {
+            const float menuPad = 8f, menuButtonHeight = 40f;
+            RectTransform menuPanel = Panel(root, "Menu", new Vector2(0f, 1f), new Vector2(screenMargin.x, -screenMargin.y),
+                                            new Vector2(menuButtonWidth + menuPad * 2f, menuButtonHeight + menuPad * 2f));
+            RectTransform menuRow = Row(Column(menuPanel, menuPad, 0f), menuButtonHeight, 0f);
+            MakeButton(menuRow, menuLabel, PrototypePauseMenuController.ToggleMenu, menuButtonWidth, out _, flexible: false);
+        }
 
         // THREAT (top centre)
         threatRoot = Panel(root, "Threat", new Vector2(0.5f, 1f), new Vector2(0f, -screenMargin.y), new Vector2(640f, 92f));
