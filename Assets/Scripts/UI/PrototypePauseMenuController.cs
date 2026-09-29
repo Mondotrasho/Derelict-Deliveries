@@ -39,6 +39,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
     private const string CreditsId = "credits";
     private const string BackId = "back";
     private const int VolumeBarSegments = 10;
+    private static readonly int[] MainMenuRows = { 1, 2, 1, 1 };
 
     [Header("Terminal UI (optional - empty = original OnGUI menu)")]
     [Tooltip("Terminal-style window for the menu. Use its own copy, not the planet picker's.")]
@@ -366,7 +367,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         }
         else
         {
-            view.Show(banner, titlePrefix + "PAUSED", "SIM HALTED", VolumeLine(), false);
+            view.Show(banner, titlePrefix + "PAUSED", "SIM HALTED", null, false);
             terminalChoices.Add(new BannerChoiceView.Choice(ResumeId, "RESUME"));
             terminalChoices.Add(new BannerChoiceView.Choice(VolumeDownId, "VOLUME -", GameVolume.Master > 0.001f));
             terminalChoices.Add(new BannerChoiceView.Choice(VolumeUpId, "VOLUME +", GameVolume.Master < 0.999f));
@@ -375,6 +376,13 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         }
 
         view.SetChoices(terminalChoices);
+
+        if (!showingCredits)
+        {
+            // RESUME / volume bar / [VOLUME -][VOLUME +] / CREDITS / RESTART SECTOR
+            view.SetChoiceRows(MainMenuRows, new[] { null, VolumeLine(), null, null },
+                               TMPro.TextAlignmentOptions.MidlineLeft, spread: true);
+        }
     }
 
     private static string VolumeLine()

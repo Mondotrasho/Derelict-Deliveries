@@ -102,6 +102,14 @@ public sealed class BannerChoiceView : MonoBehaviour
     private LayoutElement bannerLayout, headerLayout, dividerLayout, bodyLayout;
     private GridLayoutGroup choiceGrid;
     private RectTransform choiceArea;
+
+    // Optional custom rows (SetChoiceRows). Null = the normal one/two-column grid.
+    private LayoutElement choiceAreaLayout;
+    private int[] rowSizes;
+    private string[] rowLabels;
+    private TextAlignmentOptions rowLabelAlignment = TextAlignmentOptions.Center;
+    private bool spreadRows;
+    private readonly List<TextMeshProUGUI> rowLabelTexts = new List<TextMeshProUGUI>();
     private LayoutElement resultLayout;
 
     private readonly List<Button> buttons = new List<Button>();
@@ -243,6 +251,40 @@ public sealed class BannerChoiceView : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Optional: lay the current buttons out in custom rows instead of the grid.
+    /// Call AFTER SetChoices (SetChoices / Show reset it back to the grid).
+    /// buttonsPerRow {1, 2, 1} = one full-width button, then two side by side,
+    /// then one. labelAboveRow (optional, same length) puts a line of text above
+    /// a row - null or empty for none. Buttons fill the rows in SetChoices order.
+    /// </summary>
+    /// labelAlignment = how the row labels line up (MidlineLeft for left-aligned).
+    /// spread = true pushes the rows apart to use the window's full height.
+    public void SetChoiceRows(IReadOnlyList<int> buttonsPerRow, IReadOnlyList<string> labelAboveRow = null,
+                              TextAlignmentOptions labelAlignment = TextAlignmentOptions.Center, bool spread = false)
+    {
+        EnsureBuilt();
+        rowLabelAlignment = labelAlignment;
+        spreadRows = spread;
+        if (buttonsPerRow == null || buttonsPerRow.Count == 0)
+        {
+            rowSizes = null;
+            rowLabels = null;
+        }
+        else
+        {
+            rowSizes = new int[buttonsPerRow.Count];
+            rowLabels = new string[buttonsPerRow.Count];
+            for (int i = 0; i < rowSizes.Length; i++)
+            {
+                rowSizes[i] = Mathf.Max(1, buttonsPerRow[i]);
+                rowLabels[i] = labelAboveRow != null && i < labelAboveRow.Count ? labelAboveRow[i] : null;
+            }
+        }
+        lastSize = new Vector2(-1f, -1f);   // relayout next frame
+    }
+
+
     /// <summary>Result line under the body. Null or empty hides it.</summary>
     public void ShowResult(string text)
     {
@@ -369,6 +411,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         choiceGrid.constraintCount = 1;
         choiceGrid.childAlignment = TextAnchor.UpperCenter;
         choiceGrid.spacing = new Vector2(spacing * 0.6f, spacing * 0.6f);
+        choiceAreaLayout = choiceArea.gameObject.AddComponent<LayoutElement>();   // unset (-1) = the grid reports its own size
 
         topBorder = CreateImage("TopBorder", generatedRoot);
         bottomBorder = CreateImage("BottomBorder", generatedRoot);
@@ -492,6 +535,18 @@ public sealed class BannerChoiceView : MonoBehaviour
         float gap = spacing * 0.6f;
 
         float bodySize = style != null ? style.BodyFontSize : 28f;
+
+        // Custom rows (SetChoiceRows): row count comes from the layout, and any
+        // row labels take fixed height before the buttons are sized.
+        bool customRows = rowSizes != null && count > 0;
+        float rowLabelHeight = bodySize * 1.4f;
+        float rowLabelsTotal = 0f;
+        if (customRows)
+        {
+            rows = rowSizes.Length;
+            foreach (string label in rowLabels)
+                if (!string.IsNullOrEmpty(label)) rowLabelsTotal += rowLabelHeight + gap;
+        }
         float minBody = bodyText.gameObject.activeSelf ? bodySize * 1.25f * minBodyLines : 0f;
         bool showingResult = resultText.gameObject.activeSelf;
         // Do not use resultText.preferredHeight here. On the first result shown in a
@@ -517,6 +572,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         foreach (Transform child in contentRect) if (child.gameObject.activeSelf) visibleChildren++;
         float fixedHeight = column.padding.top + column.padding.bottom + headerHeight + border
                             + spacing * Mathf.Max(0, visibleChildren - 1) + resultHeight + minBody;
+        fixedHeight += rowLabelsTotal;
         float available = Mathf.Max(0f, size.y - fixedHeight);
 
         float idealButton = buttonSize * buttonHeightScale;
@@ -570,9 +626,31 @@ public sealed class BannerChoiceView : MonoBehaviour
         bannerLayout.preferredHeight = bannerHeight;
         bodyLayout.minHeight = Mathf.Max(20f, minBody);
 
-        choiceGrid.constraintCount = columns;
-        choiceGrid.spacing = new Vector2(gap, gap);
-        choiceGrid.cellSize = new Vector2(Mathf.Max(1f, (contentWidth - (columns - 1) * gap) / columns), buttonHeight);
+        if (customRows)
+        {
+            choiceGrid.enabled = false;
+            // Spread: the space the grid would otherwise leave empty goes between the rows.
+            float natural = rowLabelsTotal + rows * buttonHeight + (rows - 1) * gap;
+            float room = available + rowLabelsTotal - bannerLayout.preferredHeight;
+            float rowGap = gap;
+            if (spreadRows && rows > 1 && room > natural)
+                rowGap = gap + (room - natural) / (rows - 1);
+
+            float rowsHeight = LayoutCustomRows(contentWidth, buttonHeight, gap, rowGap, rowLabelHeight);
+            choiceAreaLayout.minHeight = rowsHeight;
+            choiceAreaLayout.preferredHeight = rowsHeight;
+        }
+        else
+        {
+            choiceGrid.enabled = true;
+            choiceAreaLayout.minHeight = -1f;
+            choiceAreaLayout.preferredHeight = -1f;
+            foreach (TextMeshProUGUI t in rowLabelTexts) t.gameObject.SetActive(false);
+
+            choiceGrid.constraintCount = columns;
+            choiceGrid.spacing = new Vector2(gap, gap);
+            choiceGrid.cellSize = new Vector2(Mathf.Max(1f, (contentWidth - (columns - 1) * gap) / columns), buttonHeight);
+        }
 
         if (scanlineImage != null && style != null)
         {
@@ -582,6 +660,85 @@ public sealed class BannerChoiceView : MonoBehaviour
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
         UpdateBannerSwapScanlineUV();
+    }
+
+
+    /// <summary>Places the active buttons (and row labels) by hand. Returns the total height.</summary>
+    private float LayoutCustomRows(float width, float buttonHeight, float gap, float rowGap, float labelHeight)
+    {
+        float body = style != null ? style.BodyFontSize : 28f;
+        float y = 0f;
+        int buttonIndex = 0;
+        int labelIndex = 0;
+
+        for (int r = 0; r < rowSizes.Length; r++)
+        {
+            if (!string.IsNullOrEmpty(rowLabels[r]))
+            {
+                TextMeshProUGUI text = GetRowLabel(labelIndex++);
+                text.gameObject.SetActive(true);
+                text.text = rowLabels[r];
+                text.alignment = rowLabelAlignment;
+                ApplyText(text, palette.primary, body);
+                PlaceTopLeft(text.rectTransform, 0f, y, width, labelHeight);
+                y += labelHeight + gap;
+            }
+
+            int perRow = rowSizes[r];
+            float cellWidth = Mathf.Max(1f, (width - (perRow - 1) * gap) / perRow);
+            for (int k = 0; k < perRow; k++)
+            {
+                Button button = NextActiveButton(ref buttonIndex);
+                if (button == null) break;
+                PlaceTopLeft((RectTransform)button.transform, k * (cellWidth + gap), y, cellWidth, buttonHeight);
+            }
+            y += buttonHeight + (r < rowSizes.Length - 1 ? rowGap : gap);
+        }
+
+        // Any buttons beyond the described rows get a full-width row each.
+        Button extra;
+        while ((extra = NextActiveButton(ref buttonIndex)) != null)
+        {
+            PlaceTopLeft((RectTransform)extra.transform, 0f, y, width, buttonHeight);
+            y += buttonHeight + gap;
+        }
+
+        for (int i = labelIndex; i < rowLabelTexts.Count; i++) rowLabelTexts[i].gameObject.SetActive(false);
+        return Mathf.Max(0f, y - gap);
+    }
+
+
+    private Button NextActiveButton(ref int index)
+    {
+        while (index < buttons.Count)
+        {
+            Button b = buttons[index++];
+            if (b.gameObject.activeSelf) return b;
+        }
+        return null;
+    }
+
+
+    private TextMeshProUGUI GetRowLabel(int index)
+    {
+        while (rowLabelTexts.Count <= index)
+        {
+            TextMeshProUGUI text = CreateText("Row Label " + rowLabelTexts.Count, choiceArea);
+            text.alignment = TextAlignmentOptions.Center;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.raycastTarget = false;
+            text.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            rowLabelTexts.Add(text);
+        }
+        return rowLabelTexts[index];
+    }
+
+
+    private static void PlaceTopLeft(RectTransform rt, float x, float y, float width, float height)
+    {
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+        rt.sizeDelta = new Vector2(width, height);
+        rt.anchoredPosition = new Vector2(x, -y);
     }
 
 
@@ -659,6 +816,11 @@ public sealed class BannerChoiceView : MonoBehaviour
             buttonIds[i] = null;
             buttonEnabled[i] = false;
         }
+
+        rowSizes = null;    // back to the normal grid until SetChoiceRows is called again
+        rowLabels = null;
+        rowLabelAlignment = TextAlignmentOptions.Center;
+        spreadRows = false;
     }
 
 
