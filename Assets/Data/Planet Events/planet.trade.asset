@@ -33,12 +33,12 @@ MonoBehaviour:
   identifiedSpinDegreesPerSecond: 0
   identifiedSizeInTiles: 1
   lifetimeTurns: 0
-  banner: {fileID: 0}
-  shortDescription: "The depot will pump fuel aboard for supplies."
+  banner: {fileID: 21300000, guid: 702bd807a35399041b1ee8ce37cc5a9d, type: 3}
+  shortDescription: The depot will pump fuel aboard for supplies.
   allowLeave: 1
   choices:
   - id: trade
-    text: "Trade 5 supplies for 20 fuel"
+    text: Trade 5 supplies for 20 fuel
     availability:
       tags: []
       flags: []
@@ -47,13 +47,17 @@ MonoBehaviour:
         key: res.supplies
         compare: 0
         value: 5
+    minCrew: 0
+    bonusStat: 
+    chancePerPoint: 0.05
+    minBonus: 0
     showWhenLocked: 1
-    lockedReason: "need 5 supplies"
+    lockedReason: need 5 supplies
     showOdds: 1
     outcomes:
-    - label: "Deal"
+    - label: Deal
       weight: 1
-      resultText: "The dock crew pumps fuel aboard and hauls your crates away."
+      resultText: The dock crew pumps fuel aboard and hauls your crates away.
       resources:
       - kind: 3
         amount: -5
@@ -66,11 +70,28 @@ MonoBehaviour:
       detectionTurns: 0
       consumeAsteroid: 0
       followUp: {fileID: 0}
+      returnCrewFromSiteCounter: 
       startCombatWith: {fileID: 0}
       spawnOnMapEdge: {fileID: 0}
+      spawnOnMapEdgeAfterClose: {fileID: 0}
+      spawnDelayTurns: 0
+      showBannerOf: {fileID: 0}
+      scheduleEvent: {fileID: 0}
+      scheduleInTurns: 1
+      delayedWrites:
+        tags: []
+        flags: []
+        counters: []
+      delayedWritesInTurns: 1
+      recruitOfficer: {fileID: 0}
+      loseOfficer: {fileID: 0}
+      loseOfficerBestAt: 
     dialogue: {fileID: 0}
+    skipResultStep: 0
     endsEvent: 1
     hideAfterUse: 1
   pickupResources: []
-  debugText: Planet trade. Opened from the shared planet option (once per planet). Leave = no deal, option stays.
+  debugText: Planet trade. Opened from the shared planet option (once per planet).
+    Leave = no deal, option stays.
   dialogueJson: {fileID: 0}
+  dialogueButtonLabel: TALK
