@@ -50,6 +50,13 @@ public sealed class PoiOption
     [Tooltip("Come back to the planet's option list afterwards. Combat options always end the visit.")]
     public bool returnToPicker = true;
 
+    [Header("Per-Turn Limit")]
+    [Tooltip("How many times this option can be OPENED per turn. 0 = unlimited (the default, so existing options are unchanged). Counted when picked, not when completed, so backing out of a market still uses a visit.")]
+    [Min(0)] public int maxUsesPerTurn = 0;
+
+    [Tooltip("Where the per-turn count is kept. Player = one shared limit across every planet. Planet = a separate limit at each planet.")]
+    public StateScope perTurnScope = StateScope.Player;
+
     [Header("Dialogue")]
     public TextAsset dialogueJson;
     public bool runBootSequence = false;
@@ -66,6 +73,10 @@ public sealed class PoiOption
 
     public string DoneFlag => "poi:" + (string.IsNullOrWhiteSpace(id) ? title : id.Trim()) + ":done";
 
+    private string Key => string.IsNullOrWhiteSpace(id) ? title : id.Trim();
+    private string TurnKey => "poi:" + Key + ":turn";
+    private string TurnUsesKey => "poi:" + Key + ":turnUses";
+
     public bool ReturnsToPicker => returnToPicker && kind != PoiActionKind.Combat;
 
 
@@ -73,6 +84,7 @@ public sealed class PoiOption
     {
         if (oncePerPlanet && context.Planet != null && context.Planet.GetFlag(DoneFlag)) return false;
         if (conditions != null && !conditions.IsMet(context)) return false;
+        if (IsUsedUpThisTurn(context)) return false;
 
         switch (kind)
         {
@@ -82,6 +94,33 @@ public sealed class PoiOption
                 return eventTable != null && eventTable.HasEligible(eventTags, context);
             default: return true;
         }
+    }
+
+
+    /// <summary>True once Max Uses Per Turn has been reached this turn.</summary>
+    public bool IsUsedUpThisTurn(EventContext context)
+    {
+        if (maxUsesPerTurn <= 0) return false;
+        IEventState state = context.Get(perTurnScope);
+        if (state == null) return false;
+        if (state.GetCounter(TurnKey, -1) != context.Turn) return false;   // a new turn: count starts again
+        return state.GetCounter(TurnUsesKey) >= maxUsesPerTurn;
+    }
+
+
+    /// <summary>Counts one use for this turn. Called by PointOfInterestController when the option is picked.</summary>
+    public void RecordUseThisTurn(EventContext context)
+    {
+        if (maxUsesPerTurn <= 0) return;
+        IEventState state = context.Get(perTurnScope);
+        if (state == null) return;
+
+        if (state.GetCounter(TurnKey, -1) != context.Turn)
+        {
+            state.SetCounter(TurnKey, context.Turn);
+            state.SetCounter(TurnUsesKey, 0);
+        }
+        state.IncrementCounter(TurnUsesKey);
     }
 }
 

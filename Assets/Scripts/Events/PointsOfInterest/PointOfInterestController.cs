@@ -164,6 +164,7 @@ public class PointOfInterestController : MonoBehaviour
                 EventContext context = BuildContext(planet, cell);
                 bool completed = false;
                 returnToPicker = picked.Option.ReturnsToPicker;
+                picked.Option.RecordUseThisTurn(context);   // per-turn limit counts on open (stops market rerolls)
 
                 switch (picked.Option.kind)
                 {
