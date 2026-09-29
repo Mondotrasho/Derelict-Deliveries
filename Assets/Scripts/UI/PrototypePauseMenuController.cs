@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -38,7 +39,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
     private const string VolumeUpId = "vol+";
     private const string CreditsId = "credits";
     private const string BackId = "back";
-    private const int VolumeBarSegments = 10;
+    private const int VolumeBarSegments = 10;   // fallback text only (window width unknown)
     private static readonly int[] MainMenuRows = { 1, 2, 1, 1 };
 
     [Header("Terminal UI (optional - empty = original OnGUI menu)")]
@@ -55,6 +56,10 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
 
     [Header("Volume")]
     [Range(0.01f, 0.5f)] [SerializeField] private float volumeStep = 0.1f;
+    [Tooltip("Characters in the volume bar. It is stretched to the window width either way; more = finer steps.")]
+    [Range(5, 60)] [SerializeField] private int volumeBarLength = 20;
+    [SerializeField] private char volumeFilledChar = '#';
+    [SerializeField] private char volumeEmptyChar = '.';
 
     [Header("Credits")]
     [Tooltip("Scrolling credits screen. If set, CREDITS opens it; otherwise the plain text below is shown.")]
@@ -382,6 +387,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
             // RESUME / volume bar / [VOLUME -][VOLUME +] / CREDITS / RESTART SECTOR
             view.SetChoiceRows(MainMenuRows, new[] { null, VolumeLine(), null, null },
                                TMPro.TextAlignmentOptions.MidlineLeft, spread: true);
+            view.SetRowLabelBuilder(1, BuildVolumeBar);   // stretches the bar to the window width
         }
     }
 
@@ -392,6 +398,32 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         StringBuilder sb = new StringBuilder("VOLUME  [");
         sb.Append('#', filled).Append('.', VolumeBarSegments - filled);
         sb.Append("]  ").Append(Mathf.RoundToInt(volume * 100.0f)).Append('%');
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// "VOLUME [####......]  60%" where the bar exactly fills the width left over.
+    /// Every bar character is forced to the same width with TMP's &lt;mspace&gt;, so
+    /// the bar never changes length as it fills.
+    /// </summary>
+    private string BuildVolumeBar(TMP_Text text, float width)
+    {
+        float volume = GameVolume.Master;
+        int percent = Mathf.RoundToInt(volume * 100.0f);
+        const string prefix = "VOLUME [";
+        string suffix = "] " + percent + "%";
+
+        // Measure with "100%" so the bar keeps the same length at any volume.
+        float fixedWidth = text.GetPreferredValues(prefix + "] 100%").x;
+        float barWidth = width - fixedWidth - text.fontSize * 0.5f;   // small safety margin
+        float fontSize = Mathf.Max(1.0f, text.fontSize);
+        float charEm = Mathf.Max(0.05f, barWidth / volumeBarLength / fontSize);
+
+        int filled = Mathf.RoundToInt(volume * volumeBarLength);
+        StringBuilder sb = new StringBuilder(prefix);
+        sb.Append("<mspace=").Append(charEm.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)).Append("em>");
+        sb.Append(volumeFilledChar, filled).Append(volumeEmptyChar, volumeBarLength - filled);
+        sb.Append("</mspace>").Append(suffix);
         return sb.ToString();
     }
 

@@ -95,12 +95,16 @@ public sealed class CreditsRoll : ScriptableObject
     [Header("Scrolling")]
     [Tooltip("Pixels per second (at 1080p reference).")]
     [Min(0f)] public float scrollSpeed = 70f;
-    [Tooltip("Scroll speed is multiplied by this while any key or mouse button is held. 1 = off.")]
+    [Tooltip("Scroll speed is multiplied by this while a key, right/middle mouse button or gamepad button is held. Left click is left alone so links can be clicked. 1 = off.")]
     [Min(1f)] public float holdSpeedMultiplier = 4f;
     [Tooltip("Seconds to ease between normal and held speed (0 = instant).")]
     [Min(0f)] public float holdEaseSeconds = 0.2f;
     [Tooltip("Mouse wheel multiplier. Wheel scrolls back and forth manually.")]
     [Min(0f)] public float wheelSpeed = 1.5f;
+    [Tooltip("After using the mouse wheel, auto-scroll waits this long before starting again.")]
+    [Min(0f)] public float manualScrollPause = 2.5f;
+    [Tooltip("Seconds for auto-scroll to ease back up to speed after a manual scroll.")]
+    [Min(0f)] public float resumeEaseSeconds = 0.8f;
     [Min(0f)] public float startDelay = 0.4f;
     [Tooltip("On: start again from the bottom. Off: stop with the closing line on screen.")]
     public bool loop = true;

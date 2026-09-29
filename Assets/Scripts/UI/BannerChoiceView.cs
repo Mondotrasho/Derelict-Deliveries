@@ -109,6 +109,7 @@ public sealed class BannerChoiceView : MonoBehaviour
     private string[] rowLabels;
     private TextAlignmentOptions rowLabelAlignment = TextAlignmentOptions.Center;
     private bool spreadRows;
+    private System.Func<TMP_Text, float, string>[] rowLabelBuilders;
     private readonly List<TextMeshProUGUI> rowLabelTexts = new List<TextMeshProUGUI>();
     private LayoutElement resultLayout;
 
@@ -266,6 +267,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         EnsureBuilt();
         rowLabelAlignment = labelAlignment;
         spreadRows = spread;
+        rowLabelBuilders = null;
         if (buttonsPerRow == null || buttonsPerRow.Count == 0)
         {
             rowSizes = null;
@@ -282,6 +284,23 @@ public sealed class BannerChoiceView : MonoBehaviour
             }
         }
         lastSize = new Vector2(-1f, -1f);   // relayout next frame
+    }
+
+
+    /// <summary>
+    /// Optional: build a row's label at layout time, when its width is known
+    /// (e.g. a text bar that should exactly fill the window). The builder gets the
+    /// label's text component (already styled, so it can measure) and the width in
+    /// pixels, and returns the text. Call after SetChoiceRows; takes priority over
+    /// that row's plain label.
+    /// </summary>
+    public void SetRowLabelBuilder(int row, System.Func<TMP_Text, float, string> builder)
+    {
+        if (rowSizes == null || row < 0 || row >= rowSizes.Length) return;
+        if (rowLabelBuilders == null || rowLabelBuilders.Length != rowSizes.Length)
+            rowLabelBuilders = new System.Func<TMP_Text, float, string>[rowSizes.Length];
+        rowLabelBuilders[row] = builder;
+        lastSize = new Vector2(-1f, -1f);
     }
 
 
@@ -544,8 +563,8 @@ public sealed class BannerChoiceView : MonoBehaviour
         if (customRows)
         {
             rows = rowSizes.Length;
-            foreach (string label in rowLabels)
-                if (!string.IsNullOrEmpty(label)) rowLabelsTotal += rowLabelHeight + gap;
+            for (int r = 0; r < rowSizes.Length; r++)
+                if (HasRowLabel(r)) rowLabelsTotal += rowLabelHeight + gap;
         }
         float minBody = bodyText.gameObject.activeSelf ? bodySize * 1.25f * minBodyLines : 0f;
         bool showingResult = resultText.gameObject.activeSelf;
@@ -673,13 +692,14 @@ public sealed class BannerChoiceView : MonoBehaviour
 
         for (int r = 0; r < rowSizes.Length; r++)
         {
-            if (!string.IsNullOrEmpty(rowLabels[r]))
+            if (HasRowLabel(r))
             {
                 TextMeshProUGUI text = GetRowLabel(labelIndex++);
                 text.gameObject.SetActive(true);
-                text.text = rowLabels[r];
-                text.alignment = rowLabelAlignment;
                 ApplyText(text, palette.primary, body);
+                text.alignment = rowLabelAlignment;
+                System.Func<TMP_Text, float, string> builder = RowLabelBuilder(r);
+                text.text = builder != null ? builder(text, width) : rowLabels[r];
                 PlaceTopLeft(text.rectTransform, 0f, y, width, labelHeight);
                 y += labelHeight + gap;
             }
@@ -706,6 +726,12 @@ public sealed class BannerChoiceView : MonoBehaviour
         for (int i = labelIndex; i < rowLabelTexts.Count; i++) rowLabelTexts[i].gameObject.SetActive(false);
         return Mathf.Max(0f, y - gap);
     }
+
+
+    private System.Func<TMP_Text, float, string> RowLabelBuilder(int row) =>
+        rowLabelBuilders != null && row < rowLabelBuilders.Length ? rowLabelBuilders[row] : null;
+
+    private bool HasRowLabel(int row) => RowLabelBuilder(row) != null || !string.IsNullOrEmpty(rowLabels[row]);
 
 
     private Button NextActiveButton(ref int index)
@@ -821,6 +847,7 @@ public sealed class BannerChoiceView : MonoBehaviour
         rowLabels = null;
         rowLabelAlignment = TextAlignmentOptions.Center;
         spreadRows = false;
+        rowLabelBuilders = null;
     }
 
 

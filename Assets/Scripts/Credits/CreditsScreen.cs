@@ -36,6 +36,8 @@ public sealed class CreditsScreen : MonoBehaviour
     private float delayLeft;
     private bool stopped;
     private float speedMultiplier = 1f;
+    private float manualPauseLeft;
+    private float autoFactor = 1f;   // 0 = auto-scroll paused by the wheel, 1 = full speed
 
 
     private void Start()
@@ -67,6 +69,8 @@ public sealed class CreditsScreen : MonoBehaviour
         IsOpen = true;
         stopped = false;
         speedMultiplier = 1f;
+        manualPauseLeft = 0f;
+        autoFactor = 1f;
         delayLeft = roll.startDelay;
 
         Canvas.ForceUpdateCanvases();
@@ -112,21 +116,40 @@ public sealed class CreditsScreen : MonoBehaviour
         contentHeight = content.rect.height;   // layout can settle a frame late
         float dt = Time.unscaledDeltaTime;
         float wheel = Mouse.current != null ? Mouse.current.scroll.ReadValue().y : 0f;
+        bool holding = AnyInputHeld();
+
+        // Mouse wheel takes over: auto-scroll stops, waits, then eases back in.
         if (Mathf.Abs(wheel) > 0.01f)
         {
             scrollY -= wheel * roll.wheelSpeed;
             stopped = false;
+            manualPauseLeft = roll.manualScrollPause;
+            autoFactor = 0f;
+        }
+        else if (holding)
+        {
+            manualPauseLeft = 0f;   // holding to fast-forward cancels the wait straight away
         }
 
-        // Hold any key / mouse button / touch to fast-forward (eased so it doesn't jerk).
-        float targetMultiplier = AnyInputHeld() ? roll.holdSpeedMultiplier : 1f;
+        if (manualPauseLeft > 0f)
+        {
+            manualPauseLeft -= dt;
+            autoFactor = 0f;
+        }
+        else
+        {
+            autoFactor = roll.resumeEaseSeconds > 0f ? Mathf.MoveTowards(autoFactor, 1f, dt / roll.resumeEaseSeconds) : 1f;
+        }
+
+        // Hold a key / right or middle mouse / gamepad button to fast-forward (eased so it doesn't jerk).
+        float targetMultiplier = holding ? roll.holdSpeedMultiplier : 1f;
         speedMultiplier = roll.holdEaseSeconds > 0f
             ? Mathf.MoveTowards(speedMultiplier, targetMultiplier,
                                 Mathf.Abs(roll.holdSpeedMultiplier - 1f) * dt / roll.holdEaseSeconds)
             : targetMultiplier;
 
         if (delayLeft > 0f) delayLeft -= dt;
-        else if (!stopped) scrollY += roll.scrollSpeed * speedMultiplier * dt;
+        else if (!stopped) scrollY += roll.scrollSpeed * speedMultiplier * autoFactor * dt;
 
         float stopAt = contentHeight - viewportHeight * 0.6f;
         if (roll.loop)
@@ -144,15 +167,17 @@ public sealed class CreditsScreen : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Fast-forward input. Left click and touch are deliberately NOT included:
+    /// they are how links get clicked.
+    /// </summary>
     private static bool AnyInputHeld()
     {
         if (Keyboard.current != null && Keyboard.current.anyKey.isPressed) return true;
         Mouse mouse = Mouse.current;
-        if (mouse != null && (mouse.leftButton.isPressed || mouse.rightButton.isPressed || mouse.middleButton.isPressed)) return true;
+        if (mouse != null && (mouse.rightButton.isPressed || mouse.middleButton.isPressed)) return true;
         Gamepad pad = Gamepad.current;
-        if (pad != null && (pad.buttonSouth.isPressed || pad.rightTrigger.isPressed)) return true;
-        Touchscreen touch = Touchscreen.current;
-        return touch != null && touch.primaryTouch.press.isPressed;
+        return pad != null && (pad.buttonSouth.isPressed || pad.rightTrigger.isPressed);
     }
 
 
