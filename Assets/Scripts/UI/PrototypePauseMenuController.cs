@@ -1,3 +1,6 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -5,6 +8,14 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Minimal pause and restart menu for the single-sector prototype.
 /// It creates itself at runtime so the test scene needs no extra authoring.
+///
+/// [Oscar - terminal UI additions] If placed in the scene with a
+/// BannerChoiceView assigned, the menu shows in the terminal-style window
+/// instead of the OnGUI one, and adds a volume control and a credits page.
+/// With no view assigned it behaves exactly as originally written (the OnGUI
+/// menu below is untouched and still the fallback). The Escape key is now
+/// optional (List For Escape) and a HUD button can call Toggle() instead.
+/// Additions are marked [TERMINAL UI].
 /// </summary>
 [DefaultExecutionOrder(-10000)]
 [DisallowMultipleComponent]
@@ -19,6 +30,41 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
     private bool isOpen;
     private bool isRestarting;
     private float timeScaleBeforePause = 1.0f;
+
+    // [TERMINAL UI] ---------------------------------------------------------
+    private const string ResumeId = "resume";
+    private const string RestartId = "restart";
+    private const string VolumeDownId = "vol-";
+    private const string VolumeUpId = "vol+";
+    private const string CreditsId = "credits";
+    private const string BackId = "back";
+    private const int VolumeBarSegments = 10;
+
+    [Header("Terminal UI (optional - empty = original OnGUI menu)")]
+    [Tooltip("Terminal-style window for the menu. Use its own copy, not the planet picker's.")]
+    [SerializeField] private BannerChoiceView view;
+    [Tooltip("Optional full-screen Image behind the window that stops clicks reaching the HUD while paused.")]
+    [SerializeField] private GameObject inputBlocker;
+    [SerializeField] private string titlePrefix = "SYS://";
+    [SerializeField] private Sprite banner;
+
+    [Header("Input")]
+    [Tooltip("Open/close with Escape. Off = only Toggle() (e.g. a HUD button). The auto-created fallback menu always listens, as originally written.")]
+    [SerializeField] private bool listenForEscape = false;
+
+    [Header("Volume")]
+    [Range(0.01f, 0.5f)] [SerializeField] private float volumeStep = 0.1f;
+
+    [Header("Credits")]
+    [Tooltip("Scrolling credits screen. If set, CREDITS opens it; otherwise the plain text below is shown.")]
+    [SerializeField] private CreditsScreen creditsScreen;
+    [Tooltip("Plain text fallback for the credits page.")]
+    [SerializeField] private TextAsset creditsText;
+
+    private Coroutine terminalRoutine;
+    private bool showingCredits;
+    private readonly List<BannerChoiceView.Choice> terminalChoices = new List<BannerChoiceView.Choice>();
+    // ------------------------------------------------------------------------
 
     private GUIStyle titleStyle;
     private GUIStyle messageStyle;
@@ -54,7 +100,40 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         }
 
         GameObject menuObject = new GameObject("Prototype Pause Menu");
-        menuObject.AddComponent<PrototypePauseMenuController>();
+        PrototypePauseMenuController menu = menuObject.AddComponent<PrototypePauseMenuController>();
+
+        // [TERMINAL UI] Only the auto-created menu persists across restarts and
+        // listens for Escape (the original behaviour). A scene-placed menu is
+        // rebuilt with the scene, so its view reference never goes stale.
+        menu.listenForEscape = true;
+        DontDestroyOnLoad(menuObject);
+    }
+
+    /// <summary>[TERMINAL UI] Opens or closes the menu. Hook a HUD button's OnClick here.</summary>
+    public void Toggle()
+    {
+        if (isRestarting)
+        {
+            return;
+        }
+
+        if (isOpen)
+        {
+            Resume();
+        }
+        else
+        {
+            Open();
+        }
+    }
+
+    /// <summary>[TERMINAL UI] Static helper so other scripts can open the menu without a reference.</summary>
+    public static void ToggleMenu()
+    {
+        if (instance != null)
+        {
+            instance.Toggle();
+        }
     }
 
     private void Awake()
@@ -66,12 +145,12 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         }
 
         instance = this;
-        DontDestroyOnLoad(gameObject);
+        // [TERMINAL UI] DontDestroyOnLoad moved to CreateForPrototype - see the note there.
     }
 
     private void Update()
     {
-        if (isRestarting || Keyboard.current == null ||
+        if (isRestarting || !listenForEscape || Keyboard.current == null ||
             !Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             return;
@@ -108,7 +187,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!isOpen)
+        if (!isOpen || view != null)   // [TERMINAL UI] the terminal window replaces this when assigned
         {
             return;
         }
@@ -172,6 +251,18 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         timeScaleBeforePause = Time.timeScale;
         Time.timeScale = 0.0f;
         isOpen = true;
+
+        // [TERMINAL UI]
+        if (view != null)
+        {
+            showingCredits = false;
+            if (inputBlocker != null)
+            {
+                inputBlocker.SetActive(true);
+                inputBlocker.transform.SetAsLastSibling();   // view then moves in front of it on Show
+            }
+            terminalRoutine = StartCoroutine(TerminalMenu());
+        }
     }
 
     private void Resume()
@@ -182,6 +273,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
         }
 
         isOpen = false;
+        CloseTerminal();   // [TERMINAL UI]
         RestoreTimeScale();
     }
 
@@ -194,6 +286,7 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
 
         isRestarting = true;
         isOpen = false;
+        CloseTerminal();   // [TERMINAL UI]
         Time.timeScale = 1.0f;
 
         Scene currentScene = SceneManager.GetActiveScene();
@@ -209,6 +302,116 @@ public sealed class PrototypePauseMenuController : MonoBehaviour
 
         isRestarting = false;
     }
+
+    // [TERMINAL UI] ---------------------------------------------------------
+
+    private IEnumerator TerminalMenu()
+    {
+        while (isOpen)
+        {
+            ShowTerminalPage();
+
+            string picked = null;
+            yield return view.WaitForChoice(id => picked = id);
+
+            if (!isOpen)
+            {
+                yield break;   // closed from elsewhere (Toggle, restart)
+            }
+
+            switch (picked)
+            {
+                case null:   // window hidden by something else: treat as resume
+                case ResumeId:
+                    terminalRoutine = null;
+                    Resume();
+                    yield break;
+                case RestartId:
+                    terminalRoutine = null;
+                    RestartSector();
+                    yield break;
+                case VolumeDownId:
+                    GameVolume.Master = GameVolume.Master - volumeStep;
+                    break;
+                case VolumeUpId:
+                    GameVolume.Master = GameVolume.Master + volumeStep;
+                    break;
+                case CreditsId:
+                    if (creditsScreen != null)
+                    {
+                        view.Hide();
+                        yield return creditsScreen.PlayAndWait();   // ShowTerminalPage reopens the menu after
+                    }
+                    else
+                    {
+                        showingCredits = true;
+                    }
+                    break;
+                case BackId:
+                    showingCredits = false;
+                    break;
+            }
+        }
+    }
+
+    private void ShowTerminalPage()
+    {
+        terminalChoices.Clear();
+
+        if (showingCredits)
+        {
+            string credits = creditsText != null ? creditsText.text : "No credits file assigned.";
+            view.Show(banner, titlePrefix + "CREDITS", "PAUSED", credits, false);
+            terminalChoices.Add(new BannerChoiceView.Choice(BackId, "BACK"));
+        }
+        else
+        {
+            view.Show(banner, titlePrefix + "PAUSED", "SIM HALTED", VolumeLine(), false);
+            terminalChoices.Add(new BannerChoiceView.Choice(ResumeId, "RESUME"));
+            terminalChoices.Add(new BannerChoiceView.Choice(VolumeDownId, "VOLUME -", GameVolume.Master > 0.001f));
+            terminalChoices.Add(new BannerChoiceView.Choice(VolumeUpId, "VOLUME +", GameVolume.Master < 0.999f));
+            terminalChoices.Add(new BannerChoiceView.Choice(CreditsId, "CREDITS"));
+            terminalChoices.Add(new BannerChoiceView.Choice(RestartId, "RESTART SECTOR"));
+        }
+
+        view.SetChoices(terminalChoices);
+    }
+
+    private static string VolumeLine()
+    {
+        float volume = GameVolume.Master;
+        int filled = Mathf.RoundToInt(volume * VolumeBarSegments);
+        StringBuilder sb = new StringBuilder("VOLUME  [");
+        sb.Append('#', filled).Append('.', VolumeBarSegments - filled);
+        sb.Append("]  ").Append(Mathf.RoundToInt(volume * 100.0f)).Append('%');
+        return sb.ToString();
+    }
+
+    private void CloseTerminal()
+    {
+        if (terminalRoutine != null)
+        {
+            StopCoroutine(terminalRoutine);
+            terminalRoutine = null;
+        }
+
+        if (view != null)
+        {
+            view.Hide();
+        }
+
+        if (creditsScreen != null)
+        {
+            creditsScreen.Close();
+        }
+
+        if (inputBlocker != null)
+        {
+            inputBlocker.SetActive(false);
+        }
+    }
+
+    // ------------------------------------------------------------------------
 
     private void RestoreTimeScale()
     {

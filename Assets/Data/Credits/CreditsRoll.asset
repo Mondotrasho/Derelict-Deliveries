@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10b7a556f54b72f4cbc1e3a0cf094658, type: 3}
+  m_Name: CreditsRoll
+  m_EditorClassIdentifier: Assembly-CSharp::CreditsRoll
+  title: DERELICT DELIVERIES
+  tagline: SIT254 - Team 4 / Team Derelict
+  sections:
+  - heading: // TEAM DERELICT
+    intro: We all worked on the design - these are the bits each of us owned.
+    people:
+    - {fileID: 11400000, guid: fb5502ec7fb463e4cb8dbf52679fd83e, type: 2}
+    - {fileID: 11400000, guid: da85b2fda988192498a7b92a4884cf35, type: 2}
+    - {fileID: 11400000, guid: f1af1be84a7db7f4b9806d8fa558babf, type: 2}
+    - {fileID: 11400000, guid: d9a16c15b4771f6489991675b8507ebe, type: 2}
+    outro: 
+  - heading: // ART
+    intro: 
+    people:
+    - {fileID: 11400000, guid: 4a5078e2d8d239b40bb9f482ccbabe85, type: 2}
+    outro: 
+  - heading: // MUSIC
+    intro: 
+    people:
+    - {fileID: 11400000, guid: 35b37758efd8a20459c767b9b44cfea2, type: 2}
+    outro: 
+  - heading: // ASSETS
+    intro: 
+    people:
+    - {fileID: 11400000, guid: 7b597a2e34ea2a249a922d10e0a1cfe9, type: 2}
+    - {fileID: 11400000, guid: d48c50eb5bd77814f821ace79d2a3dfa, type: 2}
+    - {fileID: 11400000, guid: aed78ca9d1668df4dbb77678cfcbaf78, type: 2}
+    outro: 
+  closingLine: Thanks for playing.
+  titleFont: {fileID: 11400000, guid: fe4223bdcc257e948a0665b01f76265d, type: 2}
+  headingFont: {fileID: 11400000, guid: fe4223bdcc257e948a0665b01f76265d, type: 2}
+  nameFont: {fileID: 11400000, guid: dea0626981f60334ea8a7f3e84bfef98, type: 2}
+  numberFont: {fileID: 11400000, guid: 77d2ad80f0f0a3348b876d8435decb50, type: 2}
+  bodyFont: {fileID: 11400000, guid: bf1ca97ababe8ec4999e1c0585065ff6, type: 2}
+  linkFont: {fileID: 11400000, guid: bf1ca97ababe8ec4999e1c0585065ff6, type: 2}
+  titleSize: 84
+  taglineSize: 28
+  headingSize: 44
+  nameSize: 40
+  numberSize: 28
+  bodySize: 28
+  citationSize: 20
+  linkSize: 26
+  titleColour: {r: 0.25882354, g: 1, b: 0.48235294, a: 1}
+  headingColour: {r: 0.25882354, g: 1, b: 0.48235294, a: 1}
+  nameColour: {r: 0.9098039, g: 0.9019608, b: 1, a: 1}
+  numberColour: {r: 1, g: 0.6901961, b: 0, a: 1}
+  contributionColour: {r: 0.7019608, g: 0.6784314, b: 0.85882354, a: 1}
+  noteColour: {r: 0.56078434, g: 0.5411765, b: 0.72156864, a: 1}
+  citationColour: {r: 0.47843137, g: 0.45882353, b: 0.61960787, a: 1}
+  linkColour: {r: 0.40392157, g: 0.84705883, b: 1, a: 1}
+  linkHoverColour: {r: 1, g: 1, b: 1, a: 1}
+  frameShape: 1
+  terminalStyle: {fileID: 11400000, guid: e2fa03d164984edfa08c97362373abd6, type: 2}
+  borderColour: {r: 0.25882354, g: 1, b: 0.48235294, a: 1}
+  borderThickness: 0.07
+  initialsBackground: {r: 0.101960786, g: 0.08235294, b: 0.2, a: 1}
+  avatarSize: 170
+  linkIconSize: 40
+  background: {fileID: 21300000, guid: 39474c0b7f9d4dd43a5cd523c630cf72, type: 3}
+  backgroundTint: {r: 1, g: 1, b: 1, a: 1}
+  backdropColour: {r: 0.050980393, g: 0.039215688, b: 0.12156863, a: 1}
+  textColumnWidth: 900
+  sectionSpacing: 140
+  entrySpacing: 70
+  scrollSpeed: 70
+  wheelSpeed: 1.5
+  startDelay: 0.4
+  loop: 1
