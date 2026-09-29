@@ -32,6 +32,8 @@ public sealed class PlanetPicker : MonoBehaviour, IPoiPicker
     [Tooltip("With more options than this, only the prompt is shown (the list would not fit).")]
     [Min(0)] [SerializeField] private int maxDescriptionsListed = 3;
     [SerializeField] private string leaveLabel = "LEAVE";
+    [Tooltip("Added to a greyed-out option's label, e.g. \" (NEXT TURN)\". Empty = label unchanged.")]
+    [SerializeField] private string lockedSuffix = "";
 
     public bool IsOpen { get; private set; }
 
@@ -66,7 +68,8 @@ public sealed class PlanetPicker : MonoBehaviour, IPoiPicker
         for (int i = 0; i < choices.Count; i++)
         {
             if (choices[i] == null) continue;
-            buttons.Add(new BannerChoiceView.Choice(i.ToString(), choices[i].Title));
+            bool locked = choices[i].Locked;
+            buttons.Add(new BannerChoiceView.Choice(i.ToString(), locked ? choices[i].Title + lockedSuffix : choices[i].Title, !locked));
         }
         buttons.Add(new BannerChoiceView.Choice(LeaveId, leaveLabel));
         view.SetChoices(buttons);

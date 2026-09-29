@@ -113,13 +113,13 @@ public class PointOfInterestController : MonoBehaviour
             if (entry == null || !string.Equals(entry.planetId?.Trim(), planet.id, System.StringComparison.OrdinalIgnoreCase)) continue;
             foreach (PoiOption option in entry.options)
             {
-                if (option != null && option.IsAvailable(context)) choices.Add(new PoiChoice(option));
+                if (option != null && option.IsAvailable(context)) choices.Add(new PoiChoice(option, option.IsUsedUpThisTurn(context)));
             }
         }
 
         foreach (PoiOption option in sharedOptions)
         {
-            if (option != null && option.IsAvailable(context)) choices.Add(new PoiChoice(option));
+            if (option != null && option.IsAvailable(context)) choices.Add(new PoiChoice(option, option.IsUsedUpThisTurn(context)));
         }
 
         if (includeLiveEventSites && registry != null &&
@@ -152,6 +152,7 @@ public class PointOfInterestController : MonoBehaviour
             PoiChoice picked = null;
             yield return picker.Pick(planet, list, c => picked = c);
             if (picked == null) break;   // Leave
+            if (picked.Locked) continue; // greyed-out option (a picker ignored the lock) - just show the list again
 
             bool returnToPicker = true;
 

@@ -51,7 +51,7 @@ public sealed class PoiOption
     public bool returnToPicker = true;
 
     [Header("Per-Turn Limit")]
-    [Tooltip("How many times this option can be OPENED per turn. 0 = unlimited (the default, so existing options are unchanged). Counted when picked, not when completed, so backing out of a market still uses a visit.")]
+    [Tooltip("How many times this option can be OPENED per turn. 0 = unlimited (the default, so existing options are unchanged). Counted when picked, not when completed, so backing out of a market still uses a visit. Once used up the button is greyed out until next turn.")]
     [Min(0)] public int maxUsesPerTurn = 0;
 
     [Tooltip("Where the per-turn count is kept. Player = one shared limit across every planet. Planet = a separate limit at each planet.")]
@@ -84,7 +84,6 @@ public sealed class PoiOption
     {
         if (oncePerPlanet && context.Planet != null && context.Planet.GetFlag(DoneFlag)) return false;
         if (conditions != null && !conditions.IsMet(context)) return false;
-        if (IsUsedUpThisTurn(context)) return false;
 
         switch (kind)
         {
@@ -142,9 +141,13 @@ public sealed class PoiChoice
     public PoiOption Option { get; }
     public EventSite Site { get; }
 
-    public PoiChoice(PoiOption option)
+    /// <summary>Shown but not pickable (greyed out), e.g. used up this turn.</summary>
+    public bool Locked { get; }
+
+    public PoiChoice(PoiOption option, bool locked = false)
     {
         Option = option;
+        Locked = locked;
         Title = option.title;
         Description = option.description;
     }

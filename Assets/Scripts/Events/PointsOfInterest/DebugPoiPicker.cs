@@ -70,11 +70,13 @@ public class DebugPoiPicker : MonoBehaviour, IPoiPicker
             GUILayout.Label(choice.Title, titleStyle);
             if (!string.IsNullOrWhiteSpace(choice.Description)) GUILayout.Label(choice.Description, wrapStyle);
             if (choice.Option != null) GUILayout.Label("[" + choice.Option.kind + "]");
-            if (GUILayout.Button("Choose"))
+            GUI.enabled = !choice.Locked;   // greyed out when used up this turn
+            if (GUILayout.Button(choice.Locked ? "Used this turn" : "Choose"))
             {
                 result = choice;
                 done = true;
             }
+            GUI.enabled = true;
             GUILayout.EndVertical();
         }
 
