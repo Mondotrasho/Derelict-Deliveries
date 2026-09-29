@@ -19874,7 +19874,7 @@ MonoBehaviour:
     perTurnScope: 0
     dialogueJson: {fileID: 0}
     runBootSequence: 0
-    eventDefinition: {fileID: 0}
+    eventDefinition: {fileID: 11400000, guid: 05e914c2cb6b49f8bdba95b9d8e06b43, type: 2}
     eventTable: {fileID: 0}
     eventTags: []
   - id: street.market

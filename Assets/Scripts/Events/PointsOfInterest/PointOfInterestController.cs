@@ -176,7 +176,14 @@ public class PointOfInterestController : MonoBehaviour
                         yield return RunEvent(picked.Option, cell, context, r => completed = r);
                         break;
                     case PoiActionKind.Combat:
-                        yield return RunCombat(r => completed = r);
+                        // Optional lead-in: if the combat option has an Event Definition (or table),
+                        // play it first. Picking a choice starts the fight; leaving backs out of it.
+                        bool startFight = true;
+                        if (picked.Option.eventDefinition != null || picked.Option.eventTable != null)
+                        {
+                            yield return RunEvent(picked.Option, cell, context, r => startFight = r);
+                        }
+                        if (startFight) yield return RunCombat(r => completed = r);
                         break;
                 }
 
